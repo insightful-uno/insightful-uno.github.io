@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Insightful Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: masthead + rotating hero word, tag-filtered work grid that flips to a director-style name index with a cursor-following preview, draggable comic strip, about, contact. */
+:root{
+  --paper:#F3EFE7; --ink:#14110F; --red:#E8271A; --muted:#6E655E; --line:#D8D0C4; --tile:#E7E0D4;
+  --display:"Anton","Impact","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --cur-point:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M12 3.2a2 2 0 0 1 4 0V13h.6a2 2 0 0 1 2.3 1.3 2 2 0 0 1 3 .9 2 2 0 0 1 3.1 1.7V23a7 7 0 0 1-7 7h-2.8a7 7 0 0 1-6-3.4l-3.4-5.9a2 2 0 0 1 3.4-2L12 20.6z' fill='%23E8271A' stroke='%2314110F' stroke-width='1.3' stroke-linejoin='round'/%3E%3Crect x='12.7' y='1.9' width='2.6' height='3.1' rx='1.2' fill='%23fff' stroke='%2314110F' stroke-width='.6'/%3E%3Cpath d='M16.6 13.2v3.4M19.6 14.6v3M22.6 16v2.8' stroke='%2314110F' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") 14 1;
+  --cur-grab:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M6.5 15a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v7a8 8 0 0 1-8 8h-4a8 8 0 0 1-8-8z' fill='%23E8271A' stroke='%2314110F' stroke-width='1.3' stroke-linejoin='round'/%3E%3Cpath d='M12 11.4v5.6M16.2 11.2v5.8M20.4 11.4v5.6' stroke='%2314110F' stroke-width='1' stroke-linecap='round'/%3E%3Crect x='8.6' y='16.4' width='2.7' height='2.4' rx='1' fill='%23fff' stroke='%2314110F' stroke-width='.6'/%3E%3Crect x='12.8' y='16.8' width='2.7' height='2.4' rx='1' fill='%23fff' stroke='%2314110F' stroke-width='.6'/%3E%3Crect x='17' y='16.8' width='2.7' height='2.4' rx='1' fill='%23fff' stroke='%2314110F' stroke-width='.6'/%3E%3Crect x='21.2' y='16.4' width='2.7' height='2.4' rx='1' fill='%23fff' stroke='%2314110F' stroke-width='.6'/%3E%3Cpath d='M6.8 19.5c2.5-.6 5 .3 6.2 2.3' fill='none' stroke='%2314110F' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E") 16 16;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--paper:#14110F;--ink:#F3EFE7;--red:#F0402F;--muted:#A39A90;--line:#2E2925;--tile:#1F1B18;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#14110F;--ink:#F3EFE7;--red:#F0402F;--muted:#A39A90;--line:#2E2925;--tile:#1F1B18;color-scheme:dark}
+
+*{box-sizing:border-box}
+html{cursor:var(--cur-point),auto}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;padding-inline:clamp(16px,4vw,48px);overflow-x:hidden}
+a,button,[data-hover]{cursor:var(--cur-point),pointer;color:inherit}
+:active,.grabbing,.grabbing *{cursor:var(--cur-grab),grabbing!important}
+a:focus-visible,button:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.wrap{max-width:1280px;margin-inline:auto}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);display:flex;justify-content:space-between;align-items:center;gap:16px;padding-block:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.logo{font-family:var(--display);font-size:24px;letter-spacing:.02em;text-decoration:none}
+.logo b{color:var(--red);font-weight:400}
+nav{display:flex;gap:20px;flex-wrap:wrap}
+nav a{text-decoration:none;position:relative}
+nav a::after{content:"";position:absolute;left:0;bottom:-3px;height:2px;width:0;background:var(--red);transition:width .25s}
+nav a:hover::after{width:100%}
+
+.hero{padding-block:clamp(40px,8vw,96px) 32px;display:grid;gap:24px}
+.hero h1{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(56px,13vw,184px);line-height:.88;margin:0;letter-spacing:-.01em}
+.swap{color:var(--red);display:inline-block;min-width:4ch}
+.swap span{display:inline-block;animation:drop .5s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes drop{from{transform:translateY(-.35em) rotate(-4deg);opacity:0}to{transform:none;opacity:1}}
+.hero-meta{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--muted)}
+.hero p{max-width:56ch;margin:0;font-size:18px}
+
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-block:20px;border-top:2px solid var(--ink);margin-top:24px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:inherit;font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;border:1px solid var(--ink);background:transparent;border-radius:999px;padding:6px 14px;transition:background .15s,color .15s}
+.chip:hover{background:var(--ink);color:var(--paper)}
+.chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.chip sup{opacity:.7;margin-left:3px}
+.view{display:flex;border:1px solid var(--ink);border-radius:999px;overflow:hidden}
+.view button{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;border:0;background:transparent;padding:6px 14px}
+.view button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:32px 24px;padding-block:8px 48px}
+.card{text-decoration:none;display:grid;gap:10px;min-width:0}
+.card .art{transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.card:hover .art{transform:rotate(-1.2deg) scale(1.02)}
+.card h3{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:28px;line-height:1;margin:0;letter-spacing:.01em}
+.card:hover h3{color:var(--red)}
+.card .row{display:flex;justify-content:space-between;gap:8px;color:var(--muted)}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tags span{border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+
+/* placeholder art: stands in for real pieces until uploads arrive */
+.art{position:relative;aspect-ratio:4/5;max-width:100%;background:var(--tile);overflow:hidden;border-radius:2px}
+.art .ph{position:absolute;left:10px;bottom:10px;background:var(--paper);padding:2px 6px;color:var(--muted)}
+.dots{background-image:radial-gradient(var(--red) 28%,transparent 30%);background-size:14px 14px}
+.dots::after{content:"";position:absolute;inset:22% 18%;background:var(--paper);border:3px solid var(--ink);border-radius:2px}
+.panels{background:var(--paper);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:6px;padding:10px;border:3px solid var(--ink)}
+.panels i{border:2px solid var(--ink);background:var(--tile)}
+.panels i:nth-child(2){background:var(--red)}
+.panels i:nth-child(5){grid-column:span 2}
+.blob::before{content:"";position:absolute;width:62%;aspect-ratio:1;left:19%;top:16%;background:var(--red);border-radius:46% 54% 60% 40%/50% 42% 58% 50%;animation:morph 6s ease-in-out infinite}
+@keyframes morph{50%{border-radius:58% 42% 38% 62%/40% 60% 40% 60%;transform:rotate(8deg)}}
+.stripes{background:repeating-linear-gradient(-35deg,var(--red) 0 14px,var(--tile) 14px 28px)}
+.stripes::after{content:"";position:absolute;inset:30% 26%;background:var(--ink);border-radius:50% 50% 8px 8px}
+.bounce::before{content:"";position:absolute;left:calc(50% - 14%);width:28%;aspect-ratio:1;border-radius:50%;background:var(--red);top:12%;animation:bounce 1.1s cubic-bezier(.5,0,.5,1) infinite alternate}
+.bounce::after{content:"";position:absolute;left:30%;right:30%;bottom:16%;height:6px;border-radius:50%;background:var(--ink);opacity:.25;animation:shadow 1.1s cubic-bezier(.5,0,.5,1) infinite alternate}
+@keyframes bounce{to{top:58%;transform:scale(1.12,.9)}}
+@keyframes shadow{to{opacity:.6;left:24%;right:24%}}
+.keys{background:linear-gradient(var(--tile) 55%,transparent 55%),repeating-linear-gradient(90deg,var(--paper) 0 calc(12.5% - 2px),var(--ink) calc(12.5% - 2px) 12.5%)}
+.keys::after{content:"";position:absolute;left:14%;top:18%;width:22%;aspect-ratio:1;background:var(--red);border-radius:50%;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.25);opacity:.7}}
+.figure::before{content:"";position:absolute;left:44%;top:14%;width:12%;aspect-ratio:1;border-radius:50%;background:var(--ink)}
+.figure::after{content:"";position:absolute;left:47%;top:26%;width:6%;height:40%;background:var(--red);transform-origin:top;animation:sway 2.4s ease-in-out infinite}
+@keyframes sway{50%{transform:rotate(14deg)}}
+.zine{background:var(--paper);border:3px solid var(--ink)}
+.zine::before{content:"No. 01";position:absolute;inset:auto 12px 40px auto;font-family:var(--display);font-size:46px;color:var(--red)}
+.zine::after{content:"";position:absolute;left:12px;right:12px;top:12px;height:40%;background:var(--ink)}
+.poster{background:var(--red)}
+.poster::after{content:"DRAWN\ATOGETHER";white-space:pre;position:absolute;left:12px;top:12px;font-family:var(--display);font-size:40px;line-height:.9;color:var(--paper)}
+
+/* index view */
+.index{list-style:none;margin:0;padding:0 0 48px}
+.index li a{display:grid;grid-template-columns:3ch minmax(0,1fr) auto;gap:16px;align-items:baseline;padding-block:14px;border-bottom:1px solid var(--line);text-decoration:none}
+.index .name{font-family:var(--display);text-transform:uppercase;font-size:clamp(32px,6vw,72px);line-height:1;transition:color .15s,transform .25s;min-width:0;overflow-wrap:anywhere}
+.index a:hover .name{color:var(--red);transform:translateX(10px)}
+.index .mono{color:var(--muted)}
+.peek{position:fixed;left:0;top:0;width:220px;pointer-events:none;z-index:30;opacity:0;transform:translate(-50%,-50%) scale(.85);transition:opacity .15s,transform .2s;}
+.peek.on{opacity:1}
+
+/* comic strip drag row */
+.strip-sec{padding-block:48px;border-top:2px solid var(--ink)}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.sec-head h2{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(40px,7vw,80px);line-height:.95;margin:0}
+.strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;cursor:var(--cur-grab),grab;scrollbar-color:var(--red) transparent;user-select:none}
+.strip .art{flex:0 0 min(70vw,300px);aspect-ratio:1}
+.strip .caption{position:absolute;left:12px;right:12px;top:12px;background:var(--paper);border:2px solid var(--ink);padding:8px 10px;font-family:var(--mono);font-size:12px;line-height:1.4}
+
+.about{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:32px;padding-block:48px;border-top:2px solid var(--ink)}
+.about p{max-width:60ch;margin:0 0 14px}
+.cv{list-style:none;margin:0;padding:0}
+.cv li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding-block:10px;border-bottom:1px solid var(--line)}
+.cv li span:last-child{color:var(--muted)}
+
+.contact{padding-block:56px 72px;border-top:2px solid var(--ink);display:grid;gap:16px}
+.contact .big{font-family:var(--display);text-transform:uppercase;font-size:clamp(36px,9vw,120px);line-height:.95;overflow-wrap:anywhere}
+.contact .big .r{color:var(--red)}
+.copy{justify-self:start;font-family:var(--mono);font-size:13px;text-transform:uppercase;letter-spacing:.06em;background:var(--red);color:#fff;border:0;border-radius:999px;padding:10px 18px;transition:transform .15s}
+.copy:hover{transform:rotate(-2deg) scale(1.04)}
+footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:20px;border-top:1px solid var(--line);color:var(--muted)}
+
+.tap{position:fixed;width:10px;height:10px;border:2px solid var(--red);border-radius:50%;pointer-events:none;z-index:40;transform:translate(-50%,-50%);animation:tap .45s ease-out forwards}
+@keyframes tap{to{width:46px;height:46px;opacity:0}}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <a class="logo" href="#top">INSIGHTFUL<b>.</b></a>
+  <nav class="mono" aria-label="Main">
+    <a href="#work">Work</a><a href="#strips">Strips</a><a href="#about">About</a><a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<main class="wrap" id="top">
+  <section class="hero">
+    <h1>Matthew Suggett<br>makes <span class="swap" id="swap"><span>comics</span></span></h1>
+    <div class="hero-meta mono"><span>Illustration · Comics · Objects · Motion</span><span>Austin, TX</span></div>
+    <p>Dark humor comics, printed objects and short loops, mostly in one color. Home of Red Man and the DEEP RED anthology.</p>
+  </section>
+
+  <section id="work">
+    <div class="toolbar">
+      <div class="chips" id="chips" role="group" aria-label="Filter by discipline"></div>
+      <div class="view" role="group" aria-label="Layout">
+        <button id="v-grid" aria-pressed="true">Grid</button><button id="v-index" aria-pressed="false">Index</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <ol class="index" id="index" hidden></ol>
+  </section>
+
+  <section class="strip-sec" id="strips">
+    <div class="sec-head"><h2>Red Man, weekly</h2><span class="mono" style="color:var(--muted)">Drag to read →</span></div>
+    <div class="strip" id="strip">
+      <div class="art panels"><i></i><i></i><i></i><i></i><i></i><span class="ph mono">Panel 1 · sample</span></div>
+      <div class="art dots"><span class="ph mono">Panel 2 · sample</span></div>
+      <div class="art figure"><div class="caption">Caption box. Replace with your real panel text.</div><span class="ph mono">Panel 3 · sample</span></div>
+      <div class="art stripes"><span class="ph mono">Panel 4 · sample</span></div>
+      <div class="art blob"><span class="ph mono">Panel 5 · sample</span></div>
+      <div class="art bounce"><span class="ph mono">Panel 6 · sample</span></div>
+    </div>
+  </section>
+
+  <section class="about" id="about">
+    <div>
+      <div class="sec-head"><h2>About</h2></div>
+      <p>Matthew Suggett is an illustrator and creative producer in Austin. He spent four years making co-branded campaign work as a Senior Production Artist at GoPro, ran the music licensing company Three's In Company, and led creator and brand partnerships at Epidemic Sound.</p>
+      <p>He trained in visual effects in the Bay Area, releases music with the Soulection collective, and hosts Drawn Together, a live figure drawing series in Austin.</p>
+    </div>
+    <ul class="cv mono">
+      <li><span>Epidemic Sound · Sr. Creator &amp; Brand Partnerships</span><span>Prev.</span></li>
+      <li><span>Three's In Company · Founder</span><span>Prev.</span></li>
+      <li><span>GoPro · Senior Production Artist</span><span>4 yrs</span></li>
+      <li><span>Soulection · Music</span><span>Ongoing</span></li>
+      <li><span>Drawn Together · Host</span><span>Austin</span></li>
+    </ul>
+  </section>
+
+  <section class="contact" id="contact">
+    <span class="mono" style="color:var(--muted)">Commissions, collaborations, brand work</span>
+    <div class="big">i<span class="r">@</span>insightful.uno</div>
+    <button class="copy" id="copy">Copy email</button>
+  </section>
+
+  <footer class="mono"><span>© 2026 Insightful</span><span>Draft v1 · all artwork shown is placeholder</span></footer>
+</main>
+
+<div class="peek" id="peek" aria-hidden="true"><div class="art" id="peekArt"></div></div>
+
+<script>
+const work=[
+ {t:"DEEP RED, Vol. 1",c:"Comics",tags:["Anthology","Print"],y:"2026",a:"dots"},
+ {t:"Red Man Strips",c:"Comics",tags:["Webcomic"],y:"2026",a:"panels"},
+ {t:"Red Man Loops",c:"Animation",tags:["GIF","Loop"],y:"2026",a:"bounce"},
+ {t:"Drawn Together Posters",c:"Physical",tags:["Poster","Event"],y:"2025",a:"poster"},
+ {t:"Rashguard Series",c:"Physical",tags:["Apparel"],y:"2026",a:"stripes"},
+ {t:"Monthly Zine",c:"Physical",tags:["Zine","Riso"],y:"2026",a:"zine"},
+ {t:"Red Man Soundboard",c:"Interactive",tags:["Web","Music"],y:"2026",a:"keys"},
+ {t:"Pose Reference",c:"Interactive",tags:["Web","3D"],y:"2026",a:"figure"},
+ {t:"Ink Blot Studies",c:"Animation",tags:["Motion"],y:"2026",a:"blob"}
+];
+const cats=["All","Comics","Physical","Animation","Interactive"];
+let cat="All",view="grid";
+const $=s=>document.querySelector(s);
+const artHTML=a=>a==="panels"?'<i></i><i></i><i></i><i></i><i></i>':'';
+
+function render(){
+  const list=work.filter(w=>cat==="All"||w.c===cat);
+  $("#grid").innerHTML=list.map(w=>`<a class="card" href="#work"><div class="art ${w.a}">${artHTML(w.a)}<span class="ph mono">Sample</span></div><h3>${w.t}</h3><div class="row mono"><span class="tags">${[w.c,...w.tags].map(x=>`<span>${x}</span>`).join("")}</span><span>${w.y}</span></div></a>`).join("");
+  $("#index").innerHTML=list.map((w,i)=>`<li><a href="#work" data-a="${w.a}"><span class="mono">${String(i+1).padStart(2,"0")}</span><span class="name">${w.t}</span><span class="mono">${w.c}</span></a></li>`).join("");
+  $("#chips").innerHTML=cats.map(c=>`<button class="chip" aria-pressed="${c===cat}" data-c="${c}">${c}<sup>${c==="All"?work.length:work.filter(w=>w.c===c).length}</sup></button>`).join("");
+  $("#grid").hidden=view!=="grid";$("#index").hidden=view!=="index";
+}
+$("#chips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(b){cat=b.dataset.c;render()}});
+["grid","index"].forEach(v=>$("#v-"+v).addEventListener("click",()=>{view=v;$("#v-grid").setAttribute("aria-pressed",v==="grid");$("#v-index").setAttribute("aria-pressed",v==="index");render()}));
+render();
+
+/* rotating hero word */
+const words=["comics","objects","loops","posters","zines","comics"];let wi=0;
+setInterval(()=>{wi=(wi+1)%words.length;$("#swap").innerHTML=`<span>${words[wi]}</span>`},2200);
+
+/* index hover preview follows the hand */
+const peek=$("#peek"),peekArt=$("#peekArt");
+if(matchMedia("(hover:hover)").matches){
+  $("#index").addEventListener("pointermove",e=>{
+    const a=e.target.closest("a[data-a]");
+    if(!a){peek.classList.remove("on");return}
+    peekArt.className="art "+a.dataset.a;peekArt.innerHTML=artHTML(a.dataset.a);
+    peek.style.left=(e.clientX+140)+"px";peek.style.top=e.clientY+"px";peek.classList.add("on");
+  });
+  $("#index").addEventListener("pointerleave",()=>peek.classList.remove("on"));
+}
+
+/* drag-to-scroll strip with grab hand */
+const strip=$("#strip");let down=false,sx=0,sl=0;
+strip.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;down=true;sx=e.clientX;sl=strip.scrollLeft;document.body.classList.add("grabbing")});
+addEventListener("pointermove",e=>{if(down)strip.scrollLeft=sl-(e.clientX-sx)});
+addEventListener("pointerup",()=>{down=false;document.body.classList.remove("grabbing")});
+
+/* red tap ring on click */
+addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;const d=document.createElement("div");d.className="tap";d.style.left=e.clientX+"px";d.style.top=e.clientY+"px";document.body.appendChild(d);setTimeout(()=>d.remove(),500)});
+
+$("#copy").addEventListener("click",async e=>{
+  try{await navigator.clipboard.writeText("i@insightful.uno");e.target.textContent="Copied"}
+  catch{const r=document.createRange();r.selectNodeContents($(".contact .big"));getSelection().removeAllRanges();getSelection().addRange(r);e.target.textContent="Selected, press copy"}
+  setTimeout(()=>e.target.textContent="Copy email",1800);
+});
+</script>
+</body>
+</html>
