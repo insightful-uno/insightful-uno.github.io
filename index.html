@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="assets/logo.webp">
 <title>Insightful Portfolio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500&display=swap">
 <style>
-/* Layout: quiet header, one-line intro, then large artwork in a full-width / two-up rhythm. Single light look by design. */
+/* Layout: quiet header with blinking Red Man, headline beside a large logo, then square artwork two-up with one full-width photo. Single light look by design. */
 :root{
   --bg:#FFFFFF; --ink:#1A1817; --soft:#8A8580; --line:#ECE9E5; --tile:#F4F2EF; --red:#E8271A;
   --sans:"Manrope","Helvetica Neue",Arial,sans-serif;
@@ -21,60 +22,56 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-weight:3
 a,button{cursor:var(--cur-point),pointer;color:inherit}
 :active{cursor:var(--cur-grab),grabbing!important}
 a:focus-visible,button:focus-visible{outline:1px solid var(--red);outline-offset:4px}
+img,video{display:block;max-width:100%}
 .wrap{max-width:1400px;margin-inline:auto}
 .label{font-size:12px;font-weight:400;letter-spacing:.18em;text-transform:uppercase}
 
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);display:flex;justify-content:space-between;align-items:center;gap:16px;padding-block:24px;flex-wrap:wrap}
-.name{text-decoration:none}
-.name i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-left:8px;vertical-align:middle}
+/* blinking Red Man: closed-eye frame flashes on top */
+.blink{position:relative;display:inline-block}
+.blink img{width:100%;height:auto}
+.blink img+img{position:absolute;inset:0;opacity:0;animation:blink 5s step-end infinite}
+@keyframes blink{0%{opacity:0}88%{opacity:1}90.5%{opacity:0}93%{opacity:1}95.5%{opacity:0}}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);display:flex;justify-content:space-between;align-items:center;gap:16px;padding-block:18px;flex-wrap:wrap}
+.name{text-decoration:none;display:flex;align-items:center;gap:12px}
+.name .blink{width:44px}
+.name .blink img+img{animation-delay:-2.2s}
 nav{display:flex;gap:32px}
 nav a{text-decoration:none;color:var(--soft);transition:color .2s}
 nav a:hover{color:var(--ink)}
 
-.intro{padding-block:clamp(48px,10vw,140px) clamp(40px,7vw,96px)}
-.intro h1{font-weight:300;font-size:clamp(30px,4.6vw,60px);line-height:1.2;letter-spacing:.02em;margin:0;max-width:20ch;text-wrap:balance}
+.intro{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:center;gap:clamp(24px,5vw,80px);padding-block:clamp(40px,7vw,104px) clamp(48px,8vw,112px)}
+.intro h1{font-weight:300;font-size:clamp(30px,4.6vw,60px);line-height:1.2;letter-spacing:.02em;margin:0;max-width:18ch;text-wrap:balance}
 .intro h1 em{font-style:normal;color:var(--red)}
+.intro .blink{width:min(100%,460px);justify-self:end}
+@media (max-width:720px){.intro{grid-template-columns:1fr}.intro .blink{justify-self:center;width:min(80%,340px)}}
 
 .work{display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,6vw,96px) clamp(16px,3vw,40px);padding-bottom:clamp(64px,10vw,140px)}
-.piece{display:grid;gap:16px;text-decoration:none;min-width:0}
+.piece{display:grid;gap:16px;min-width:0}
 .piece.full{grid-column:1/-1}
-.piece .art{aspect-ratio:4/5}
-.piece.full .art{aspect-ratio:16/9}
 .cap{display:flex;justify-content:space-between;gap:16px;align-items:baseline}
 .cap h2{font-weight:400;font-size:15px;letter-spacing:.08em;margin:0}
 .cap span{color:var(--soft)}
-.art{position:relative;max-width:100%;background:var(--tile);overflow:hidden}
-.art>*{transition:transform .9s cubic-bezier(.2,.7,.2,1)}
-.piece:hover .art>*{transform:scale(1.04)}
-
+.art{position:relative;max-width:100%;aspect-ratio:1;background:var(--tile);overflow:hidden}
+.full .art{aspect-ratio:3/2}
+.art img,.art video{width:100%;height:100%;object-fit:cover;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.piece:hover .art img,.piece:hover .art video{transform:scale(1.03)}
 /* film grain over all artwork */
-.art::after{content:"";position:absolute;inset:-50%;z-index:2;pointer-events:none;opacity:.32;mix-blend-mode:multiply;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:grain .5s steps(4) infinite}
+.art::after{content:"";position:absolute;inset:-50%;z-index:2;pointer-events:none;opacity:.3;mix-blend-mode:multiply;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:grain .5s steps(4) infinite}
 @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-1%)}100%{transform:translate(1%,3%)}}
-@media (max-width:640px){.work{grid-template-columns:1fr}.piece .art,.piece.full .art{aspect-ratio:4/5}}
+.sound{position:absolute;right:14px;bottom:14px;z-index:3;font:inherit;font-size:11px;letter-spacing:.18em;text-transform:uppercase;background:var(--bg);color:var(--ink);border:0;border-radius:999px;padding:7px 14px;opacity:.9}
+.sound[aria-pressed="true"]{background:var(--red);color:#fff}
+@media (max-width:640px){.work{grid-template-columns:1fr}.full .art{aspect-ratio:4/3}}
 
-/* placeholder artwork, replaced by real images later */
-.s{position:absolute;inset:0}
-.dots{background-image:radial-gradient(var(--red) 22%,transparent 24%);background-size:18px 18px;opacity:.9;inset:12% 10%}
-.sun::before{content:"";position:absolute;left:50%;top:50%;width:34%;aspect-ratio:1;border-radius:50%;background:var(--red);transform:translate(-50%,-50%)}
-.sun::after{content:"";position:absolute;left:0;right:0;bottom:0;height:30%;background:var(--ink);opacity:.08}
-.bounce::before{content:"";position:absolute;left:43%;width:14%;aspect-ratio:1;border-radius:50%;background:var(--red);top:14%;animation:bounce 1.1s cubic-bezier(.5,0,.5,1) infinite alternate}
-.bounce::after{content:"";position:absolute;left:40%;right:40%;bottom:18%;height:5px;border-radius:50%;background:var(--ink);opacity:.12;animation:shadow 1.1s cubic-bezier(.5,0,.5,1) infinite alternate}
-@keyframes bounce{to{top:66%;transform:scale(1.1,.9)}}
-@keyframes shadow{to{opacity:.3;left:37%;right:37%}}
-.blob::before{content:"";position:absolute;width:48%;aspect-ratio:1;left:26%;top:24%;background:var(--red);border-radius:46% 54% 60% 40%/50% 42% 58% 50%;animation:morph 7s ease-in-out infinite}
-@keyframes morph{50%{border-radius:58% 42% 38% 62%/40% 60% 40% 60%;transform:rotate(10deg)}}
-.stripes{background:repeating-linear-gradient(-35deg,var(--red) 0 10px,transparent 10px 34px);inset:18% 22%}
-.figure::before{content:"";position:absolute;left:46%;top:22%;width:8%;aspect-ratio:1;border-radius:50%;background:var(--ink)}
-.figure::after{content:"";position:absolute;left:48.4%;top:30%;width:3.2%;height:38%;background:var(--red);transform-origin:top;animation:sway 2.6s ease-in-out infinite}
-@keyframes sway{50%{transform:rotate(12deg)}}
-
-.about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:32px;padding-block:clamp(56px,8vw,112px);border-top:1px solid var(--line)}
-.about p{margin:0;max-width:52ch;font-size:clamp(18px,2vw,22px);line-height:1.6}
+.about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:clamp(24px,5vw,80px);align-items:end;padding-block:clamp(56px,8vw,112px);border-top:1px solid var(--line)}
+.about .art{aspect-ratio:2/3}
+.about h2{font-weight:300;font-size:clamp(26px,3vw,38px);letter-spacing:.03em;margin:0 0 20px}
+.about p{margin:0;max-width:48ch;font-size:clamp(17px,1.8vw,20px);line-height:1.65}
 .contact{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:32px;padding-block:clamp(56px,8vw,112px);border-top:1px solid var(--line)}
 .mail{display:flex;align-items:baseline;gap:24px;flex-wrap:wrap}
 .mail strong{font-weight:300;font-size:clamp(26px,4vw,48px);letter-spacing:.02em;overflow-wrap:anywhere}
 .copy{font:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;background:none;border:0;border-bottom:1px solid var(--red);padding:0 0 2px;color:var(--ink)}
-@media (max-width:640px){.about,.contact{grid-template-columns:1fr;gap:16px}}
+@media (max-width:640px){.about,.contact{grid-template-columns:1fr;gap:20px}}
 footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:24px 40px;color:var(--soft)}
 
 .tap{position:fixed;width:8px;height:8px;border:1.5px solid var(--red);border-radius:50%;pointer-events:none;z-index:40;transform:translate(-50%,-50%);animation:tap .45s ease-out forwards}
@@ -85,27 +82,32 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
 <body>
 
 <header class="wrap">
-  <a class="name label" href="#top">Insightful<i></i></a>
+  <a class="name label" href="#top"><span class="blink"><img src="assets/logo.webp" alt="" width="900" height="765"><img src="assets/logo-blink.webp" alt="" width="900" height="765"></span>Insightful</a>
   <nav class="label" aria-label="Main"><a href="#work">Work</a><a href="#about">About</a><a href="#contact">Contact</a></nav>
 </header>
 
 <main class="wrap" id="top">
   <section class="intro">
     <h1>Comics, objects and short animations, drawn mostly in <em>red</em>.</h1>
+    <span class="blink"><img src="assets/logo.webp" alt="Red Man, the Insightful character, winking" width="900" height="765"><img src="assets/logo-blink.webp" alt="" width="900" height="765"></span>
   </section>
 
   <section class="work" id="work" aria-label="Selected work">
-    <a class="piece full" href="#work"><div class="art"><div class="s sun"></div></div><div class="cap label"><h2>DEEP RED, Vol. 1</h2><span>Comics</span></div></a>
-    <a class="piece" href="#work"><div class="art"><div class="s bounce"></div></div><div class="cap label"><h2>Red Man Loops</h2><span>Animation</span></div></a>
-    <a class="piece" href="#work"><div class="art"><div class="s dots"></div></div><div class="cap label"><h2>Drawn Together Posters</h2><span>Print</span></div></a>
-    <a class="piece full" href="#work"><div class="art"><div class="s blob"></div></div><div class="cap label"><h2>Ink Studies</h2><span>Animation</span></div></a>
-    <a class="piece" href="#work"><div class="art"><div class="s stripes"></div></div><div class="cap label"><h2>Rashguard Series</h2><span>Apparel</span></div></a>
-    <a class="piece" href="#work"><div class="art"><div class="s figure"></div></div><div class="cap label"><h2>Red Man Strips</h2><span>Comics</span></div></a>
+    <div class="piece"><div class="art"><video src="assets/snail-trail.mp4" poster="assets/snail-trail.jpg" muted loop playsinline preload="metadata"></video><button class="sound" aria-pressed="false">Sound</button></div><div class="cap label"><h2>Snail Trail</h2><span>Animation</span></div></div>
+    <div class="piece"><div class="art"><video src="assets/jacuzzi.mp4" poster="assets/jacuzzi.jpg" muted loop playsinline preload="metadata"></video><button class="sound" aria-pressed="false">Sound</button></div><div class="cap label"><h2>Jacuzzi</h2><span>Animation</span></div></div>
+    <div class="piece full"><div class="art"><img src="assets/rashguard.jpg" alt="White rashguard printed with Red Man in water, beside two red papier-mache hands" loading="lazy"></div><div class="cap label"><h2>Red Man Rashguard</h2><span>Apparel</span></div></div>
+    <div class="piece"><div class="art"><video src="assets/red-head-360.mp4" poster="assets/red-head-360.jpg" muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Red Head 360</h2><span>Animation</span></div></div>
+    <div class="piece"><div class="art"><video src="assets/rabbit-run.mp4" poster="assets/rabbit-run.jpg" muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Rabbit Run</h2><span>Animation</span></div></div>
+    <div class="piece"><div class="art"><video src="assets/red-man-figure.mp4" poster="assets/red-man-figure.jpg" muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Red Man Figure</h2><span>Object</span></div></div>
+    <div class="piece"><div class="art"><video src="assets/dream.mp4" poster="assets/dream.jpg" muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Dream</h2><span>Animation</span></div></div>
   </section>
 
   <section class="about" id="about">
-    <span class="label">About</span>
-    <p>Matthew Suggett is an illustrator in Austin, Texas. He makes dark humor comics, printed objects and short animated loops, most of them starring Red Man.</p>
+    <div class="art"><img src="assets/portrait.jpg" alt="Matthew Suggett holding a large red sculpted hand" loading="lazy"></div>
+    <div>
+      <h2>Matthew Suggett</h2>
+      <p>Illustrator based in Austin, Texas, making dark humor comics, printed objects and short animated loops, most of them starring Red Man.</p>
+    </div>
   </section>
 
   <section class="contact" id="contact">
@@ -113,10 +115,22 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     <div class="mail"><strong id="email">i@insightful.uno</strong><button class="copy" id="copy">Copy</button></div>
   </section>
 
-  <footer class="label"><span>© 2026 Insightful</span><span>Artwork shown is placeholder</span></footer>
+  <footer class="label"><span>© 2026 Insightful</span><span>Austin, TX</span></footer>
 </main>
 
 <script>
+/* play loops only while on screen */
+const vids=[...document.querySelectorAll(".art video")];
+const io=new IntersectionObserver(es=>es.forEach(e=>{e.isIntersecting?e.target.play().catch(()=>{}):e.target.pause()}),{threshold:.25});
+vids.forEach(v=>io.observe(v));
+
+/* one sound on at a time */
+document.querySelectorAll(".sound").forEach(b=>b.addEventListener("click",()=>{
+  const v=b.parentElement.querySelector("video"),on=v.muted;
+  vids.forEach(x=>x.muted=true);document.querySelectorAll(".sound").forEach(x=>{x.setAttribute("aria-pressed","false");x.textContent="Sound"});
+  if(on){v.muted=false;v.play().catch(()=>{});b.setAttribute("aria-pressed","true");b.textContent="Sound on"}
+}));
+
 addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;const d=document.createElement("div");d.className="tap";d.style.left=e.clientX+"px";d.style.top=e.clientY+"px";document.body.appendChild(d);setTimeout(()=>d.remove(),500)});
 document.getElementById("copy").addEventListener("click",async e=>{
   const b=e.currentTarget;
