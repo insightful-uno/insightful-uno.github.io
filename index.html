@@ -45,8 +45,25 @@ nav a:hover{color:var(--ink)}
 .intro{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:center;gap:clamp(24px,5vw,80px);padding-block:clamp(40px,7vw,104px) clamp(48px,8vw,112px)}
 .intro h1{font-weight:300;font-size:clamp(30px,4.6vw,60px);line-height:1.2;letter-spacing:.02em;margin:0;max-width:18ch;text-wrap:balance}
 .intro h1 em{font-style:normal;color:var(--red)}
-.intro .blink{width:min(100%,460px);justify-self:end}
-@media (max-width:720px){.intro{grid-template-columns:1fr}.intro .blink{justify-self:center;width:min(80%,340px)}}
+/* quote machine: eyes shut 2s, then a speech bubble for 5s */
+.oracle{position:relative;justify-self:end;width:min(100%,460px);display:grid;justify-items:center;gap:18px}
+.oracle .blink{width:100%}
+.oracle.thinking .blink img+img{animation:none;opacity:1}
+.ask{font:inherit;font-size:12px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;background:none;color:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:10px 20px;transition:background .2s,color .2s,border-color .2s}
+.ask:hover{background:var(--red);border-color:var(--red);color:#fff}
+.ask:disabled{opacity:.35;pointer-events:none}
+.bubble{position:absolute;z-index:4;right:76%;top:22%;width:max-content;min-width:min(260px,70vw);max-width:min(300px,80vw);background:#fff;color:var(--ink);border:2.5px solid var(--ink);border-radius:26px;padding:16px 20px;font-size:clamp(16px,1.5vw,19px);font-weight:500;line-height:1.35;letter-spacing:.01em;box-shadow:4px 4px 0 var(--ink);transform-origin:100% 80%;animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+.bubble::before,.bubble::after{content:"";position:absolute;width:0;height:0;border-style:solid}
+.bubble::before{right:-25px;bottom:22px;border-width:6px 0 18px 26px;border-color:transparent transparent transparent var(--ink)}
+.bubble::after{right:-18px;bottom:25px;border-width:4px 0 13px 19px;border-color:transparent transparent transparent #fff}
+.bubble.out{animation:fade .3s ease forwards}
+@keyframes pop{from{transform:scale(.4) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{to{transform:scale(.9);opacity:0}}
+@media (max-width:720px){.intro{grid-template-columns:1fr}.oracle{justify-self:center;width:min(80%,340px);margin-top:84px}
+.bubble{right:auto;left:-6%;top:-92px;max-width:112%;transform-origin:60% 100%}
+.bubble::before{right:auto;left:58%;bottom:-24px;border-width:24px 6px 0 18px;border-color:var(--ink) transparent transparent transparent}
+.bubble::after{right:auto;left:calc(58% + 3px);bottom:-17px;border-width:18px 4px 0 13px;border-color:#fff transparent transparent transparent}
+.ask{white-space:nowrap;letter-spacing:.12em;padding:10px 16px}}
 
 .block{padding-bottom:clamp(64px,10vw,140px)}
 .cap{display:flex;justify-content:space-between;gap:16px;align-items:baseline}
@@ -135,7 +152,11 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
 <main class="wrap" id="top">
   <section class="intro">
     <h1>Illustrating my intrusive thoughts<em>.</em></h1>
-    <span class="blink"><img src="assets/logo.webp" alt="Red Man, the Insightful character, winking" width="900" height="765"><img src="assets/logo-blink.webp" alt="" width="900" height="765"></span>
+    <div class="oracle">
+      <div class="bubble" id="bubble" role="status" aria-live="polite" hidden></div>
+      <span class="blink" id="oracleFace"><img src="assets/logo.webp" alt="Red Man, the Insightful character, winking" width="900" height="765"><img src="assets/logo-blink.webp" alt="" width="900" height="765"></span>
+      <button class="ask" id="ask">Click for inspirational quote</button>
+    </div>
   </section>
 
   <section class="work block" id="work" aria-label="Animation">
@@ -235,6 +256,28 @@ document.querySelectorAll(".car").forEach(car=>{
   track.addEventListener("click",e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false;return}
     const film=e.target.closest("[data-src]");if(film)openFilm(film)},true);
   track.addEventListener("keydown",e=>{const film=e.target.closest("[data-src]");if(film&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openFilm(film)}});
+});
+
+/* inspirational quotes */
+const quotes=[
+  "Inside you are two wolves, and they both can’t stop fuckin!",
+  "Are you from China? Cause if China fuck",
+  "Liquor? Yea if she’ll let me",
+  "Sorry for what I said yesterday, I had two White Claws and I let it create a third",
+  "Our Father, who art in heaven, Baja be thy blast",
+  "She calls me Anthony Bourdain the way I eat her parts unknown",
+  "She’s Cuban on my missile, til I cry sis"
+];
+const oracle=document.querySelector(".oracle"),bubble=document.getElementById("bubble"),ask=document.getElementById("ask");
+let lastQ=-1;
+ask.addEventListener("click",()=>{
+  ask.disabled=true;bubble.hidden=true;oracle.classList.add("thinking");
+  setTimeout(()=>{
+    oracle.classList.remove("thinking");
+    let q;do{q=Math.floor(Math.random()*quotes.length)}while(q===lastQ&&quotes.length>1);lastQ=q;
+    bubble.textContent=quotes[q];bubble.classList.remove("out");bubble.hidden=false;
+    setTimeout(()=>{bubble.classList.add("out");setTimeout(()=>{bubble.hidden=true;ask.disabled=false;ask.focus({preventScroll:true})},300)},5000);
+  },2000);
 });
 
 addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;const d=document.createElement("div");d.className="tap";d.style.left=e.clientX+"px";d.style.top=e.clientY+"px";document.body.appendChild(d);setTimeout(()=>d.remove(),500)});
