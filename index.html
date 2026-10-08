@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500&display=swap">
 <style>
-/* Layout: quiet header with blinking Red Man, headline beside a large logo, then square artwork two-up with one full-width photo. Single light look by design. */
+/* Layout: quiet header with blinking Red Man, big square loops two-up, then swipeable carousels that nudge once when they come into view. Single light look by design. */
 :root{
   --bg:#FFFFFF; --ink:#1A1817; --soft:#8A8580; --line:#ECE9E5; --tile:#F4F2EF; --red:#E8271A;
   --sans:"Manrope","Helvetica Neue",Arial,sans-serif;
@@ -26,8 +26,8 @@ a:focus-visible,button:focus-visible{outline:1px solid var(--red);outline-offset
 img,video{display:block;max-width:100%}
 .wrap{max-width:1400px;margin-inline:auto}
 .label{font-size:12px;font-weight:400;letter-spacing:.18em;text-transform:uppercase}
+main section{scroll-margin-top:90px}
 
-/* blinking Red Man: closed-eye frame flashes on top */
 .blink{position:relative;display:inline-block}
 .blink img{width:100%;height:auto}
 .blink img+img{position:absolute;inset:0;opacity:0;animation:blink 5s step-end infinite}
@@ -37,11 +37,10 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:va
 .name{text-decoration:none;display:flex;align-items:center;gap:12px}
 .name .blink{width:44px}
 .name .blink img+img{animation-delay:-2.2s}
-nav{display:flex;gap:32px}
-main section{scroll-margin-top:90px}
-@media (max-width:640px){nav{gap:14px 18px;flex-wrap:wrap}nav a{letter-spacing:.12em}}
+nav{display:flex;gap:28px;flex-wrap:wrap}
 nav a{text-decoration:none;color:var(--soft);transition:color .2s}
 nav a:hover{color:var(--ink)}
+@media (max-width:640px){nav{gap:12px 18px}nav a{letter-spacing:.12em}main section{scroll-margin-top:130px}}
 
 .intro{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:center;gap:clamp(24px,5vw,80px);padding-block:clamp(40px,7vw,104px) clamp(48px,8vw,112px)}
 .intro h1{font-weight:300;font-size:clamp(30px,4.6vw,60px);line-height:1.2;letter-spacing:.02em;margin:0;max-width:18ch;text-wrap:balance}
@@ -49,63 +48,64 @@ nav a:hover{color:var(--ink)}
 .intro .blink{width:min(100%,460px);justify-self:end}
 @media (max-width:720px){.intro{grid-template-columns:1fr}.intro .blink{justify-self:center;width:min(80%,340px)}}
 
-.work{display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,6vw,96px) clamp(16px,3vw,40px);padding-bottom:clamp(64px,10vw,140px)}
+.block{padding-bottom:clamp(64px,10vw,140px)}
+.cap{display:flex;justify-content:space-between;gap:16px;align-items:baseline}
+.cap h2,.cap h3{font-weight:400;font-size:15px;letter-spacing:.08em;margin:0}
+.cap span{color:var(--soft);font-variant-numeric:tabular-nums}
+
+/* artwork frame + film grain */
 .art{position:relative;max-width:100%;aspect-ratio:1;background:var(--tile);overflow:hidden}
-.art img,.art video{width:100%;height:100%;object-fit:cover;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
-/* film grain over all artwork */
+.art img,.art video{width:100%;height:100%;object-fit:cover}
 .art::after{content:"";position:absolute;inset:-50%;z-index:2;pointer-events:none;opacity:.3;mix-blend-mode:multiply;background-image:var(--grain);animation:grain .5s steps(4) infinite}
 @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-1%)}100%{transform:translate(1%,3%)}}
 
-.cap{display:flex;justify-content:space-between;gap:16px;align-items:baseline}
-.cap h2{font-weight:400;font-size:15px;letter-spacing:.08em;margin:0}
-.cap span{color:var(--soft);font-variant-numeric:tabular-nums}
-section>.label.head{display:block;margin-bottom:24px}
+/* big square loops, two-up */
+.work{display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,6vw,96px) clamp(16px,3vw,40px)}
+.piece{display:grid;gap:16px;min-width:0}
+.piece .art video{transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.piece:hover .art video{transform:scale(1.03)}
+.sound{position:absolute;right:14px;bottom:14px;z-index:3;font:inherit;font-size:11px;letter-spacing:.18em;text-transform:uppercase;background:var(--bg);color:var(--ink);border:0;border-radius:999px;padding:7px 14px;opacity:.9}
+.sound[aria-pressed="true"]{background:var(--red);color:#fff}
+@media (max-width:640px){.work{grid-template-columns:1fr}}
 
-/* motion: justified contact sheet of small looping previews; click opens the full film */
-.motion{--h:250px;display:flex;flex-wrap:wrap;gap:clamp(8px,1.2vw,14px);padding-bottom:clamp(64px,10vw,140px)}
-.motion::after{content:"";flex:1000 1 0}
-.clip{all:unset;box-sizing:border-box;position:relative;display:block;flex:var(--ar) 1 calc(var(--ar)*var(--h));aspect-ratio:var(--ar);background:var(--tile);overflow:hidden;cursor:var(--cur-point),pointer}
-.clip:focus-visible{outline:1px solid var(--red);outline-offset:3px}
-.clip video{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.2,.7,.2,1)}
-.clip:hover video{transform:scale(1.04)}
-.clip .t{position:absolute;left:10px;bottom:10px;z-index:3;background:var(--bg);color:var(--ink);padding:4px 9px;font-size:11px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s}
-.clip:hover .t,.clip:focus-visible .t{opacity:1;transform:none}
-@media (max-width:640px){.motion{--h:150px}.clip .t{display:none}}
+/* carousels: swipe, drag or arrows; a one-time nudge says "there is more" */
+.car{min-width:0}
+.car-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
+.car-head h2,.car-head h3{font-weight:400;font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin:0}
+.car-ctrl{display:flex;align-items:center;gap:14px}
+.car-ctrl span{color:var(--soft);font-variant-numeric:tabular-nums;min-width:7ch;text-align:right}
+.arrow{font:inherit;font-size:16px;line-height:1;background:none;border:1px solid var(--line);border-radius:50%;width:38px;height:38px;color:var(--ink);transition:border-color .2s,color .2s,opacity .2s}
+.arrow:hover{border-color:var(--red);color:var(--red)}
+.arrow:disabled{opacity:.3;pointer-events:none}
+.car-track{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.car-track::-webkit-scrollbar{display:none}
+.car-track.dragging{scroll-snap-type:none;cursor:var(--cur-grab),grabbing}
+.car-row{display:flex;gap:clamp(10px,1.4vw,18px);width:max-content;min-width:100%}
+.car-row.bump{animation:bump 1s cubic-bezier(.45,0,.2,1)}
+@keyframes bump{35%{transform:translateX(-64px)}100%{transform:none}}
+.slide{flex:0 0 var(--w);width:var(--w);scroll-snap-align:start;display:grid;gap:12px;margin:0;min-width:0}
+.slide .art{aspect-ratio:var(--ar,1)}
+.slide img{pointer-events:none;user-select:none}
+.one{--w:var(--one)}
+.one .slide{--w:var(--one)}
+
+.comics{display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,6vw,96px) clamp(16px,3vw,40px)}
+@media (max-width:640px){.comics{grid-template-columns:1fr}}
+
+.vert .slide{--w:clamp(190px,21vw,290px);--ar:9/16}
+.vert .slide .art{cursor:var(--cur-point),pointer}
+.vert .slide video{transition:transform .8s cubic-bezier(.2,.7,.2,1)}
+.vert .slide:hover video{transform:scale(1.04)}
+.deck .slide{--w:clamp(210px,24vw,340px);--ar:822/1122}
+.sketch .slide{--w:clamp(230px,27vw,380px);--ar:1011/1400}
+@media (max-width:640px){.vert .slide{--w:58vw}.deck .slide,.sketch .slide{--w:70vw}}
+.drawings{display:grid;gap:clamp(56px,7vw,104px)}
 
 .lb{border:0;padding:0;background:transparent;max-width:min(92vw,1100px);max-height:94vh;overflow:visible}
 .lb::backdrop{background:rgba(255,255,255,.96)}
 .lb video{display:block;max-width:min(92vw,1100px);max-height:84vh;width:auto;height:auto;background:var(--ink)}
 .lb .bar{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-top:14px;color:var(--ink)}
 .lb button{font:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;background:none;border:0;border-bottom:1px solid var(--red);padding:0 0 2px;color:var(--ink)}
-
-/* reels (comics + apparel): one frame, panels slide in order on a timer */
-/* comics: one square frame per comic, panels slide in order on a timer */
-.comics{display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,6vw,96px) clamp(16px,3vw,40px);padding-bottom:clamp(64px,10vw,140px)}
-.comic,.reelbox{display:grid;gap:16px;min-width:0;margin:0}
-.apparel{padding-bottom:clamp(64px,10vw,140px)}
-.apparel .frame{aspect-ratio:3/2}
-@media (max-width:640px){.apparel .frame{aspect-ratio:4/3}}
-.frame{aspect-ratio:1}
-.reel{display:flex;width:100%;height:100%;will-change:transform}
-.reel.moving{transition:transform .7s cubic-bezier(.65,0,.35,1)}
-.frame{cursor:var(--cur-point),pointer}
-.reel img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;transition:none!important;transform:none!important}
-@media (max-width:640px){.comics{grid-template-columns:1fr}}
-
-/* drawings carousel: drag, swipe or use arrows */
-.gallery{padding-bottom:clamp(64px,10vw,140px)}
-.g-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}
-.g-ctrl{display:flex;align-items:center;gap:20px}
-.g-ctrl span{color:var(--soft);font-variant-numeric:tabular-nums}
-.arrow{font:inherit;font-size:20px;line-height:1;background:none;border:1px solid var(--line);border-radius:50%;width:44px;height:44px;color:var(--ink);transition:border-color .2s,color .2s}
-.arrow:hover{border-color:var(--red);color:var(--red)}
-.track{display:flex;gap:clamp(12px,2vw,24px);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;cursor:var(--cur-grab),grab;user-select:none;margin-inline:calc(-1*clamp(16px,5vw,72px));padding-inline:clamp(16px,5vw,72px);scroll-padding-inline:clamp(16px,5vw,72px)}
-.track::-webkit-scrollbar{display:none}
-.track.dragging{scroll-snap-type:none}
-.slide{position:relative;flex:0 0 auto;scroll-snap-align:start;height:clamp(380px,68vh,720px);overflow:hidden;background:var(--tile)}
-.slide img{height:100%;width:auto;max-width:none;pointer-events:none}
-.slide::after{content:"";position:absolute;inset:-50%;pointer-events:none;opacity:.22;mix-blend-mode:multiply;background-image:var(--grain);animation:grain .5s steps(4) infinite}
-@media (max-width:640px){.slide{height:auto;width:82vw}.slide img{width:100%;height:auto}}
 
 .about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:clamp(24px,5vw,80px);align-items:end;padding-block:clamp(56px,8vw,112px);border-top:1px solid var(--line)}
 .about .art{aspect-ratio:2/3}
@@ -127,7 +127,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
 
 <header class="wrap">
   <a class="name label" href="#top"><span class="blink"><img src="assets/logo.webp" alt="" width="900" height="765"><img src="assets/logo-blink.webp" alt="" width="900" height="765"></span>Insightful</a>
-  <nav class="label" aria-label="Main"><a href="#work">Work</a><a href="#comics">Comics</a><a href="#apparel">Apparel</a><a href="#about">About</a><a href="#contact">Contact</a></nav>
+  <nav class="label" aria-label="Main"><a href="#work">Work</a><a href="#comics">Comics</a><a href="#collab">Collab</a><a href="#drawings">Drawings</a><a href="#about">About</a><a href="#contact">Contact</a></nav>
 </header>
 
 <main class="wrap" id="top">
@@ -136,37 +136,31 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     <span class="blink"><img src="assets/logo.webp" alt="Red Man, the Insightful character, winking" width="900" height="765"><img src="assets/logo-blink.webp" alt="" width="900" height="765"></span>
   </section>
 
-  <section id="work" aria-label="Motion">
-    <span class="label head">Motion</span>
-    <div class="motion">
-      <button class="clip art" style="--ar:1" data-src="assets/snail-trail.mp4" data-title="Snail Trail" aria-label="Play Snail Trail"><video src="assets/snail-trail-thumb.mp4" poster="assets/snail-trail-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Snail Trail</span></button>
-      <button class="clip art" style="--ar:0.5625" data-src="assets/hi-hey.mp4" data-title="Hi Hey" aria-label="Play Hi Hey"><video src="assets/hi-hey-thumb.mp4" poster="assets/hi-hey-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Hi Hey</span></button>
-      <button class="clip art" style="--ar:1" data-src="assets/jacuzzi.mp4" data-title="Jacuzzi" aria-label="Play Jacuzzi"><video src="assets/jacuzzi-thumb.mp4" poster="assets/jacuzzi-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Jacuzzi</span></button>
-      <button class="clip art" style="--ar:0.5625" data-src="assets/rabbit-breast.mp4" data-title="Rabbit Breast" aria-label="Play Rabbit Breast"><video src="assets/rabbit-breast-thumb.mp4" poster="assets/rabbit-breast-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Rabbit Breast</span></button>
-      <button class="clip art" style="--ar:0.5625" data-src="assets/pink-field.mp4" data-title="Untitled" aria-label="Play Untitled"><video src="assets/pink-field-thumb.mp4" poster="assets/pink-field-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Untitled</span></button>
-      <button class="clip art" style="--ar:1" data-src="assets/red-head-360.mp4" data-title="Red Head 360" aria-label="Play Red Head 360"><video src="assets/red-head-360-thumb.mp4" poster="assets/red-head-360-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Red Head 360</span></button>
-      <button class="clip art" style="--ar:0.5625" data-src="assets/carrot-promo.mp4" data-title="Carrot Promo" aria-label="Play Carrot Promo"><video src="assets/carrot-promo-thumb.mp4" poster="assets/carrot-promo-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Carrot Promo</span></button>
-      <button class="clip art" style="--ar:0.5625" data-src="assets/open-mind.mp4" data-title="Open Mind" aria-label="Play Open Mind"><video src="assets/open-mind-thumb.mp4" poster="assets/open-mind-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Open Mind</span></button>
-      <button class="clip art" style="--ar:1" data-src="assets/rabbit-run.mp4" data-title="Rabbit Run" aria-label="Play Rabbit Run"><video src="assets/rabbit-run-thumb.mp4" poster="assets/rabbit-run-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Rabbit Run</span></button>
-      <button class="clip art" style="--ar:0.5625" data-src="assets/rabbit-scenes.mp4" data-title="Rabbit Scenes" aria-label="Play Rabbit Scenes"><video src="assets/rabbit-scenes-thumb.mp4" poster="assets/rabbit-scenes-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Rabbit Scenes</span></button>
-      <button class="clip art" style="--ar:0.5625" data-src="assets/carrot-viz.mp4" data-title="Carrot Viz 2.0" aria-label="Play Carrot Viz 2.0"><video src="assets/carrot-viz-thumb.mp4" poster="assets/carrot-viz-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Carrot Viz 2.0</span></button>
-      <button class="clip art" style="--ar:1" data-src="assets/dream.mp4" data-title="Dream" aria-label="Play Dream"><video src="assets/dream-thumb.mp4" poster="assets/dream-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Dream</span></button>
-      <button class="clip art" style="--ar:1" data-src="assets/red-man-figure.mp4" data-title="Red Man Figure" aria-label="Play Red Man Figure"><video src="assets/red-man-figure-thumb.mp4" poster="assets/red-man-figure-thumb.jpg" muted loop playsinline preload="none"></video><span class="t">Red Man Figure</span></button>
-    </div>
+  <section class="work block" id="work" aria-label="Animation">
+    <div class="piece"><div class="art"><video src="assets/snail-trail.mp4" poster="assets/snail-trail.jpg" autoplay muted loop playsinline preload="metadata"></video><button class="sound" aria-pressed="false">Sound</button></div><div class="cap label"><h2>Snail Trail</h2><span>Animation</span></div></div>
+    <div class="piece"><div class="art"><video src="assets/jacuzzi.mp4" poster="assets/jacuzzi.jpg" autoplay muted loop playsinline preload="metadata"></video><button class="sound" aria-pressed="false">Sound</button></div><div class="cap label"><h2>Jacuzzi</h2><span>Animation</span></div></div>
+    <div class="piece"><div class="art"><video src="assets/red-head-360.mp4" poster="assets/red-head-360.jpg" autoplay muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Red Head 360</h2><span>Animation</span></div></div>
+    <div class="piece"><div class="art"><video src="assets/rabbit-run.mp4" poster="assets/rabbit-run.jpg" autoplay muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Rabbit Run</h2><span>Animation</span></div></div>
+    <div class="piece"><div class="art"><video src="assets/dream.mp4" poster="assets/dream.jpg" autoplay muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Dream</h2><span>Animation</span></div></div>
+    <div class="piece"><div class="art"><video src="assets/red-man-figure.mp4" poster="assets/red-man-figure.jpg" autoplay muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Red Man Figure</h2><span>Object</span></div></div>
   </section>
 
-  <section class="comics" id="comics" aria-label="Comics">
-    <figure class="comic reelbox" data-files="comic-01.jpg,comic-02.jpg,comic-03.jpg,comic-04.jpg,comic-05.jpg,comic-06.jpg,comic-07.jpg,comic-08.jpg,comic-09.jpg,comic-10.jpg,comic-11.jpg,comic-12.jpg,comic-13.jpg"><div class="art frame"><div class="reel"></div></div><figcaption class="cap label"><h2>Pink Taxi</h2><span class="ct"></span></figcaption></figure>
-    <figure class="comic reelbox" data-files="comic-14.jpg,comic-15.jpg,comic-16.jpg,comic-17.jpg"><div class="art frame"><div class="reel"></div></div><figcaption class="cap label"><h2>Campfire</h2><span class="ct"></span></figcaption></figure>
+  <section class="block" id="shorts" aria-label="Shorts">
+    <div class="car vert"><div class="car-head"><h2>Shorts</h2><div class="car-ctrl label"><span class="ct"></span><button class="arrow prev" aria-label="Previous">←</button><button class="arrow next" aria-label="Next">→</button></div></div><div class="car-track"><div class="car-row"><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/hi-hey.mp4" data-title="Hi Hey" aria-label="Play Hi Hey with sound"><video src="assets/hi-hey-thumb.mp4" poster="assets/hi-hey-thumb.jpg" autoplay muted loop playsinline preload="metadata"></video></div><figcaption class="cap label"><h3>Hi Hey</h3></figcaption></figure><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/rabbit-breast.mp4" data-title="Rabbit Breast" aria-label="Play Rabbit Breast with sound"><video src="assets/rabbit-breast-thumb.mp4" poster="assets/rabbit-breast-thumb.jpg" autoplay muted loop playsinline preload="metadata"></video></div><figcaption class="cap label"><h3>Rabbit Breast</h3></figcaption></figure><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/pink-field.mp4" data-title="Untitled" aria-label="Play Untitled with sound"><video src="assets/pink-field-thumb.mp4" poster="assets/pink-field-thumb.jpg" autoplay muted loop playsinline preload="metadata"></video></div><figcaption class="cap label"><h3>Untitled</h3></figcaption></figure><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/carrot-promo.mp4" data-title="Carrot Promo" aria-label="Play Carrot Promo with sound"><video src="assets/carrot-promo-thumb.mp4" poster="assets/carrot-promo-thumb.jpg" autoplay muted loop playsinline preload="metadata"></video></div><figcaption class="cap label"><h3>Carrot Promo</h3></figcaption></figure><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/open-mind.mp4" data-title="Open Mind" aria-label="Play Open Mind with sound"><video src="assets/open-mind-thumb.mp4" poster="assets/open-mind-thumb.jpg" autoplay muted loop playsinline preload="metadata"></video></div><figcaption class="cap label"><h3>Open Mind</h3></figcaption></figure><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/rabbit-scenes.mp4" data-title="Rabbit Scenes" aria-label="Play Rabbit Scenes with sound"><video src="assets/rabbit-scenes-thumb.mp4" poster="assets/rabbit-scenes-thumb.jpg" autoplay muted loop playsinline preload="metadata"></video></div><figcaption class="cap label"><h3>Rabbit Scenes</h3></figcaption></figure><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/carrot-viz.mp4" data-title="Carrot Viz 2.0" aria-label="Play Carrot Viz 2.0 with sound"><video src="assets/carrot-viz-thumb.mp4" poster="assets/carrot-viz-thumb.jpg" autoplay muted loop playsinline preload="metadata"></video></div><figcaption class="cap label"><h3>Carrot Viz 2.0</h3></figcaption></figure></div></div></div>
   </section>
 
-  <section class="apparel" id="apparel" aria-label="Apparel">
-    <figure class="reelbox" data-files="apparel-01.jpg,apparel-02.jpg,apparel-03.jpg,apparel-04.jpg"><div class="art frame"><div class="reel"></div></div><figcaption class="cap label"><h2>Apparel</h2><span class="ct"></span></figcaption></figure>
+  <section class="comics block" id="comics" aria-label="Comics">
+    <div class="car one" style="--one:100%"><div class="car-head"><h2>Pink Taxi</h2><div class="car-ctrl label"><span class="ct"></span><button class="arrow prev" aria-label="Previous">←</button><button class="arrow next" aria-label="Next">→</button></div></div><div class="car-track"><div class="car-row"><figure class="slide"><div class="art"><img src="assets/comic-01.jpg" alt="Pink Taxi, panel 1 of 13" draggable="false"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-02.jpg" alt="Pink Taxi, panel 2 of 13" draggable="false"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-03.jpg" alt="Pink Taxi, panel 3 of 13" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-04.jpg" alt="Pink Taxi, panel 4 of 13" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-05.jpg" alt="Pink Taxi, panel 5 of 13" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-06.jpg" alt="Pink Taxi, panel 6 of 13" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-07.jpg" alt="Pink Taxi, panel 7 of 13" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-08.jpg" alt="Pink Taxi, panel 8 of 13" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-09.jpg" alt="Pink Taxi, panel 9 of 13" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-10.jpg" alt="Pink Taxi, panel 10 of 13" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-11.jpg" alt="Pink Taxi, panel 11 of 13" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-12.jpg" alt="Pink Taxi, panel 12 of 13" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-13.jpg" alt="Pink Taxi, panel 13 of 13" draggable="false" loading="lazy"></div></figure></div></div></div>
+    <div class="car one" style="--one:100%"><div class="car-head"><h2>Campfire</h2><div class="car-ctrl label"><span class="ct"></span><button class="arrow prev" aria-label="Previous">←</button><button class="arrow next" aria-label="Next">→</button></div></div><div class="car-track"><div class="car-row"><figure class="slide"><div class="art"><img src="assets/comic-14.jpg" alt="Campfire, panel 1 of 4" draggable="false"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-15.jpg" alt="Campfire, panel 2 of 4" draggable="false"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-16.jpg" alt="Campfire, panel 3 of 4" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-17.jpg" alt="Campfire, panel 4 of 4" draggable="false" loading="lazy"></div></figure></div></div></div>
   </section>
 
-  <section class="gallery" id="drawings" aria-label="Drawings">
-    <div class="g-head"><span class="label">Drawings</span><div class="g-ctrl label"><span id="gCount">01 / 15</span><button class="arrow" id="gPrev" aria-label="Previous drawing">←</button><button class="arrow" id="gNext" aria-label="Next drawing">→</button></div></div>
-    <div class="track" id="track"></div>
+  <section class="block" id="collab" aria-label="Insightful x Perry">
+    <div class="car one" style="--one:100%"><div class="car-head"><h2>Insightful x Perry</h2><div class="car-ctrl label"><span class="ct"></span><button class="arrow prev" aria-label="Previous">←</button><button class="arrow next" aria-label="Next">→</button></div></div><div class="car-track"><div class="car-row"><figure class="slide"><div class="art" style="--ar:3/2"><img src="assets/apparel-01.jpg" alt="Insightful x Perry rashguard, photo 1 of 4" draggable="false"></div></figure><figure class="slide"><div class="art" style="--ar:3/2"><img src="assets/apparel-02.jpg" alt="Insightful x Perry rashguard, photo 2 of 4" draggable="false"></div></figure><figure class="slide"><div class="art" style="--ar:3/2"><img src="assets/apparel-03.jpg" alt="Insightful x Perry rashguard, photo 3 of 4" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art" style="--ar:3/2"><img src="assets/apparel-04.jpg" alt="Insightful x Perry rashguard, photo 4 of 4" draggable="false" loading="lazy"></div></figure></div></div></div>
+  </section>
+
+  <section class="drawings block" id="drawings" aria-label="Drawings">
+    <div class="car deck"><div class="car-head"><h2>Card Deck</h2><div class="car-ctrl label"><span class="ct"></span><button class="arrow prev" aria-label="Previous">←</button><button class="arrow next" aria-label="Next">→</button></div></div><div class="car-track"><div class="car-row"><figure class="slide"><div class="art"><img src="assets/card-01.jpg" alt="Card 1 of 10" draggable="false"></div></figure><figure class="slide"><div class="art"><img src="assets/card-02.jpg" alt="Card 2 of 10" draggable="false"></div></figure><figure class="slide"><div class="art"><img src="assets/card-03.jpg" alt="Card 3 of 10" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/card-04.jpg" alt="Card 4 of 10" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/card-05.jpg" alt="Card 5 of 10" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/card-06.jpg" alt="Card 6 of 10" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/card-07.jpg" alt="Card 7 of 10" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/card-08.jpg" alt="Card 8 of 10" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/card-09.jpg" alt="Card 9 of 10" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/card-10.jpg" alt="Card 10 of 10" draggable="false" loading="lazy"></div></figure></div></div></div>
+    <div class="car sketch"><div class="car-head"><h2>Sketches</h2><div class="car-ctrl label"><span class="ct"></span><button class="arrow prev" aria-label="Previous">←</button><button class="arrow next" aria-label="Next">→</button></div></div><div class="car-track"><div class="car-row"><figure class="slide"><div class="art"><img src="assets/drawing-01.jpg" alt="Sketch 1 of 4" draggable="false"></div></figure><figure class="slide"><div class="art"><img src="assets/drawing-02.jpg" alt="Sketch 2 of 4" draggable="false"></div></figure><figure class="slide"><div class="art"><img src="assets/drawing-03.jpg" alt="Sketch 3 of 4" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/drawing-04.jpg" alt="Sketch 4 of 4" draggable="false" loading="lazy"></div></figure></div></div></div>
   </section>
 
   <section class="about" id="about">
@@ -188,59 +182,54 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
 <dialog class="lb" id="lb"><video id="lbv" controls playsinline></video><div class="bar"><span class="label" id="lbt"></span><button id="lbx">Close</button></div></dialog>
 
 <script>
-/* motion previews play only while on screen */
-const io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting){v.preload="auto";v.play().catch(()=>{})}else v.pause()}),{threshold:.2});
-document.querySelectorAll(".clip video").forEach(v=>io.observe(v));
+/* keep loops playing while on screen (also retries after the first tap, for browsers that block autoplay) */
+const loops=[...document.querySelectorAll(".art video")];
+const playIt=v=>{v.muted=v.dataset.sound!=="on";v.defaultMuted=true;const p=v.play();if(p)p.catch(()=>{})};
+const vio=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting?playIt(e.target):e.target.pause()),{threshold:.15});
+loops.forEach(v=>vio.observe(v));
+const wake=()=>loops.forEach(v=>{const r=v.getBoundingClientRect();if(r.bottom>0&&r.top<innerHeight&&v.paused)playIt(v)});
+["touchend","click","scroll"].forEach(ev=>addEventListener(ev,wake,{passive:true}));
+/* low-power mode can block autoplay: a tap on a paused loop starts it */
+document.querySelectorAll(".piece .art").forEach(a=>a.addEventListener("click",e=>{const v=a.querySelector("video");if(v.paused&&!e.target.closest(".sound"))playIt(v)}));
 
-/* click a preview: full film with sound */
-const lb=document.getElementById("lb"),lbv=document.getElementById("lbv"),lbt=document.getElementById("lbt");
-document.querySelectorAll(".clip").forEach(c=>c.addEventListener("click",()=>{
-  lbv.src=c.dataset.src;lbt.textContent=c.dataset.title;lb.showModal();lbv.muted=false;lbv.play().catch(()=>{lbv.muted=true;lbv.play().catch(()=>{})});
+/* sound on the big squares, one at a time */
+document.querySelectorAll(".sound").forEach(b=>b.addEventListener("click",()=>{
+  const v=b.parentElement.querySelector("video"),turnOn=v.dataset.sound!=="on";
+  loops.forEach(x=>{x.dataset.sound="";x.muted=true});
+  document.querySelectorAll(".sound").forEach(x=>{x.setAttribute("aria-pressed","false");x.textContent="Sound"});
+  if(turnOn){v.dataset.sound="on";v.muted=false;v.play().catch(()=>{});b.setAttribute("aria-pressed","true");b.textContent="Sound on"}
 }));
-const closeLb=()=>lb.close();
-document.getElementById("lbx").onclick=closeLb;
-lb.addEventListener("click",e=>{if(e.target===lb)closeLb()});
+
+/* full vertical film with sound */
+const lb=document.getElementById("lb"),lbv=document.getElementById("lbv"),lbt=document.getElementById("lbt");
+function openFilm(el){lbv.src=el.dataset.src;lbt.textContent=el.dataset.title;lb.showModal();lbv.muted=false;lbv.play().catch(()=>{lbv.muted=true;lbv.play().catch(()=>{})})}
+document.getElementById("lbx").onclick=()=>lb.close();
+lb.addEventListener("click",e=>{if(e.target===lb)lb.close()});
 lb.addEventListener("close",()=>{lbv.pause();lbv.removeAttribute("src");lbv.load()});
 
-/* reels (comics + apparel): auto-advance every 2.5s with a plain slide, loop back to the first panel */
-const STEP=2500,still=matchMedia("(prefers-reduced-motion:reduce)").matches;
-document.querySelectorAll(".reelbox").forEach(c=>{
-  const reel=c.querySelector(".reel"),ct=c.querySelector(".ct"),title=c.querySelector("h2").textContent;
-  const files=c.dataset.files.split(",").map(f=>"assets/"+f.trim()),n=files.length;
-  reel.innerHTML=[...files,files[0]].map((f,k)=>`<img src="${f}" alt="${title}, ${k%n+1} of ${n}" ${k>1?'loading="lazy"':''} draggable="false">`).join("");
-  let i=0,seen=false,hover=false;
-  const pad=x=>String(x).padStart(2,"0"),show=()=>ct.textContent=`${pad(i%n+1)} / ${pad(n)}`;
-  function move(to,anim){i=to;reel.classList.toggle("moving",anim&&!still);reel.style.transform=`translateX(${-100*i}%)`;show()}
-  const next=()=>{if(still)move((i+1)%n,false);else if(i<n)move(i+1,true)};
-  reel.addEventListener("transitionend",()=>{if(i===n)move(0,false)});
-  new IntersectionObserver(es=>seen=es[0].isIntersecting,{threshold:.3}).observe(c);
-  c.addEventListener("mouseenter",()=>hover=true);c.addEventListener("mouseleave",()=>hover=false);
-  c.querySelector(".frame").addEventListener("click",next);
-  setInterval(()=>{if(seen&&!hover&&!document.hidden)next()},STEP);
-  move(0,false);
+/* carousels */
+const still=matchMedia("(prefers-reduced-motion:reduce)").matches,pad=n=>String(n).padStart(2,"0");
+document.querySelectorAll(".car").forEach(car=>{
+  const track=car.querySelector(".car-track"),row=car.querySelector(".car-row"),slides=[...row.children];
+  const ct=car.querySelector(".ct"),prev=car.querySelector(".prev"),next=car.querySelector(".next"),n=slides.length;
+  const idx=()=>{const x=track.scrollLeft+4;let i=0;slides.forEach((s,k)=>{if(s.offsetLeft-row.offsetLeft<=x)i=k});return i};
+  const atEnd=()=>track.scrollLeft+track.clientWidth>=track.scrollWidth-4;
+  function update(){const i=atEnd()?n-1:idx();ct.textContent=`${pad(i+1)} / ${pad(n)}`;prev.disabled=track.scrollLeft<=4;next.disabled=atEnd()}
+  const go=d=>{const i=Math.max(0,Math.min(n-1,idx()+d));track.scrollTo({left:slides[i].offsetLeft-row.offsetLeft,behavior:still?"auto":"smooth"})};
+  prev.onclick=()=>go(-1);next.onclick=()=>go(1);
+  track.addEventListener("scroll",()=>requestAnimationFrame(update),{passive:true});
+  addEventListener("resize",update);update();
+  /* one nudge the first time it comes into view */
+  if(n>1&&!still){const o=new IntersectionObserver(es=>{if(es[0].isIntersecting){o.disconnect();if(track.scrollLeft<4){row.classList.add("bump");row.addEventListener("animationend",()=>row.classList.remove("bump"),{once:true})}}},{threshold:.6});o.observe(car)}
+  /* mouse drag on desktop; a drag never counts as a click */
+  let drag=null,moved=false;
+  track.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"||e.button!==0)return;drag={x:e.clientX,l:track.scrollLeft};moved=false});
+  addEventListener("pointermove",e=>{if(!drag)return;const dx=e.clientX-drag.x;if(Math.abs(dx)>5){moved=true;track.classList.add("dragging")}if(moved)track.scrollLeft=drag.l-dx});
+  addEventListener("pointerup",()=>{if(!drag)return;drag=null;if(moved){track.classList.remove("dragging");go(0)}});
+  track.addEventListener("click",e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false;return}
+    const film=e.target.closest("[data-src]");if(film)openFilm(film)},true);
+  track.addEventListener("keydown",e=>{const film=e.target.closest("[data-src]");if(film&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openFilm(film)}});
 });
-
-/* drawings carousel: to add a drawing, drop the file in assets/ and add its name here */
-const drawings=[
-  "card-01.jpg","card-02.jpg","card-03.jpg","card-04.jpg","card-05.jpg",
-  "card-06.jpg","card-07.jpg","card-08.jpg","card-09.jpg","card-10.jpg",
-  "drawing-01.jpg","drawing-02.jpg","drawing-03.jpg","drawing-04.jpg","drawing-05.jpg"
-];
-const track=document.getElementById("track"),count=document.getElementById("gCount");
-track.innerHTML=drawings.map((f,i)=>`<div class="slide"><img src="assets/${f}" alt="Drawing ${i+1} of ${drawings.length}" draggable="false" ${i>2?'loading="lazy"':''}></div>`).join("");
-const slides=[...track.children],pad=n=>String(n).padStart(2,"0");
-function current(){const x=track.scrollLeft+track.getBoundingClientRect().width*.15;let i=0;slides.forEach((s,k)=>{if(s.offsetLeft-track.offsetLeft<=x)i=k});return i}
-function update(){count.textContent=`${pad(current()+1)} / ${pad(slides.length)}`}
-function go(d){const i=Math.max(0,Math.min(slides.length-1,current()+d));track.scrollTo({left:slides[i].offsetLeft-slides[0].offsetLeft,behavior:"smooth"})}
-document.getElementById("gPrev").onclick=()=>go(-1);
-document.getElementById("gNext").onclick=()=>go(1);
-track.addEventListener("scroll",()=>requestAnimationFrame(update));
-let drag=null;
-track.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;drag={x:e.clientX,l:track.scrollLeft};track.classList.add("dragging")});
-addEventListener("pointermove",e=>{if(drag)track.scrollLeft=drag.l-(e.clientX-drag.x)});
-addEventListener("pointerup",()=>{if(!drag)return;drag=null;track.classList.remove("dragging");go(0)});
-addEventListener("keydown",e=>{if(!track.matches(":hover"))return;if(e.key==="ArrowRight")go(1);if(e.key==="ArrowLeft")go(-1)});
-update();
 
 addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;const d=document.createElement("div");d.className="tap";d.style.left=e.clientX+"px";d.style.top=e.clientY+"px";document.body.appendChild(d);setTimeout(()=>d.remove(),500)});
 document.getElementById("copy").addEventListener("click",async e=>{
