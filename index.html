@@ -135,9 +135,19 @@ nav a:hover{color:var(--ink)}
 .about p{margin:0;max-width:48ch;font-size:clamp(17px,1.8vw,20px);line-height:1.65}
 .contact{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:32px;padding-block:clamp(56px,8vw,112px);border-top:1px solid var(--line)}
 .mail{display:flex;align-items:baseline;gap:24px;flex-wrap:wrap}
-.mail strong{font-weight:300;font-size:clamp(26px,4vw,48px);letter-spacing:.02em;overflow-wrap:anywhere}
+.mail strong{font-weight:300;font-size:clamp(22px,3.4vw,41px);letter-spacing:.02em;overflow-wrap:anywhere}
 .copy{font:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;background:none;border:0;border-bottom:1px solid var(--red);padding:0 0 2px;color:var(--ink)}
 @media (max-width:640px){.about,.contact{grid-template-columns:1fr;gap:20px}}
+.news{border-top:1px solid var(--line)}
+.news-lede{margin:0 0 18px;max-width:46ch;font-size:clamp(17px,1.8vw,20px)}
+.news-form{display:flex;gap:12px;flex-wrap:wrap;max-width:560px}
+.news-form input{flex:1 1 240px;min-width:0;font:inherit;font-size:17px;letter-spacing:.02em;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--ink);padding:10px 2px;border-radius:0;outline:none}
+.news-form input:focus{border-bottom-color:var(--red)}
+.news-form input::placeholder{color:var(--soft)}
+.news-btn{font:inherit;font-size:12px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;background:var(--ink);color:var(--bg);border:0;border-radius:999px;padding:12px 24px;transition:background .2s}
+.news-btn:hover{background:var(--red)}
+.news-msg{margin:14px 0 0;min-height:1.6em;color:var(--soft);font-size:14px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:24px 40px;color:var(--soft)}
 
 .tap{position:fixed;width:8px;height:8px;border:1.5px solid var(--red);border-radius:50%;pointer-events:none;z-index:40;transform:translate(-50%,-50%);animation:tap .45s ease-out forwards}
@@ -202,7 +212,20 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     <div class="mail"><strong id="email">i@insightful.uno</strong><button class="copy" id="copy">Copy</button></div>
   </section>
 
-  <footer class="label"><span>© 2026 Insightful</span><span>Austin, TX</span></footer>
+  <section class="contact news" id="newsletter">
+    <span class="label">Newsletter</span>
+    <div>
+      <p class="news-lede">New comics, loops and drops, sent now and then. No spam.</p>
+      <form class="news-form" id="newsForm" novalidate>
+        <label class="sr" for="newsEmail">Email address</label>
+        <input id="newsEmail" name="email" type="email" autocomplete="email" placeholder="you@email.com" required>
+        <button type="submit" class="news-btn">Sign up</button>
+      </form>
+      <p class="news-msg" id="newsMsg" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <footer class="label"><span>© 2026 Household Positive</span><span>Austin, TX</span></footer>
 </main>
 
 <dialog class="lb" id="lb"><video id="lbv" controls playsinline></video><div class="bar"><span class="label" id="lbt"></span><button id="lbx">Close</button></div></dialog>
@@ -255,6 +278,18 @@ document.querySelectorAll(".car").forEach(car=>{
   track.addEventListener("click",e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false;return}
     const film=e.target.closest("[data-src]");if(film)openFilm(film)},true);
   track.addEventListener("keydown",e=>{const film=e.target.closest("[data-src]");if(film&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openFilm(film)}});
+});
+
+/* newsletter: set NEWSLETTER_ACTION to your provider's form URL to start collecting sign-ups */
+const NEWSLETTER_ACTION="";
+const newsForm=document.getElementById("newsForm"),newsEmail=document.getElementById("newsEmail"),newsMsg=document.getElementById("newsMsg");
+newsForm.addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!newsEmail.checkValidity()){newsMsg.textContent="Enter a valid email address, like you@email.com.";newsEmail.focus();return}
+  if(!NEWSLETTER_ACTION){newsMsg.textContent="Sign-ups open soon. Check back shortly.";return}
+  newsMsg.textContent="Signing you up\u2026";
+  try{await fetch(NEWSLETTER_ACTION,{method:"POST",mode:"no-cors",body:new FormData(newsForm)});newsMsg.textContent="You\u2019re on the list.";newsForm.reset()}
+  catch{newsMsg.textContent="That didn\u2019t go through. Try again in a minute."}
 });
 
 /* inspirational quotes */
