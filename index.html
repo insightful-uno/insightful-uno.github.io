@@ -119,7 +119,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
   </section>
 
   <section class="gallery" id="drawings" aria-label="Drawings">
-    <div class="g-head"><span class="label">Drawings</span><div class="g-ctrl label"><span id="gCount">01 / 15</span><button class="arrow" id="gPrev" aria-label="Previous drawing">←</button><button class="arrow" id="gNext" aria-label="Next drawing">→</button></div></div>
+    <div class="g-head"><span class="label">Drawings</span><div class="g-ctrl label"><span id="gCount">01 / 32</span><button class="arrow" id="gPrev" aria-label="Previous drawing">←</button><button class="arrow" id="gNext" aria-label="Next drawing">→</button></div></div>
     <div class="track" id="track"></div>
   </section>
 
@@ -156,7 +156,10 @@ document.querySelectorAll(".sound").forEach(b=>b.addEventListener("click",()=>{
 const drawings=[
   "card-01.jpg","card-02.jpg","card-03.jpg","card-04.jpg","card-05.jpg",
   "card-06.jpg","card-07.jpg","card-08.jpg","card-09.jpg","card-10.jpg",
-  "drawing-01.jpg","drawing-02.jpg","drawing-03.jpg","drawing-04.jpg","drawing-05.jpg"
+  "drawing-01.jpg","drawing-02.jpg","drawing-03.jpg","drawing-04.jpg","drawing-05.jpg",
+  "comic-01.jpg","comic-02.jpg","comic-03.jpg","comic-04.jpg","comic-05.jpg","comic-06.jpg",
+  "comic-07.jpg","comic-08.jpg","comic-09.jpg","comic-10.jpg","comic-11.jpg","comic-12.jpg",
+  "comic-13.jpg","comic-14.jpg","comic-15.jpg","comic-16.jpg","comic-17.jpg"
 ];
 const track=document.getElementById("track"),count=document.getElementById("gCount");
 track.innerHTML=drawings.map((f,i)=>`<div class="slide"><img src="assets/${f}" alt="Drawing ${i+1} of ${drawings.length}" draggable="false" ${i>2?'loading="lazy"':''}></div>`).join("");
