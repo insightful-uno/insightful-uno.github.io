@@ -64,6 +64,34 @@ nav a:hover{color:var(--ink)}
 .sound[aria-pressed="true"]{background:var(--red);color:#fff}
 @media (max-width:640px){.work{grid-template-columns:1fr}.full .art{aspect-ratio:4/3}}
 
+/* comics: one square frame per comic, panels slide in order on a timer */
+.comics{display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,6vw,96px) clamp(16px,3vw,40px);padding-bottom:clamp(64px,10vw,140px)}
+.comic{display:grid;gap:16px;min-width:0;margin:0}
+.frame{aspect-ratio:1}
+.reel{display:flex;width:100%;height:100%;will-change:transform}
+.reel.moving{transition:transform .7s cubic-bezier(.65,0,.35,1)}
+.reel img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;transition:none!important;transform:none!important}
+.comic .cap span{font-variant-numeric:tabular-nums}
+@media (max-width:640px){.comics{grid-template-columns:1fr}}
+
+/* comics: auto-advance every 2.5s with a plain slide, loops back to panel 1 */
+const STEP=2500,still=matchMedia("(prefers-reduced-motion:reduce)").matches;
+document.querySelectorAll(".comic").forEach(c=>{
+  const reel=c.querySelector(".reel"),ct=c.querySelector(".ct"),title=c.querySelector("h2").textContent;
+  const from=+c.dataset.from,to=+c.dataset.to,n=to-from+1,files=[];
+  for(let k=from;k<=to;k++)files.push(`assets/${c.dataset.prefix}${String(k).padStart(2,"0")}.jpg`);
+  reel.innerHTML=[...files,files[0]].map((f,k)=>`<img src="${f}" alt="${title}, panel ${k%n+1} of ${n}" ${k>1?'loading="lazy"':''} draggable="false">`).join("");
+  let i=0,seen=false,hover=false;
+  const pad=x=>String(x).padStart(2,"0"),show=()=>ct.textContent=`${pad(i%n+1)} / ${pad(n)}`;
+  function move(to,anim){i=to;reel.classList.toggle("moving",anim&&!still);reel.style.transform=`translateX(${-100*i}%)`;show()}
+  reel.addEventListener("transitionend",()=>{if(i===n)move(0,false)});
+  new IntersectionObserver(es=>seen=es[0].isIntersecting,{threshold:.3}).observe(c);
+  c.addEventListener("mouseenter",()=>hover=true);c.addEventListener("mouseleave",()=>hover=false);
+  c.querySelector(".frame").addEventListener("click",()=>{if(still)move((i+1)%n,false);else if(i<n)move(i+1,true)});
+  setInterval(()=>{if(!seen||hover||document.hidden)return;if(still)move((i+1)%n,false);else if(i<n)move(i+1,true)},STEP);
+  move(0,false);
+});
+
 /* drawings carousel: drag, swipe or use arrows */
 .gallery{padding-bottom:clamp(64px,10vw,140px)}
 .g-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}
@@ -99,7 +127,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
 
 <header class="wrap">
   <a class="name label" href="#top"><span class="blink"><img src="assets/logo.webp" alt="" width="900" height="765"><img src="assets/logo-blink.webp" alt="" width="900" height="765"></span>Insightful</a>
-  <nav class="label" aria-label="Main"><a href="#work">Work</a><a href="#about">About</a><a href="#contact">Contact</a></nav>
+  <nav class="label" aria-label="Main"><a href="#work">Work</a><a href="#comics">Comics</a><a href="#about">About</a><a href="#contact">Contact</a></nav>
 </header>
 
 <main class="wrap" id="top">
@@ -118,8 +146,13 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     <div class="piece"><div class="art"><video src="assets/dream.mp4" poster="assets/dream.jpg" muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Dream</h2><span>Animation</span></div></div>
   </section>
 
+  <section class="comics" id="comics" aria-label="Comics">
+    <figure class="comic" data-prefix="comic-" data-from="1" data-to="13"><div class="art frame"><div class="reel"></div></div><figcaption class="cap label"><h2>Pink Taxi</h2><span class="ct"></span></figcaption></figure>
+    <figure class="comic" data-prefix="comic-" data-from="14" data-to="17"><div class="art frame"><div class="reel"></div></div><figcaption class="cap label"><h2>Campfire</h2><span class="ct"></span></figcaption></figure>
+  </section>
+
   <section class="gallery" id="drawings" aria-label="Drawings">
-    <div class="g-head"><span class="label">Drawings</span><div class="g-ctrl label"><span id="gCount">01 / 32</span><button class="arrow" id="gPrev" aria-label="Previous drawing">←</button><button class="arrow" id="gNext" aria-label="Next drawing">→</button></div></div>
+    <div class="g-head"><span class="label">Drawings</span><div class="g-ctrl label"><span id="gCount">01 / 15</span><button class="arrow" id="gPrev" aria-label="Previous drawing">←</button><button class="arrow" id="gNext" aria-label="Next drawing">→</button></div></div>
     <div class="track" id="track"></div>
   </section>
 
@@ -156,10 +189,7 @@ document.querySelectorAll(".sound").forEach(b=>b.addEventListener("click",()=>{
 const drawings=[
   "card-01.jpg","card-02.jpg","card-03.jpg","card-04.jpg","card-05.jpg",
   "card-06.jpg","card-07.jpg","card-08.jpg","card-09.jpg","card-10.jpg",
-  "drawing-01.jpg","drawing-02.jpg","drawing-03.jpg","drawing-04.jpg","drawing-05.jpg",
-  "comic-01.jpg","comic-02.jpg","comic-03.jpg","comic-04.jpg","comic-05.jpg","comic-06.jpg",
-  "comic-07.jpg","comic-08.jpg","comic-09.jpg","comic-10.jpg","comic-11.jpg","comic-12.jpg",
-  "comic-13.jpg","comic-14.jpg","comic-15.jpg","comic-16.jpg","comic-17.jpg"
+  "drawing-01.jpg","drawing-02.jpg","drawing-03.jpg","drawing-04.jpg","drawing-05.jpg"
 ];
 const track=document.getElementById("track"),count=document.getElementById("gCount");
 track.innerHTML=drawings.map((f,i)=>`<div class="slide"><img src="assets/${f}" alt="Drawing ${i+1} of ${drawings.length}" draggable="false" ${i>2?'loading="lazy"':''}></div>`).join("");
