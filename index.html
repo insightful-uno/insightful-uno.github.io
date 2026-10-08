@@ -14,7 +14,7 @@
   --sans:"Manrope","Helvetica Neue",Arial,sans-serif;
   color-scheme:light;
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  --cur-point:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M12 3.2a2 2 0 0 1 4 0V13h.6a2 2 0 0 1 2.3 1.3 2 2 0 0 1 3 .9 2 2 0 0 1 3.1 1.7V23a7 7 0 0 1-7 7h-2.8a7 7 0 0 1-6-3.4l-3.4-5.9a2 2 0 0 1 3.4-2L12 20.6z' fill='%23E8271A' stroke='%2314110F' stroke-width='1.3' stroke-linejoin='round'/%3E%3Crect x='12.7' y='1.9' width='2.6' height='3.1' rx='1.2' fill='%23fff' stroke='%2314110F' stroke-width='.6'/%3E%3Cpath d='M16.6 13.2v3.4M19.6 14.6v3M22.6 16v2.8' stroke='%2314110F' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") 14 1;
+  --cur-point:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 64 64'%3E%3Cg transform='rotate%28-40 32 32%29' stroke='%2314110F' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'%3E%3Crect x='14' y='28' width='36' height='26' rx='9' fill='%23E8271A'/%3E%3Crect x='27' y='4' width='10' height='33' rx='5' fill='%23E8271A'/%3E%3Crect x='28.3' y='29' width='7.4' height='9' fill='%23E8271A' stroke='none'/%3E%3Crect x='29.2' y='5.8' width='5.6' height='7' rx='2.6' fill='%23fff' stroke-width='1.2'/%3E%3Cpath d='M21 28.5v6M42 28.5v6M47 31v4' fill='none' stroke-width='1.8'/%3E%3Cpath d='M18 44c5-2 12-2 18 0' fill='none' stroke-width='1.8'/%3E%3C/g%3E%3C/svg%3E") 7 5;
   --cur-grab:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M6.5 15a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v7a8 8 0 0 1-8 8h-4a8 8 0 0 1-8-8z' fill='%23E8271A' stroke='%2314110F' stroke-width='1.3' stroke-linejoin='round'/%3E%3Cpath d='M12 11.4v5.6M16.2 11.2v5.8M20.4 11.4v5.6' stroke='%2314110F' stroke-width='1' stroke-linecap='round'/%3E%3Crect x='8.6' y='16.4' width='2.7' height='2.4' rx='1' fill='%23fff' stroke='%2314110F' stroke-width='.6'/%3E%3Crect x='12.8' y='16.8' width='2.7' height='2.4' rx='1' fill='%23fff' stroke='%2314110F' stroke-width='.6'/%3E%3Crect x='17' y='16.8' width='2.7' height='2.4' rx='1' fill='%23fff' stroke='%2314110F' stroke-width='.6'/%3E%3Crect x='21.2' y='16.4' width='2.7' height='2.4' rx='1' fill='%23fff' stroke='%2314110F' stroke-width='.6'/%3E%3Cpath d='M6.8 19.5c2.5-.6 5 .3 6.2 2.3' fill='none' stroke='%2314110F' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E") 16 16;
 }
 *{box-sizing:border-box}
@@ -49,9 +49,11 @@ nav a:hover{color:var(--ink)}
 .oracle{position:relative;justify-self:end;width:min(100%,460px);display:grid;justify-items:center;gap:18px}
 .oracle .blink{width:100%}
 .oracle.thinking .blink img+img{animation:none;opacity:1}
-.ask{font:inherit;font-size:12px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;background:none;color:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:10px 20px;transition:background .2s,color .2s,border-color .2s}
-.ask:hover{background:var(--red);border-color:var(--red);color:#fff}
-.ask:disabled{opacity:.35;pointer-events:none}
+.face{all:unset;box-sizing:border-box;display:block;width:100%;cursor:var(--cur-point),pointer;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
+.face:hover{transform:rotate(-2deg) scale(1.02)}
+.face:active{transform:scale(.97)}
+.face:focus-visible{outline:1px solid var(--red);outline-offset:6px}
+.oracle.busy .face{cursor:default;transform:none}
 .bubble{position:absolute;z-index:4;right:76%;top:22%;width:max-content;min-width:min(260px,70vw);max-width:min(300px,80vw);background:#fff;color:var(--ink);border:2.5px solid var(--ink);border-radius:26px;padding:16px 20px;font-size:clamp(16px,1.5vw,19px);font-weight:500;line-height:1.35;letter-spacing:.01em;box-shadow:4px 4px 0 var(--ink);transform-origin:100% 80%;animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
 .bubble::before,.bubble::after{content:"";position:absolute;width:0;height:0;border-style:solid}
 .bubble::before{right:-25px;bottom:22px;border-width:6px 0 18px 26px;border-color:transparent transparent transparent var(--ink)}
@@ -62,8 +64,7 @@ nav a:hover{color:var(--ink)}
 @media (max-width:720px){.intro{grid-template-columns:1fr}.oracle{justify-self:center;width:min(80%,340px);margin-top:84px}
 .bubble{right:auto;left:-6%;top:-92px;max-width:112%;transform-origin:60% 100%}
 .bubble::before{right:auto;left:58%;bottom:-24px;border-width:24px 6px 0 18px;border-color:var(--ink) transparent transparent transparent}
-.bubble::after{right:auto;left:calc(58% + 3px);bottom:-17px;border-width:18px 4px 0 13px;border-color:#fff transparent transparent transparent}
-.ask{white-space:nowrap;letter-spacing:.12em;padding:10px 16px}}
+.bubble::after{right:auto;left:calc(58% + 3px);bottom:-17px;border-width:18px 4px 0 13px;border-color:#fff transparent transparent transparent}}
 
 .block{padding-bottom:clamp(64px,10vw,140px)}
 .cap{display:flex;justify-content:space-between;gap:16px;align-items:baseline}
@@ -112,10 +113,12 @@ nav a:hover{color:var(--ink)}
 @media (max-width:640px){.comics{grid-template-columns:1fr}}
 
 .vert .slide{--w:clamp(190px,21vw,290px);--ar:9/16}
+.sqr .slide{--w:clamp(240px,27vw,380px);--ar:1}
+.sqr .slide .art{cursor:var(--cur-point),pointer}
 .vert .slide .art{cursor:var(--cur-point),pointer}
 .vert .slide video{transition:transform .8s cubic-bezier(.2,.7,.2,1)}
 .vert .slide:hover video{transform:scale(1.04)}
-@media (max-width:640px){.vert .slide{--w:58vw}}
+@media (max-width:640px){.vert .slide{--w:58vw}.sqr .slide{--w:78vw}}
 .drawings{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.733fr) minmax(0,.722fr);gap:clamp(48px,6vw,96px) clamp(16px,2.4vw,32px)}
 @media (max-width:980px) and (min-width:641px){.drawings{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 @media (max-width:640px){.drawings{grid-template-columns:minmax(0,1fr)}}
@@ -154,8 +157,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     <h1>Illustrating my intrusive thoughts<em>.</em></h1>
     <div class="oracle">
       <div class="bubble" id="bubble" role="status" aria-live="polite" hidden></div>
-      <span class="blink" id="oracleFace"><img src="assets/logo.webp" alt="Red Man, the Insightful character, winking" width="900" height="765"><img src="assets/logo-blink.webp" alt="" width="900" height="765"></span>
-      <button class="ask" id="ask">Click for inspirational quote</button>
+      <button class="face" id="ask" aria-label="Click Red Man for an inspirational quote"><span class="blink"><img src="assets/logo.webp" alt="" width="900" height="765"><img src="assets/logo-blink.webp" alt="" width="900" height="765"></span></button>
     </div>
   </section>
 
@@ -173,11 +175,8 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     <div class="car one" style="--ar:1"><div class="car-head"><h2>Archers</h2><div class="car-ctrl label"><span class="ct"></span><button class="arrow prev" aria-label="Previous">←</button><button class="arrow next" aria-label="Next">→</button></div></div><div class="car-track"><div class="car-row"><figure class="slide"><div class="art"><img src="assets/comic-27.jpg" alt="Archers, panel 1 of 8" draggable="false"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-28.jpg" alt="Archers, panel 2 of 8" draggable="false"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-29.jpg" alt="Archers, panel 3 of 8" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-30.jpg" alt="Archers, panel 4 of 8" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-31.jpg" alt="Archers, panel 5 of 8" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-32.jpg" alt="Archers, panel 6 of 8" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-33.jpg" alt="Archers, panel 7 of 8" draggable="false" loading="lazy"></div></figure><figure class="slide"><div class="art"><img src="assets/comic-34.jpg" alt="Archers, panel 8 of 8" draggable="false" loading="lazy"></div></figure></div></div></div>
   </section>
 
-  <section class="work block" id="loops" aria-label="Animation">
-    <div class="piece"><div class="art"><video src="assets/red-head-360.mp4" poster="assets/red-head-360.jpg" autoplay muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Red Head 360</h2><span>Animation</span></div></div>
-    <div class="piece"><div class="art"><video src="assets/rabbit-run.mp4" poster="assets/rabbit-run.jpg" autoplay muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Rabbit Run</h2><span>Animation</span></div></div>
-    <div class="piece"><div class="art"><video src="assets/dream.mp4" poster="assets/dream.jpg" autoplay muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Dream</h2><span>Animation</span></div></div>
-    <div class="piece"><div class="art"><video src="assets/red-man-figure.mp4" poster="assets/red-man-figure.jpg" autoplay muted loop playsinline preload="metadata"></video></div><div class="cap label"><h2>Red Man Figure</h2><span>Object</span></div></div>
+  <section class="block" id="loops" aria-label="Loops">
+    <div class="car sqr"><div class="car-head"><h2>Loops</h2><div class="car-ctrl label"><span class="ct"></span><button class="arrow prev" aria-label="Previous">←</button><button class="arrow next" aria-label="Next">→</button></div></div><div class="car-track"><div class="car-row"><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/red-head-360.mp4" data-title="Red Head 360" aria-label="Play Red Head 360 large"><video src="assets/red-head-360.mp4" poster="assets/red-head-360.jpg" autoplay muted loop playsinline preload="metadata"></video></div></figure><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/rabbit-run.mp4" data-title="Rabbit Run" aria-label="Play Rabbit Run large"><video src="assets/rabbit-run.mp4" poster="assets/rabbit-run.jpg" autoplay muted loop playsinline preload="metadata"></video></div></figure><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/dream.mp4" data-title="Dream" aria-label="Play Dream large"><video src="assets/dream.mp4" poster="assets/dream.jpg" autoplay muted loop playsinline preload="metadata"></video></div></figure><figure class="slide"><div class="art" role="button" tabindex="0" data-src="assets/red-man-figure.mp4" data-title="Red Man Figure" aria-label="Play Red Man Figure large"><video src="assets/red-man-figure.mp4" poster="assets/red-man-figure.jpg" autoplay muted loop playsinline preload="metadata"></video></div></figure></div></div></div>
   </section>
 
   <section class="block" id="shorts" aria-label="Shorts">
@@ -270,13 +269,14 @@ const quotes=[
 ];
 const oracle=document.querySelector(".oracle"),bubble=document.getElementById("bubble"),ask=document.getElementById("ask");
 let lastQ=-1;
+let busy=false;
 ask.addEventListener("click",()=>{
-  ask.disabled=true;bubble.hidden=true;oracle.classList.add("thinking");
+  if(busy)return;busy=true;oracle.classList.add("busy");bubble.hidden=true;oracle.classList.add("thinking");
   setTimeout(()=>{
     oracle.classList.remove("thinking");
     let q;do{q=Math.floor(Math.random()*quotes.length)}while(q===lastQ&&quotes.length>1);lastQ=q;
     bubble.textContent=quotes[q];bubble.classList.remove("out");bubble.hidden=false;
-    setTimeout(()=>{bubble.classList.add("out");setTimeout(()=>{bubble.hidden=true;ask.disabled=false;ask.focus({preventScroll:true})},300)},5000);
+    setTimeout(()=>{bubble.classList.add("out");setTimeout(()=>{bubble.hidden=true;busy=false;oracle.classList.remove("busy")},300)},5000);
   },2000);
 });
 
