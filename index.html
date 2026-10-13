@@ -54,15 +54,15 @@ nav a:hover{color:var(--ink)}
 @keyframes qm{0%{opacity:0;transform:translateY(6px) rotate(var(--r))}20%{opacity:.75}100%{opacity:0;transform:translateY(-34px) rotate(var(--r))}}
 .face:focus-visible{outline:1px solid var(--red);outline-offset:6px}
 .oracle.busy .face{cursor:default}
-.bubble{position:absolute;z-index:4;right:76%;top:22%;width:max-content;min-width:min(260px,70vw);max-width:min(300px,80vw);background:#fff;color:var(--ink);border:2.5px solid var(--ink);border-radius:26px;padding:16px 20px;font-size:clamp(16px,1.5vw,19px);font-weight:500;line-height:1.35;letter-spacing:.01em;box-shadow:4px 4px 0 var(--ink);transform-origin:100% 80%;animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+.bubble{position:absolute;z-index:4;right:83%;top:22%;width:max-content;min-width:min(260px,70vw);max-width:min(300px,80vw);background:#fff;color:var(--ink);border:2.5px solid var(--ink);border-radius:26px;padding:16px 20px;font-size:clamp(16px,1.5vw,19px);font-weight:500;line-height:1.35;letter-spacing:.01em;box-shadow:4px 4px 0 var(--ink);transform-origin:100% 80%;animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
 .bubble::before,.bubble::after{content:"";position:absolute;width:0;height:0;border-style:solid}
-.bubble::before{right:-25px;bottom:22px;border-width:6px 0 18px 26px;border-color:transparent transparent transparent var(--ink)}
-.bubble::after{right:-18px;bottom:25px;border-width:4px 0 13px 19px;border-color:transparent transparent transparent #fff}
+.bubble::before{right:-41px;bottom:22px;border-width:6px 0 18px 42px;border-color:transparent transparent transparent var(--ink)}
+.bubble::after{right:-33px;bottom:25px;border-width:4px 0 13px 34px;border-color:transparent transparent transparent #fff}
 .bubble.out{animation:fade .3s ease forwards}
 @keyframes pop{from{transform:scale(.4) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
 @keyframes fade{to{transform:scale(.9);opacity:0}}
 @media (max-width:720px){.intro{grid-template-columns:1fr}.oracle{justify-self:center;width:min(80%,340px);margin-top:84px}
-.bubble{right:auto;left:-6%;top:-92px;max-width:112%;transform-origin:60% 100%}
+.bubble{right:auto;left:-12%;top:-92px;max-width:112%;transform-origin:60% 100%}
 .bubble::before{right:auto;left:58%;bottom:-24px;border-width:24px 6px 0 18px;border-color:var(--ink) transparent transparent transparent}
 .bubble::after{right:auto;left:calc(58% + 3px);bottom:-17px;border-width:18px 4px 0 13px;border-color:#fff transparent transparent transparent}}
 
