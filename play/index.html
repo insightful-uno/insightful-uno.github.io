@@ -1,1 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<link rel="icon" href="../assets/logo.webp">
+<title>Walk with Red</title>
+<meta name="description" content="A short pixel walk through four Red Man comics by Insightful.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@300;400;500;700&display=swap">
+<style>
+:root{
+  --bg:#FFFFFF; --ink:#1A1817; --soft:#8A8580; --line:#ECE9E5; --paper:#F7F4EE; --red:#E8271A; --pee:#F3D23B;
+  --sans:"Manrope","Helvetica Neue",Arial,sans-serif; --display:"Anton","Impact",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-weight:300;letter-spacing:.03em}
+body{padding:0 clamp(12px,3vw,40px) env(safe-area-inset-bottom,0px);min-height:100svh;display:flex;flex-direction:column;-webkit-user-select:none;user-select:none}
+a{color:inherit}
+.label{font-size:12px;font-weight:400;letter-spacing:.18em;text-transform:uppercase}
+.top{display:flex;justify-content:space-between;align-items:center;padding:16px 0 12px;gap:12px}
+.top a{text-decoration:none}
+.top a:hover{color:var(--red)}
+main{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px;padding-bottom:16px}
 
+#stage{position:relative;width:min(100%, calc((100svh - 150px) * 16 / 9));aspect-ratio:16/9;background:#111;outline:2px solid var(--ink);overflow:hidden;touch-action:none;container-type:inline-size}
+body.touch #stage{width:min(100%, calc((100svh - 250px) * 16 / 9))}
+#screen{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* overlays */
+.ov{position:absolute;pointer-events:none}
+#hud{inset:0 0 auto 0;display:flex;justify-content:space-between;padding:2.2cqw 2.6cqw;font-size:max(10px,1.5cqw);font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);text-shadow:0 1px 0 rgba(0,0,0,.6)}
+#hud .drop{display:inline-block;width:.8em;height:1em;background:var(--pee);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;vertical-align:-.12em;margin-right:.5em;box-shadow:0 0 0 1px var(--ink)}
+#caption{top:7cqw;left:2.6cqw;max-width:44%;background:var(--paper);border:2px solid var(--ink);padding:.6em .8em;font-size:max(11px,1.7cqw);font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.3;opacity:0;transform:translateY(-6px);transition:opacity .25s,transform .25s}
+#caption.on{opacity:1;transform:none}
+.bubble{position:absolute;transform:translate(-50%,-100%);background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:.35em .8em;font-size:max(11px,1.6cqw);font-weight:700;white-space:nowrap;opacity:0;transition:opacity .15s}
+.bubble::after{content:"";position:absolute;left:50%;bottom:-8px;width:10px;height:10px;background:var(--paper);border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:translateX(-50%) rotate(45deg) skew(8deg,8deg)}
+.bubble.on{opacity:1}
+#title{inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:12cqw;letter-spacing:.02em;color:var(--paper);-webkit-text-stroke:.35cqw var(--ink);paint-order:stroke fill;text-shadow:.6cqw .6cqw 0 var(--ink);opacity:0;transform:scale(.96);transition:opacity .35s,transform .35s}
+#title.on{opacity:1;transform:none}
+#prompt{transform:translate(-50%,-100%);background:var(--red);color:#fff;font-size:max(10px,1.3cqw);font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:.3em .6em;opacity:0;transition:opacity .2s;border:2px solid var(--ink)}
+#prompt.on{opacity:1}
+
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(247,244,238,.96);color:var(--ink);padding:4cqw;gap:1.6cqw;pointer-events:auto}
+.screen.on{display:flex}
+.screen h1{font-family:var(--display);font-weight:400;font-size:9cqw;line-height:.95;margin:0;letter-spacing:.01em}
+.screen h1 span{color:var(--red)}
+.screen p{margin:0;font-size:max(12px,1.8cqw);line-height:1.5;max-width:60ch}
+.screen .keys{font-size:max(10px,1.35cqw);font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--soft)}
+.screen .keys b{color:var(--ink);font-weight:700}
+.btn{font:inherit;font-size:max(11px,1.4cqw);font-weight:700;letter-spacing:.16em;text-transform:uppercase;background:var(--ink);color:var(--paper);border:0;padding:.9em 1.4em;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.alt{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.btn:hover{background:var(--red);color:#fff;box-shadow:none}
+.row{display:flex;gap:1.2cqw;flex-wrap:wrap;justify-content:center}
+.blinky{animation:bl 1.2s steps(2) infinite}
+@keyframes bl{50%{opacity:.25}}
+
+#look{background:rgba(20,17,15,.92);flex-direction:row;gap:3cqw;cursor:pointer}
+#look img{height:86%;aspect-ratio:1;object-fit:cover;outline:3px solid var(--paper);background:#222}
+#look .meta{color:var(--paper);text-align:left;display:flex;flex-direction:column;gap:1.2cqw;max-width:30%}
+#look .meta h2{font-family:var(--display);font-weight:400;font-size:5cqw;margin:0;line-height:1}
+#look .meta .label{color:#bbb;font-size:max(10px,1.3cqw)}
+#look .btn{background:var(--paper);color:var(--ink)}
+#look .btn:hover{background:var(--red);color:#fff}
+
+/* touch controls */
+#touch{display:none;width:min(100%,900px);justify-content:space-between;align-items:center;gap:10px;touch-action:none}
+body.touch #touch{display:flex}
+#touch .grp{display:flex;gap:10px;align-items:center}
+.tb{width:66px;height:66px;border-radius:50%;border:2px solid var(--ink);background:var(--paper);font:700 13px/1 var(--sans);letter-spacing:.1em;color:var(--ink);display:flex;align-items:center;justify-content:center;touch-action:none;padding:0}
+.tb.arrow{font-size:22px}
+.tb.down{background:var(--ink);color:var(--paper)}
+.tb.pee{background:var(--pee)}
+.tb.look{width:auto;border-radius:999px;padding:0 18px;height:44px;background:var(--red);color:#fff;opacity:.25}
+.tb.look.ready{opacity:1}
+#keyhint{color:var(--soft)}
+body.touch #keyhint{display:none}
+@media (max-width:520px){.tb{width:56px;height:56px}.tb.look{height:40px;padding:0 12px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="label" href="../">&larr; Insightful</a>
+  <span class="label">Walk with Red</span>
+</header>
+<main>
+  <div id="stage">
+    <canvas id="screen" aria-label="Walk with Red game"></canvas>
+    <div id="hud" class="ov"><span id="world">Pink Taxi</span><span><i class="drop"></i><span id="score">0 / 4</span></span></div>
+    <div id="caption" class="ov"></div>
+    <div id="b0" class="ov bubble"></div>
+    <div id="b1" class="ov bubble"></div>
+    <div id="prompt" class="ov">Look</div>
+    <div id="title" class="ov"></div>
+
+    <div id="look" class="screen" role="dialog" aria-label="Comic panel">
+      <img id="lookImg" alt="">
+      <div class="meta">
+        <span class="label" id="lookNum"></span>
+        <h2 id="lookTitle"></h2>
+        <a class="btn" href="../#comics" id="lookRead">Read the comic</a>
+        <span class="label">Tap anywhere to keep walking</span>
+      </div>
+    </div>
+
+    <div id="start" class="screen on">
+      <h1>Walk with <span>Red</span></h1>
+      <p>A short walk through four comics. No fighting. Just keep moving.</p>
+      <p class="keys" id="startKeys"><b>&larr; &rarr;</b> walk &nbsp; <b>&uarr;</b> jump &nbsp; <b>&darr;</b> duck &nbsp; <b>P</b> pee &nbsp; <b>L</b> look at a panel</p>
+      <button class="btn" id="go">Start walking</button>
+      <span class="label blinky" id="loading">Loading the comics</span>
+    </div>
+
+    <div id="end" class="screen">
+      <h1>The <span>End</span></h1>
+      <p id="endStats"></p>
+      <div class="row">
+        <button class="btn" id="again">Walk again</button>
+        <a class="btn alt" href="../#comics">Read the comics</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="touch" aria-hidden="true">
+    <div class="grp">
+      <button class="tb arrow" data-k="left">&#9664;</button>
+      <button class="tb arrow" data-k="right">&#9654;</button>
+    </div>
+    <button class="tb look" data-k="look" id="lookBtn">Look</button>
+    <div class="grp">
+      <button class="tb" data-k="duck">Duck</button>
+      <button class="tb pee" data-k="pee">Pee</button>
+      <button class="tb" data-k="jump">Jump</button>
+    </div>
+  </div>
+  <p class="label" id="keyhint">&larr; &rarr; walk &middot; &uarr; jump &middot; &darr; duck &middot; P pee &middot; L look</p>
+</main>
+
+<script>
+(() => {
+"use strict";
+/* ============ setup ============ */
+const W = 320, H = 180, G = 150;            // virtual resolution, ground line
+const buf = document.createElement("canvas"); buf.width = W; buf.height = H;
+const ctx = buf.getContext("2d"); ctx.imageSmoothingEnabled = false;
+const screen = document.getElementById("screen"), sctx = screen.getContext("2d");
+const stage = document.getElementById("stage");
+const $ = id => document.getElementById(id);
+const C = { ink:"#14110F", red:"#E8271A", redD:"#A8170D", redH:"#FF7A5E", paper:"#F7F4EE", paperD:"#CFC8BE", pee:"#F3D23B", peeD:"#C9A51E" };
+
+const isTouch = matchMedia("(pointer:coarse)").matches || "ontouchstart" in window;
+if (isTouch) {
+  document.body.classList.add("touch");
+  $("startKeys").textContent = "Use the buttons below the screen. Tap Look when a panel lights up.";
+}
+
+function resize() {
+  const r = stage.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 3);
+  screen.width = Math.round(r.width * d); screen.height = Math.round(r.height * d);
+  sctx.imageSmoothingEnabled = false;
+}
+addEventListener("resize", resize); resize();
+
+/* ============ helpers ============ */
+const R = (c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+const hash = (k, s = 0) => { const v = Math.sin(k * 127.1 + s * 311.7) * 43758.5453; return v - Math.floor(v); };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ============ Red sprite ============ */
+const HEAD = [".....RRRR.......","...RRRRRRRR.....","..RHRRRRRRRR....","..RRRRRRRKRR....","..RRRRRRRRRRR...","..rRRRRRRRRR....","...rrRRRRRRR....",".....rRRRR......"];
+const TORSO = ["....RRRRRRR.....","...RRRRRRRRR....","...RRrRRRRRR....","...RRrRRRRRR....","...RRrRRRRRR....","...RR.rRRRRR...."];
+const BRIEFS = ["....WWWWWWW.....","....WWWWWWW.....","....wWW.WWw....."];
+const LEGS = {
+  stand:[".....RR.RR......",".....RR.RR......",".....RR.RR......",".....RR.RR......",".....RRR.RRR...."],
+  a:    [".....RR.RR......","....RR...RR.....","...RR.....RR....","..RR.......RR...",".RRR.......RRR.."],
+  b:    [".....RR.RR......",".....RRRR.......","......RRR.......","......RR.R......","......RRRRR....."],
+  c:    [".....RR.RR......","....RR..RR......","...RR....RR.....","...RR.....RR....","..RRR.....RRR..."],
+  jump: [".....RR.RR......","....RRR.RRR.....","...RR.....RR....","....RRR..RRR....","................"]
+};
+const DUCK = [".....RRRR.......","...RRRRRRRR.....","..RHRRRRRRRR....","..RRRRRRRKRR....","..RRRRRRRRRRR...",".RRrRRRRRRRR....",".RRRrrRRRRR.....",".RRRRRRRRRRR....",".RWWWWWWWRRR....",".RWWWWWWWRRR....",".RRR....RRRR....","RRRR....RRRRR..."];
+const BACK = [".....RRRRR......","...RRRRRRRRR....","..RRHRRRRRRRR...","..RRRRRRRRRRR...","..RRRRRRRRRRR...","..rRRRRRRRRRr...","...rRRRRRRRr....","......RRR.......","...RRRRRRRRR....","..RRRRRRRRRRR...","..RRRRRrRRRRR...","..rR.RRrRR.Rr...","..rR.RRrRR.Rr...","....RRRrRRR.....","...WWWWWWWWW....","...WWWWWWWWW....","...wWWWWWWWw....","....RRR.RRR.....","....RRR.RRR.....","....RRR.RRR.....","....RRR.RRR.....","...RRRR.RRRR...."];
+const PAL = { R:C.red, r:C.redD, H:C.redH, W:C.paper, w:C.paperD, K:C.ink };
+
+function sprite(rows) {
+  const w = 16, h = rows.length, c = document.createElement("canvas");
+  c.width = w + 2; c.height = h + 2; const x = c.getContext("2d");
+  x.fillStyle = C.ink;   // ink outline pass
+  rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== ".") x.fillRect(i, j, 3, 3); }));
+  rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== "." && ch !== "K") { x.fillStyle = PAL[ch]; x.fillRect(i + 1, j + 1, 1, 1); } }));
+  return c;
+}
+function flip(c) { const o = document.createElement("canvas"); o.width = c.width; o.height = c.height; const x = o.getContext("2d"); x.translate(c.width, 0); x.scale(-1, 1); x.drawImage(c, 0, 0); return o; }
+function body(legs, blink) { const head = blink ? HEAD.map(r => r.replace("K", "R")) : HEAD; return sprite([...head, ...TORSO, ...BRIEFS, ...legs]); }
+const SPR = {};
+for (const k of Object.keys(LEGS)) { SPR[k] = body(LEGS[k]); SPR[k + "L"] = flip(SPR[k]); }
+SPR.blink = body(LEGS.stand, true); SPR.blinkL = flip(SPR.blink);
+SPR.duck = sprite(DUCK); SPR.duckL = flip(SPR.duck);
+SPR.back = sprite(BACK);
+const WALK = ["a", "b", "c", "b"];
+
+/* ============ comic panels ============ */
+const SERIES = {
+  taxi: { name: "Pink Taxi", total: 13 }, kick: { name: "Free Kick", total: 9 },
+  arch: { name: "Archers", total: 8 },  camp: { name: "Campfire", total: 4 }
+};
+const IMG = {};
+function pixelate(img, n) {
+  let s = img.naturalWidth || 1400, cur = document.createElement("canvas");
+  cur.width = cur.height = s; cur.getContext("2d").drawImage(img, 0, 0, s, s);
+  while (s / 2 >= n * 1.5) { s = Math.round(s / 2); const t = document.createElement("canvas"); t.width = t.height = s; const tc = t.getContext("2d"); tc.imageSmoothingQuality = "high"; tc.drawImage(cur, 0, 0, s, s); cur = t; }
+  const o = document.createElement("canvas"); o.width = o.height = n; const oc = o.getContext("2d"); oc.imageSmoothingQuality = "high"; oc.drawImage(cur, 0, 0, n, n);
+  try { const d = oc.getImageData(0, 0, n, n), a = d.data, q = v => Math.round(v / 255 * 6) / 6 * 255;
+    for (let i = 0; i < a.length; i += 4) { a[i] = q(a[i]); a[i + 1] = q(a[i + 1]); a[i + 2] = q(a[i + 2]); }
+    oc.putImageData(d, 0, 0); } catch (e) { /* file:// preview, skip posterize */ }
+  return o;
+}
+function loadPanel(num) {
+  return new Promise(res => {
+    const im = new Image(); im.decoding = "async";
+    im.onload = () => { IMG[num] = { full: im.src, lv: [pixelate(im, 12), pixelate(im, 24), pixelate(im, 62)] }; res(); };
+    im.onerror = () => res();
+    im.src = `../assets/comic-${num}.jpg`;
+  });
+}
+
+/* ============ level data ============ */
+const LEN = 1000, END = 4 * LEN;
+const WORLDS = [
+  { key: "taxi", title: "PINK TAXI", panels: [["01", 1], ["05", 5], ["13", 13]],
+    obs: [["case", 300], ["taxi", 430], ["sign", 600], ["case", 690], ["taxi", 760], ["sign", 930]],
+    target: ["parked", 150],
+    captions: [[30, isTouch ? "Hold ▶ to walk." : "Hold → to walk."], [95, isTouch ? "Nature calls. Hold PEE." : "Nature calls. Hold P."], [380, "Pink taxis. Everywhere."], [640, "9 months later..."]] },
+  { key: "kick", title: "FREE KICK", panels: [["18", 1], ["20", 3], ["26", 9]],
+    obs: [["ball", 150], ["hiball", 330], ["ball", 440], ["ball", 470], ["hiball", 600], ["ball", 760], ["hiball", 900]],
+    target: ["flag", 680],
+    captions: [[30, "Home crowd. No pressure."], [300, "Keep your head down."]] },
+  { key: "arch", title: "ARCHERS", panels: [["27", 1], ["28", 2], ["31", 5]],
+    obs: [["stuck", 160], ["volley", 300], ["stuck", 560], ["volley", 640], ["stuck", 720], ["volley", 880]],
+    target: ["bush", 440],
+    captions: [[30, "Lovely day for a walk."], [270, "Heads up."]] },
+  { key: "camp", title: "CAMPFIRE", panels: [["14", 1], ["15", 2], ["16", 3]],
+    obs: [["fire", 150], ["bat", 300], ["fire", 430], ["bat", 580], ["fire", 700], ["bat", 760]],
+    target: ["campfire", 900],
+    captions: [[30, "Warm night. Odd company."], [820, "Almost there."]] }
+];
+
+// obstacle types: w,h, y = height of bottom above ground, vx = speed (0 = static)
+const OT = {
+  taxi:   { w: 40, h: 16, y: 0,  vx: -75 },
+  case:   { w: 9,  h: 7,  y: 0,  vx: 0 },
+  sign:   { w: 12, h: 9,  y: 15, vx: -130 },
+  ball:   { w: 7,  h: 7,  y: 0,  vx: -105 },
+  hiball: { w: 7,  h: 7,  y: 15, vx: -145 },
+  volley: { w: 46, h: 4,  y: 16, vx: -165 },
+  stuck:  { w: 11, h: 10, y: 0,  vx: 0 },
+  fire:   { w: 10, h: 12, y: 0,  vx: 0 },
+  bat:    { w: 11, h: 7,  y: 15, vx: -115 }
+};
+
+/* ============ state ============ */
+let S;
+function reset() {
+  S = { t: 0, camX: 0, running: false, paused: false, ended: false,
+        p: { x: 30, y: 0, vy: 0, face: 1, dist: 0, duck: false, pee: false, inv: 0, kb: 0, onG: true, blink: 0 },
+        obs: [], targets: [], panels: [], captions: [], puddles: [], fx: [], card: 0,
+        seen: new Set(), score: 0, near: null, lastBubble: 0 };
+  WORLDS.forEach((w, i) => {
+    const s = i * LEN;
+    w.obs.forEach(([type, x]) => S.obs.push({ type, x: s + x, ...OT[type], active: OT[type].vx === 0, dead: false }));
+    S.targets.push({ kind: w.target[0], x: s + w.target[1], wet: 0, done: false, t: 0, vx: 0 });
+    w.panels.forEach(([num, n]) => S.panels.push({ num, n, key: w.key, x: s + 230 + S.panels.filter(p => p.key === w.key).length * 290 }));
+    w.captions.forEach(([x, text]) => S.captions.push({ x: s + x, text, shown: false }));
+  });
+  $("score").textContent = "0 / 4";
+  hideCaption(); $("end").classList.remove("on");
+}
+
+/* ============ input ============ */
+const K = { left: false, right: false, jump: false, duck: false, pee: false };
+let jumpEdge = false;
+const MAP = { ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", ArrowUp: "jump", KeyW: "jump", Space: "jump",
+              ArrowDown: "duck", KeyS: "duck", KeyP: "pee", KeyE: "pee" };
+addEventListener("keydown", e => {
+  if ($("look").classList.contains("on")) { if (!e.metaKey && !e.ctrlKey) { closeLook(); e.preventDefault(); } return; }
+  if ($("start").classList.contains("on") && (e.code === "Enter" || e.code === "Space")) { start(); e.preventDefault(); return; }
+  if (e.code === "KeyL" || e.code === "Enter") { openLook(); e.preventDefault(); return; }
+  const k = MAP[e.code]; if (!k) return;
+  e.preventDefault();
+  if (k === "jump" && !K.jump && !e.repeat) jumpEdge = true;
+  K[k] = true;
+});
+addEventListener("keyup", e => { const k = MAP[e.code]; if (k) K[k] = false; });
+addEventListener("blur", () => { for (const k in K) K[k] = false; });
+
+document.querySelectorAll("#touch .tb").forEach(b => {
+  const k = b.dataset.k;
+  const down = e => { e.preventDefault(); b.classList.add("down");
+    if (k === "look") { openLook(); return; }
+    if (!S.running && $("start").classList.contains("on")) start();
+    if (k === "jump" && !K.jump) jumpEdge = true; K[k] = true; try { b.setPointerCapture(e.pointerId); } catch (_) {} };
+  const up = e => { b.classList.remove("down"); if (k !== "look") K[k] = false; };
+  b.addEventListener("pointerdown", down);
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => b.addEventListener(ev, up));
+  b.addEventListener("contextmenu", e => e.preventDefault());
+});
+document.addEventListener("gesturestart", e => e.preventDefault());
+
+// click a panel on the canvas to look at it
+screen.addEventListener("pointerdown", e => {
+  if (!S.running) return;
+  const r = screen.getBoundingClientRect(), wx = (e.clientX - r.left) / r.width * W + S.camX, wy = (e.clientY - r.top) / r.height * H;
+  const p = S.panels.find(p => Math.abs(p.x - wx) < 34 && wy > 28 && wy < 100);
+  if (p) openLook(p);
+});
+
+$("go").addEventListener("click", start);
+$("again").addEventListener("click", () => { reset(); start(); });
+$("look").addEventListener("click", e => { if (e.target.closest("a")) return; closeLook(); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) for (const k in K) K[k] = false; });
+
+function start() { $("start").classList.remove("on"); S.running = true; S.paused = false; }
+
+/* ============ UI overlays ============ */
+let capTimer = 0, titleTimer = 0;
+function showCaption(t) { const c = $("caption"); c.textContent = t; c.classList.add("on"); capTimer = 3.6; }
+function hideCaption() { $("caption").classList.remove("on"); capTimer = 0; }
+function showTitle(t) { const el = $("title"); el.textContent = t; el.classList.add("on"); titleTimer = 1.8; }
+const bubbles = [{ el: $("b0"), t: 0, x: 0, y: 0, follow: false }, { el: $("b1"), t: 0, x: 0, y: 0, follow: false }];
+function say(text, x, y, dur = 1.6, follow = false) {
+  const b = bubbles.find(b => b.t <= 0) || bubbles[0];
+  b.el.textContent = text; b.x = x; b.y = y; b.t = dur; b.follow = follow; b.el.classList.add("on");
+}
+function openLook(p) {
+  p = p || S.near; if (!p || !S.running) return;
+  const im = IMG[p.num], s = SERIES[p.key];
+  $("lookImg").src = im ? im.full : `../assets/comic-${p.num}.jpg`;
+  $("lookImg").alt = `${s.name}, panel ${p.n} of ${s.total}`;
+  $("lookTitle").textContent = s.name;
+  $("lookNum").textContent = `Panel ${p.n} of ${s.total}`;
+  $("look").classList.add("on"); S.paused = true; for (const k in K) K[k] = false;
+}
+function closeLook() { $("look").classList.remove("on"); S.paused = false; }
+
+reset();
+if (/[?&]debug/.test(location.search)) window.__red = { get S() { return S; } };
+
+/* ============ update ============ */
+const SPEED = 70, GRAV = 820, JUMP = 265;
+function hitbox(p) { return p.duck ? { l: p.x - 6, r: p.x + 6, b: p.y, t: p.y + 11 } : { l: p.x - 4, r: p.x + 4, b: p.y, t: p.y + 21 }; }
+const OUCH = ["ow.", "rude.", "ouch!", "my good briefs", "hey!", "noted."];
+
+function update(dt) {
+  const p = S.p; S.t += dt;
+  // controls
+  p.pee = K.pee && p.onG && !K.duck && p.kb <= 0;
+  p.duck = K.duck && p.onG && !p.pee;
+  let vx = 0;
+  if (p.kb > 0) { p.kb -= dt; vx = -110; }
+  else if (!p.pee) {
+    const spd = p.duck ? SPEED * 0.45 : SPEED;
+    if (K.right) { vx += spd; p.face = 1; }
+    if (K.left) { vx -= spd; p.face = -1; }
+  }
+  if (jumpEdge && p.onG && !p.pee) { p.vy = JUMP; p.onG = false; p.duck = false; }
+  jumpEdge = false;
+  if (!K.jump && p.vy > 80) p.vy = 80;           // short hop when released early
+  p.vy -= GRAV * dt; p.y += p.vy * dt;
+  if (p.y <= 0) { if (!p.onG && p.vy < -200) dust(p.x); p.y = 0; p.vy = 0; p.onG = true; }
+  p.x = clamp(p.x + vx * dt, 10, END + 300);
+  if (p.onG && vx !== 0) p.dist += Math.abs(vx * dt);
+  if (p.inv > 0) p.inv -= dt;
+  p.blink -= dt; if (p.blink < -3.2) p.blink = 0.12;
+
+  // camera
+  S.camX += (clamp(p.x - 120, 0, END + 320 - W) - S.camX) * Math.min(1, dt * 8);
+
+  // world titles + HUD
+  const wi = Math.min(3, Math.floor(p.x / LEN));
+  if (p.x < END) { $("world").textContent = SERIES[WORLDS[wi].key].name; if (!S.seen.has(wi) && p.x - wi * LEN > 8) { S.seen.add(wi); showTitle(WORLDS[wi].title); } }
+  else $("world").textContent = "The End";
+  for (const c of S.captions) if (!c.shown && p.x > c.x) { c.shown = true; showCaption(c.text); }
+
+  // obstacles
+  const hb = hitbox(p);
+  for (const o of S.obs) {
+    if (o.dead) continue;
+    if (!o.active && o.x - S.camX < W + 6) o.active = true;
+    if (o.active && o.vx) { o.x += o.vx * dt; if (o.x + o.w < S.camX - 60) o.dead = true; }
+    if (p.inv > 0) continue;
+    const pad = 1;
+    if (hb.r > o.x + pad && hb.l < o.x + o.w - pad && hb.t > o.y + pad && hb.b < o.y + o.h - pad) {
+      p.inv = 1.3; p.kb = 0.16; p.vy = Math.max(p.vy, 120); p.onG = false;
+      say(OUCH[Math.floor(Math.random() * OUCH.length)], p.x, 26, 1.2, true);
+    }
+  }
+
+  // pee targets
+  for (const tg of S.targets) {
+    tg.t += dt;
+    if (tg.vx) tg.x += tg.vx * dt;
+    if (p.pee && !tg.done && Math.abs(tg.x - p.x) < 36) {
+      tg.wet += dt;
+      if (tg.wet > 0.9) { tg.done = true; tg.t = 0; S.score++; $("score").textContent = `${S.score} / 4`; react(tg); }
+    }
+  }
+  // puddles while peeing with no target nearby
+  if (p.pee && Math.floor(S.t * 30) % 2 === 0) {
+    let pd = S.puddles.find(q => Math.abs(q.x - p.x) < 4 && q.age < 5);
+    if (!pd) { pd = { x: p.x, w: 2, age: 0 }; S.puddles.push(pd); }
+    pd.w = Math.min(16, pd.w + dt * 14); pd.age = 0;
+  }
+  S.puddles.forEach(q => q.age += dt); S.puddles = S.puddles.filter(q => q.age < 7);
+  S.fx.forEach(f => { f.t += dt; f.x += (f.vx || 0) * dt; f.y += (f.vy || 0) * dt; }); S.fx = S.fx.filter(f => f.t < f.life);
+  if (S.card > 0) S.card -= dt;
+
+  // nearby panel
+  S.near = S.panels.find(q => Math.abs(q.x - p.x) < 30) || null;
+  $("lookBtn").classList.toggle("ready", !!S.near);
+
+  // ending
+  if (!S.ended && p.x > END + 110) {
+    S.ended = true;
+    setTimeout(() => {
+      const n = S.score;
+      $("endStats").textContent = n === 4 ? "You peed on all 4 things. Red is proud of you." :
+        `You found ${n} of 4 things to pee on. ${n ? "Respectable." : "Very restrained."} Walk again to find the rest.`;
+      $("end").classList.add("on"); for (const k in K) K[k] = false;
+    }, 700);
+  }
+
+  // overlay timers
+  if (capTimer > 0 && (capTimer -= dt) <= 0) hideCaption();
+  if (titleTimer > 0 && (titleTimer -= dt) <= 0) $("title").classList.remove("on");
+  bubbles.forEach(b => { if (b.t > 0 && (b.t -= dt) <= 0) b.el.classList.remove("on"); });
+}
+
+function react(tg) {
+  if (tg.kind === "parked") { say("!!", tg.x, 26, 1.4); setTimeout(() => { tg.vx = 140; }, 700); }
+  if (tg.kind === "flag") { say("FOUL.", tg.x, 32, 1.8); S.card = 2.2; }
+  if (tg.kind === "bush") { say("it's thriving.", tg.x, 22, 1.8); }
+  if (tg.kind === "campfire") { say("tssssss", tg.x, 26, 2); for (let i = 0; i < 10; i++) S.fx.push({ kind: "steam", x: tg.x - 6 + Math.random() * 12, y: 8, vx: (Math.random() - .5) * 8, vy: 14 + Math.random() * 10, t: -i * 0.12, life: 2.4 }); }
+}
+function dust(x) { for (let i = 0; i < 4; i++) S.fx.push({ kind: "dust", x: x + (i - 1.5) * 3, y: 1, vx: (i - 1.5) * 14, vy: 6, t: 0, life: .35 }); }
+
+/* ============ drawing: worlds ============ */
+function layer(f, spacing, fn) {
+  const off = S.camX * f, k0 = Math.floor(off / spacing) - 1, k1 = k0 + Math.ceil(W / spacing) + 3;
+  for (let k = k0; k <= k1; k++) fn(k * spacing - off, k);
+}
+const BG = {
+  taxi(t) {
+    [["#202024", 0], ["#29292d", 30], ["#323236", 60], ["#3b3b40", 90]].forEach(([c, y]) => R(c, 0, y, W, 40));
+    layer(.25, 34, (x, k) => { const h = 40 + hash(k, 1) * 55, w = 22 + hash(k, 2) * 12; R("#18181b", x, G - 22 - h, w, h + 22);
+      for (let j = 0; j < 6; j++) if (hash(k * 7 + j, 3) > .62) R("#7c7c84", x + 4 + (j % 2) * 9, G - 18 - h + 6 + Math.floor(j / 2) * 10, 2, 3); });
+    layer(.55, 9, (x, k) => { const h = 6 + hash(k, 4) * 5; R("#141417", x, G - 10 - h, 7, h + 10); R("#141417", x + 1, G - 14 - h, 5, 4);
+      if (hash(k, 5) > .82) { R("#3a2a1c", x + 3, G - 30 - h, 1, 16); R(C.paper, x - 2, G - 38 - h, 11, 8); R(C.red, x + 1, G - 37 - h, 5, 6); R(C.paper, x + 2, G - 36 - h, 3, 4); R("#E3A9E0", x + 2, G - 35 - h, 3, 2); R(C.red, x + 1, G - 36 - h, 1, 1); R(C.red, x + 5, G - 33 - h, 1, 1); } });
+    R("#7a7a80", 0, G, W, 1); R("#646469", 0, G + 1, W, 7); R("#2a2a2e", 0, G + 8, W, 2); R("#333338", 0, G + 10, W, 20);
+    layer(1, 28, x => R("#77777d", x, G + 19, 14, 1));
+  },
+  kick(t) {
+    R("#07080c", 0, 0, W, H);
+    layer(.12, 110, (x, k) => { for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) R("#f4f4f0", x + i * 6, 10 + j * 5, 4, 3); R("rgba(255,255,240,.06)", x - 8, 4, 32, 22); });
+    for (let row = 0; row < 7; row++) layer(.3 + row * .02, 7, (x, k) => { const y = 34 + row * 11 + (hash(k, row) * 2 | 0);
+      R(row % 2 ? "#15161b" : "#1b1d24", x, y, 6, 11); R(row % 2 ? "#1c1e25" : "#22252e", x + 1, y - 3, 4, 4);
+      if (hash(k * 3, row + 9) > .9) { R("#888", x + 5, y - 9, 1, 7); R("#3b82d6", x + 6, y - 9, 3, 2); } });
+    R("#3a3352", 0, 112, W, 13); R("#564b7a", 0, 112, W, 1);
+    layer(1, 24, (x, k) => R(k % 2 ? "#2f8a2b" : "#2a7e27", x, 125, 24, 55));
+    R("#e9e9e2", 0, G + 12, W, 1);
+  },
+  arch(t) {
+    [["#c3c3be", 0], ["#babab5", 40], ["#b0b0ab", 80]].forEach(([c, y]) => R(c, 0, y, W, 45));
+    layer(.2, 2, (x, k) => { const y = 102 + Math.sin(k * .02) * 6 + Math.sin(k * .051) * 3; R("#3d8b37", x, y, 2, H); });
+    layer(.2, 260, (x, k) => { const y = 98 + Math.sin((k * 130) * .02) * 6; R("#2a2a26", x + 40, y - 3, 20, 4); for (let i = 0; i < 3; i++) { R("#555", x + 43 + i * 7, y - 8, 1, 5); R("#e2c23a", x + 44 + i * 7, y - 8, 2, 2); } });
+    layer(.5, 2, (x, k) => { const y = 124 + Math.sin(k * .035) * 5; R("#307d2c", x, y, 2, H); });
+    R("#348a30", 0, G, W, 1); R("#2a6f27", 0, G + 1, W, 29);
+    layer(1, 13, (x, k) => R("#246222", x + hash(k, 6) * 9, G + 4 + hash(k, 7) * 22, 2, 1));
+  },
+  camp(t) {
+    R("#0a0c15", 0, 0, W, H);
+    layer(.05, 23, (x, k) => { if (hash(k, 8) > .5) R("#9aa0b8", x + hash(k, 9) * 20, 6 + hash(k, 10) * 50, 1, 1); });
+    layer(.25, 2, (x, k) => { const y = 74 + Math.sin(k * .09) * 7 + Math.sin(k * .23) * 4; R("#0f1f16", x, y, 2, H); });
+    layer(.55, 2, (x, k) => { const y = 98 + Math.sin(k * .07 + 2) * 9 + Math.sin(k * .19) * 4; R("#15301d", x, y, 2, H); });
+    layer(.55, 46, (x, k) => R("#24170e", x + 10, 118, 3, 30));
+    R("#6b3c1b", 0, G, W, 1); R("#4a2a15", 0, G + 1, W, 29);
+    layer(1, 17, (x, k) => R("#3d2311", x + hash(k, 11) * 12, G + 5 + hash(k, 12) * 20, 3, 1));
+  }
+};
+
+function gutter(wx) {
+  const x = Math.round(wx - S.camX);
+  if (x < -10 || x > W + 10) return;
+  R(C.ink, x - 7, 0, 2, H); R(C.paper, x - 5, 0, 10, H); R(C.ink, x + 5, 0, 2, H);
+  R(C.ink, x - 5, G, 10, 1);
+}
+function endPage() {
+  const x = Math.round(END - S.camX);
+  if (x > W) return;
+  R(C.paper, x, 0, W + 400, H);
+  for (let i = 0; i < 70; i++) for (let j = 0; j < 30; j++) if ((i + j) % 2 === 0) R("#e6e1d8", x + 10 + i * 6, 8 + j * 6, 1, 1);
+  R(C.ink, x, G, W + 400, 1);
+}
+
+/* ============ drawing: things ============ */
+function drawPanel(pn) {
+  const cx = Math.round(pn.x - S.camX); if (cx < -50 || cx > W + 50) return;
+  const p = S.p, d = Math.abs(p.x - pn.x), im = IMG[pn.num];
+  const near = S.near === pn;
+  R("#111", cx - 1, 96, 3, G - 96);              // post
+  R(near ? C.red : C.ink, cx - 34, 28, 68, 70);   // frame
+  R(C.paper, cx - 33, 29, 66, 68);
+  if (im) { const lv = d > 150 ? 0 : d > 75 ? 1 : 2; ctx.drawImage(im.lv[lv], cx - 31, 31, 62, 62); }
+  else R("#555", cx - 31, 31, 62, 62);
+  if (near && Math.floor(S.t * 3) % 2) { R(C.red, cx - 36, 26, 72, 1); R(C.red, cx - 36, 99, 72, 1); }
+}
+
+function drawTaxi(x, y, mode, t) {   // mode: drive | sleep | awake ; faces left
+  const pk = "#E3A9E0", pkD = "#B880B5", pkL = "#F3CFF0";
+  R(C.ink, x, y + 5, 40, 10); R(C.ink, x + 7, y, 25, 7);
+  R(pk, x + 1, y + 6, 38, 8); R(pkD, x + 1, y + 12, 38, 2);
+  R(pk, x + 8, y + 1, 23, 6);
+  R("#2a2530", x + 10, y + 2, 8, 4); R("#2a2530", x + 20, y + 2, 9, 4);
+  R("#eee", x + 13, y + 2, 1, 4); R("#eee", x + 24, y + 2, 1, 4);
+  R(C.ink, x + 16, y - 3, 7, 4); R(pkL, x + 17, y - 2, 5, 2); R(C.ink, x + 17, y - 1, 5, 1);
+  const bounce = mode === "drive" ? (Math.floor(t * 10) % 2) : 0;
+  [5, 29].forEach(wx => { R(C.ink, x + wx, y + 12 + bounce * 0, 7, 5); R("#ddd", x + wx + 1, y + 13, 5, 3); });
+  if (mode === "sleep") { R(C.ink, x + 3, y + 9, 4, 1); R(C.ink, x + 2, y + 8, 1, 1); }
+  else { R("#fff", x + 2, y + 7, 5, 4); R(C.ink, x + 2 + (mode === "awake" ? 2 : 0), y + 8, 2, 2); R(C.ink, x + 2, y + 6, 1, 1); R(C.ink, x + 4, y + 5, 1, 1); R(C.ink, x + 6, y + 6, 1, 1); }
+  R(C.ink, x + 8, y + 11, 3, 1);
+  if (mode === "awake") R("#ff6fa8", x + 8, y + 9, 3, 1);
+}
+function drawBall(x, y, t) { R(C.ink, x, y + 1, 7, 5); R(C.ink, x + 1, y, 5, 7); R("#f2f2ee", x + 1, y + 1, 5, 5); const f = Math.floor(t * 12) % 2; R(C.ink, x + 2 + f, y + 2 + f, 2, 2); }
+function drawSign(x, y, t) { const b = Math.floor(t * 8) % 2; R("#3a2a1c", x + 5, y + 7 - b, 1, 3); R(C.ink, x, y - b, 12, 8); R(C.paper, x + 1, y + 1 - b, 10, 6); R(C.red, x + 3, y + 1 - b, 6, 6); R(C.paper, x + 4, y + 2 - b, 4, 4); R("#E3A9E0", x + 4, y + 3 - b, 4, 2); R(C.red, x + 5, y + 3 - b, 1, 1); R(C.red, x + 6, y + 4 - b, 1, 1); }
+function drawArrowL(x, y) { R("#9a9a9a", x, y + 1, 2, 2); R(C.ink, x + 1, y, 1, 4); R("#6b4425", x + 2, y + 1, 11, 1); R("#e2c23a", x + 12, y, 3, 1); R("#e2c23a", x + 12, y + 2, 3, 1); }
+function drawStuck(x, y) { [[1, 0], [5, -1], [8, 1]].forEach(([dx, dy]) => { R("#6b4425", x + dx, y + 2 + dy, 1, 9 - dy); R("#e2c23a", x + dx - 1, y + dy, 3, 3); }); R("#1d521b", x - 1, y + 9, 13, 2); }
+function drawFire(x, y, t, big) {
+  const s = big ? 2 : 1, f = Math.floor(t * 9) % 3;
+  R("#5b3412", x, y + 9 * s, 10 * s, 3 * s); R(C.ink, x + 2 * s, y + 9 * s, 1, 3 * s);
+  R("#e2541c", x + 2 * s, y + (3 + f % 2) * s, 6 * s, (6 - f % 2) * s); R("#f39a2a", x + 3 * s, y + (5 + (f === 2)) * s, 4 * s, (4 - (f === 2)) * s); R("#ffe17a", x + 4 * s, y + 7 * s, 2 * s, 2 * s);
+  R("#e2541c", x + (3 + f) * s, y + (1 + (f % 2)) * s, 2 * s, 2 * s);
+}
+function drawBat(x, y, t) { const up = Math.floor(t * 10) % 2; R(C.ink, x + 4, y + 2, 3, 3); R("#ff5a3a", x + 4, y + 3, 1, 1);
+  if (up) { R(C.ink, x, y, 4, 2); R(C.ink, x + 7, y, 4, 2); } else { R(C.ink, x, y + 3, 4, 2); R(C.ink, x + 7, y + 3, 4, 2); } }
+function drawCase(x, y) { R(C.ink, x, y + 1, 9, 6); R("#7a4522", x + 1, y + 2, 7, 4); R(C.ink, x + 3, y, 3, 1); R("#c9a24a", x + 4, y + 3, 1, 1); }
+
+function drawObs(o) {
+  const x = Math.round(o.x - S.camX), y = Math.round(G - o.y - o.h);
+  if (x < -60 || x > W + 10) return;
+  const t = S.t;
+  switch (o.type) {
+    case "taxi": drawTaxi(x, y, "drive", t); break;
+    case "case": drawCase(x, y); break;
+    case "sign": drawSign(x, y, t); break;
+    case "ball": case "hiball": drawBall(x, y, t); break;
+    case "volley": for (let i = 0; i < 3; i++) drawArrowL(x + i * 16, y + (i % 2)); break;
+    case "stuck": drawStuck(x, y); break;
+    case "fire": drawFire(x, y, t + o.x); break;
+    case "bat": drawBat(x, y + Math.round(Math.sin(t * 6 + o.x) * 1.5), t); break;
+  }
+}
+function drawTarget(tg) {
+  const x = Math.round(tg.x - S.camX); if (x < -60 || x > W + 60) return;
+  const t = S.t;
+  if (tg.kind === "parked") drawTaxi(x - 20, G - 16, tg.done ? (tg.vx ? "drive" : "awake") : "sleep", t);
+  if (tg.kind === "parked" && !tg.done && Math.floor(t * 1.5) % 2) { R(C.paper, x + 2, G - 26, 3, 1); R(C.paper, x + 4, G - 25, 1, 1); R(C.paper, x + 2, G - 24, 3, 1); }
+  if (tg.kind === "flag") { R("#ddd", x, G - 24, 1, 24); const w = Math.floor(t * 4) % 2; R("#f2a91f", x + 1, G - 24, 7 - w, 3); R("#f2a91f", x + 1, G - 21, 5 - w, 2); R("#c46f12", x + 1, G - 24, 1, 5); }
+  if (tg.kind === "bush") { R(C.ink, x - 9, G - 12, 18, 12); R("#2f7a2b", x - 8, G - 11, 16, 11); R("#3c9636", x - 6, G - 13, 9, 4); R(C.ink, x - 7, G - 14, 11, 1);
+    if (tg.done) [[-5, -9], [2, -11], [5, -6], [-2, -5], [-6, -3]].forEach(([dx, dy], i) => { if (tg.t > i * .15) { R("#ff8fc4", x + dx, G + dy, 2, 2); R("#ffe17a", x + dx, G + dy, 1, 1); } }); }
+  if (tg.kind === "campfire") { if (!tg.done) drawFire(x - 10, G - 24, t, true); else { R("#5b3412", x - 10, G - 6, 20, 6); R("#2b2b2b", x - 6, G - 7, 12, 2); } }
+}
+
+function drawRed() {
+  const p = S.p, sx = Math.round(p.x - S.camX), gy = G - Math.round(p.y);
+  if (p.inv > 0 && Math.floor(p.inv * 14) % 2) return;
+  let spr;
+  if (p.pee) spr = SPR.back;
+  else if (p.duck) spr = p.face > 0 ? SPR.duck : SPR.duckL;
+  else if (!p.onG) spr = p.face > 0 ? SPR.jump : SPR.jumpL;
+  else if (K.left || K.right) { const f = WALK[Math.floor(p.dist / 6) % 4]; spr = p.face > 0 ? SPR[f] : SPR[f + "L"]; }
+  else spr = p.blink > 0 ? (p.face > 0 ? SPR.blink : SPR.blinkL) : (p.face > 0 ? SPR.stand : SPR.standL);
+  // shadow
+  R("rgba(0,0,0,.28)", sx - 6 + Math.min(3, p.y / 12), G, 12 - Math.min(6, p.y / 8), 1);
+  ctx.drawImage(spr, sx - 9, gy - spr.height + 1);
+}
+
+function drawPee() {
+  const p = S.p; if (!p.pee) return;
+  const tg = S.targets.find(t => !t.done && Math.abs(t.x - p.x) < 36);
+  const sx = p.x - S.camX, sy = G - 9;
+  if (tg) {
+    const tx = tg.x - S.camX, ty = G - (tg.kind === "flag" ? 4 : tg.kind === "bush" ? 7 : 6);
+    for (let i = 0; i <= 18; i++) { const u = i / 18; if ((i + Math.floor(S.t * 30)) % 3 === 0) continue;
+      R(i % 2 ? C.pee : C.peeD, sx + (tx - sx) * u, sy + (ty - sy) * u - Math.sin(u * Math.PI) * 9, 1, 1); }
+    if (Math.floor(S.t * 20) % 2) R(C.pee, tx - 1, ty, 3, 1);
+  } else {
+    const f = Math.floor(S.t * 24) % 3;
+    for (let i = 0; i < 4; i++) R(C.pee, sx + (i % 2), sy + 2 + i * 2 + f % 2, 1, 1);
+  }
+}
+function drawPuddles() { for (const q of S.puddles) { const a = clamp(1 - q.age / 7, 0, 1); ctx.globalAlpha = a; const x = Math.round(q.x - S.camX - q.w / 2); R(C.peeD, x, G, Math.round(q.w), 1); R(C.pee, x + 1, G, Math.max(0, Math.round(q.w) - 2), 1); ctx.globalAlpha = 1; } }
+function drawFx() {
+  for (const f of S.fx) { if (f.t < 0) continue; const x = f.x - S.camX, y = G - f.y;
+    if (f.kind === "steam") { ctx.globalAlpha = clamp(1 - f.t / f.life, 0, 1) * .8; R("#d6d6d6", x, y, 3, 2); ctx.globalAlpha = 1; }
+    if (f.kind === "dust") R("rgba(220,220,220,.7)", x, y, 2, 1); }
+  if (S.card > 0) { const x = Math.round(S.p.x - S.camX) + 8, y = G - 40 - Math.round(S.p.y); R(C.ink, x, y, 7, 10); R("#f5d32a", x + 1, y + 1, 5, 8); R("#dcdcdc", x + 2, y + 9, 1, 4); }
+}
+
+/* ============ frame ============ */
+function render() {
+  const cam = S.camX;
+  ctx.clearRect(0, 0, W, H);
+  WORLDS.forEach((w, i) => {
+    const a = i * LEN - cam, b = a + LEN;
+    if (b < 0 || a > W) return;
+    ctx.save(); ctx.beginPath(); ctx.rect(Math.max(0, Math.round(a)), 0, Math.min(W, Math.round(b)) - Math.max(0, Math.round(a)), H); ctx.clip();
+    BG[w.key](S.t);
+    ctx.restore();
+  });
+  endPage();
+  S.panels.forEach(drawPanel);
+  for (let i = 1; i <= 4; i++) gutter(i * LEN);
+  drawPuddles();
+  S.targets.forEach(drawTarget);
+  drawPee();
+  S.obs.forEach(o => { if (!o.dead) drawObs(o); });
+  drawRed();
+  drawFx();
+  // panel border around the whole screen (comic page feel)
+  R(C.ink, 0, 0, W, 2); R(C.ink, 0, H - 2, W, 2); R(C.ink, 0, 0, 2, H); R(C.ink, W - 2, 0, 2, H);
+
+  sctx.imageSmoothingEnabled = false;
+  sctx.drawImage(buf, 0, 0, screen.width, screen.height);
+
+  // HTML overlays that follow world positions
+  const sc = 100 / W, scy = 100 / H;
+  bubbles.forEach(b => { if (b.t <= 0) return; const x = b.follow ? S.p.x : b.x, y = b.follow ? S.p.y + b.y : b.y;
+    b.el.style.left = ((x - cam) * sc) + "%"; b.el.style.top = ((G - y) * scy) + "%"; });
+  const pr = $("prompt");
+  if (S.near && S.running && !S.paused) { pr.style.left = ((S.near.x - cam) * sc) + "%"; pr.style.top = (25 * scy) + "%"; pr.textContent = isTouch ? "Tap look" : "L to look"; pr.classList.add("on"); }
+  else pr.classList.remove("on");
+}
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
+  if (S.running && !S.paused && !S.ended) update(dt);
+  else { S.t += dt; S.fx.forEach(f => f.t += dt); }
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// load panels (game can start before all finish)
+const nums = WORLDS.flatMap(w => w.panels.map(p => p[0]));
+Promise.all(nums.map(loadPanel)).then(() => { $("loading").style.display = "none"; });
+})();
+</script>
+</body>
+</html>
