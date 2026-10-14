@@ -87,6 +87,9 @@ body.touch #touch{display:flex}
 .tb.down{background:var(--ink);color:var(--paper)}
 .tb.pee{background:var(--pee)}
 .tb.hit{background:var(--red);color:#fff}
+#stage.trip #screen{animation:trip 2.6s linear infinite}
+@keyframes trip{0%{filter:hue-rotate(0deg) saturate(1.5);transform:none}25%{transform:skewX(1.2deg) scale(1.01)}50%{filter:hue-rotate(180deg) saturate(2)}75%{transform:skewX(-1.2deg) scale(1.01)}100%{filter:hue-rotate(360deg) saturate(1.5);transform:none}}
+@media (prefers-reduced-motion:reduce){#stage.trip #screen{animation:none;filter:hue-rotate(90deg) saturate(1.6)}}
 .tb.pee span{display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
 .tb small{font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;opacity:.7}
 .tb.look{width:auto;border-radius:999px;padding:0 18px;height:44px;background:var(--red);color:#fff;opacity:.25}
@@ -104,7 +107,7 @@ body.touch #keyhint{display:none}
 <main>
   <div id="stage">
     <canvas id="screen" aria-label="Walk with Red game"></canvas>
-    <div id="hud" class="ov"><span id="world">Pink Taxi</span><span><i class="drop"></i><span id="score">0 / 4</span></span></div>
+    <div id="hud" class="ov"><span id="world">Pink Taxi</span><span><i class="drop"></i><span id="score">0 / 5</span></span></div>
     <div id="caption" class="ov"></div>
     <div id="b0" class="ov bubble"></div>
     <div id="b1" class="ov bubble"></div>
@@ -191,8 +194,8 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /* ============ Red sprite ============ */
 const SP = {"stand":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RRR.RRR..."],"a":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......rR.RR.....","......rr.RR.....",".....rr...RR....",".....rr...RR....",".....rr....RR...","....rr.....RR...","....rr......RR..","...rr.......RR..","...rr.......RR..","..rrr.......RRR."],"b":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.rr.....","......RR.rr.....","......RR.rr.....","......RR.rr.....","......RR..rr....","......RR...rr...","......RR...rr...","......RR..rr....","......RR........","......RRR......."],"c":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.rr.....","......RR.rr.....",".....RR...rr....",".....RR...rr....","....RR.....rr...","....RR.....rr...","...RR......rr...","...RR.......rr..","...RR.......rr..","..RRR.......rrr."],"d":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......rr.RR.....","......rr.RR.....","......rr.RR.....","......rr.RR.....",".....rr..RR.....","....rr...RR.....","....rr...RR.....",".....rr..RR.....",".........RR.....",".........RRR...."],"jump":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.RR.....","......RR.RR.....",".....RR..RR.....","....RR...RR.....","....RR....RR....",".....RR...RR....",".....RRR..RRR...","................","................","................"],"blink":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRRKKR...","...KKRRRRRKKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RRR.RRR..."],"duck":["..........KKKK....","........KKKKKKK...",".......KKKKKKKKR..",".......KKKKRRREER.",".......KKRRRRREKR.",".......KRKRRRRRRRR","...RRRRKRKRRRRRRR.","..RRRRRRRRRRRKKR..",".RRRRRRRRRRRRRR...",".WWWWWRRRRRRRR....",".WWWWWRRRRRRR.....","..rr....RRRRR.....",".rrr.....RRRRR...."],"attack":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRRRRRR","....RRRRRRRRRRRR","....RRRRRRR.....",".....RRRRR......",".....RRRRR......",".....RRRRR......",".....RRRRR......",".....RRRRR......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.rr.....","......RR.rr.....",".....RR...rr....",".....RR...rr....","....RR.....rr...","....RR.....rr...","...RR......rr...","...RR.......rr..","...RR.......rr..","..RRR.......rrr."],"carry":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RRR.RRR..."],"carryA":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......rR.RR.....","......rr.RR.....",".....rr...RR....",".....rr...RR....",".....rr....RR...","....rr.....RR...","....rr......RR..","...rr.......RR..","...rr.......RR..","..rrr.......RRR."],"carryB":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.rr.....","......RR.rr.....","......RR.rr.....","......RR.rr.....","......RR..rr....","......RR...rr...","......RR...rr...","......RR..rr....","......RR........","......RRR......."],"carryC":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.rr.....","......RR.rr.....",".....RR...rr....",".....RR...rr....","....RR.....rr...","....RR.....rr...","...RR......rr...","...RR.......rr..","...RR.......rr..","..RRR.......rrr."],"carryD":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......rr.RR.....","......rr.RR.....","......rr.RR.....","......rr.RR.....",".....rr..RR.....","....rr...RR.....","....rr...RR.....",".....rr..RR.....",".........RR.....",".........RRR...."],"carryJ":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.RR.....","......RR.RR.....",".....RR..RR.....","....RR...RR.....","....RR....RR....",".....RR...RR....",".....RRR..RRR...","................","................","................"],"back":["......KKKK......","....KKKKKKKK....","...KKKKKKKKKK...","...KKKKKKKKKK...","..RKKKKKKKKKKR..","..RKKKKKKKKKKR..","...RRKKKKKKRR...","...RRRRRRRRRR...","....RRRRRRRR....",".....RRRRRR.....","......RRRR......","....RRRRRRRR....","...RRRRRRRRRR...","..RRRRRRRRRRRR..","..RRR.RRRR.RRR..","..RR..RRRR..RR..","..RR..RRRR..RR..","...R..RRRR..R...","......RRRR......","......RRRR......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....","....RRR..RRR...."],"backLow":["......KKKK......","....KKKKKKKK....","...KKKKKKKKKK...","...KKKKKKKKKK...","..RKKKKKKKKKKR..","..RKKKKKKKKKKR..","...RRKKKKKKRR...","...RRRRRRRRRR...","....RRRRRRRR....",".....RRRRRR.....","......RRRR......","....RRRRRRRR....","...RRRRRRRRRR...","..RRRRRRRRRRRR..","..RRR.RRRR.RRR..","..RR..RRRR..RR..","..RR..RRRR..RR..","...R..RRRR..R...","......RRRR......",".....RRKrRR.....",".....RRKrRR.....",".....WWWWWW.....",".....wWWWWw.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....","....RRR..RRR...."]};
-const NPC = {"speaker":["...........R....","...........R....","....GGGG..RR....","...GRRRRG.RR....","...GRRREKRRR....","...GRRRRRRR.....","....RRKKRRR.....",".....RRRRR......","...RRRRBRRRR....","..RRRRBBBRRR....","..RRRRBBBRR.....","..UUUUUUUUUUUU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UUUUUUUUUUUU.."],"protester":["..SSSSSS..","..SRRRRS..","..SRSSRS..","..SSSSSS..","....U.....","...ggg....","..ggggg...","..ggggg.U.","...gggUUU.","..gggggg..","..ggggg...","..ggggg...","..gg.gg...","..gg.gg...","..gg.gg..."],"kicker":["....KKKK....","...KKKKKK...","...KRRREK...","...RRRRRR...","....RRRR....","..YYYYYYYY..",".RYYYKKYYYR.",".RYYYKKYYYR.",".R.YYYYYY.R.","...YYYYYY...","...yyyyyy...","...yyy.yyy..","...RRR.RRR..","...RRR.RRR..","...SSS.SSS..","...SSS.SSS..","...SSS.SSS..","..OOO..OOO.."],"waller":["...RRRR...","..RRRRRR..","..RKRRKR..","..RRRRRR..","...RKKR...","..BbBbBB..",".BBbBbBBB.",".BBbBbBBB.",".BBRRRRBB.","..BBRRBB..","..BbBbBB..","..SS..SS..","..RR..RR..","..RR..RR..","..SS..SS..","..SS..SS..","..SS..SS..",".KKK..KKK."],"keeper":["......KKK.....",".....RRRRR....",".....RKRKR....",".....RRRRR....","..YY.GGGGG.YY.","..YRGGGGGGGRY.","...RGGGGGGGR..",".....GGGGG....",".....ggggg....","....RR...RR...","...RR.....RR..","...SS.....SS..","..KKK.....KKK."],"archer":["....SSSS........","...SSSSSS....N..","...SgggSS.....N.","...SRRRSS.....N.","....RRRR......N.","..GGGGGGGRRRRRNN","..GGGGGGG.....N.","..GGYYYGG.....N.","..GGYYYGG.....N.","...YYYYY.....N..","...YYYYY........","...yyyyy........","...RR.RR........","...RR.RR........","...RR.RR........","..KKK.KKK......."],"girl":["..U.UUU.U.","..UUUUUUU.","...UPPPU..","...PKPKP..","...PPPPP..","....PPP...","...BBBBB..","..PBBBBBP.","..PBBBBBP.","...BBBBB..","..BBBBBBB.","...PP.PP..","...pp.pp..","...KK.KK.."],"knight":["....RRRR.....","...RRRRRR....","...RKRRKR....","...RRRRRR....","..GGGGGGGG...",".GGGGGGGGGG..",".GGgGGGGgGG..",".GGgGGGGgGG..","..GGGGGGGG...","..GGGGGGGGGGG","..gggggggggg.","..........GG.",".........KKK."],"centaur":[".........S......","........S.......",".......S........","...KKK.R........","..KRRERR........","..RRRRR.........","...RRRR.........","..RRRRRR........","..RRRRRR........","..RRRRRRTTTTTT..","..TTTTTTTTTTTTTY","..TTTTTTTTTTTTYY","...TTTTTTTTTTT.Y","...TT..TT..TT...","...TT..TT...T...","...tt..tt...tt.."],"can":["SS","RR","SR","RR","SS"],"ball":[".SS.","SKSS","SSKS",".SS."],"helmet":[".GGG.","GGGGG","GgggG","G...G"],"stick":["SS........","SS........","..U.......","...U......","....U.....",".....U....","......U...",".......U..","........U.",".........."]};
-const PAL = { R: C.red, r: "#B21A10", K: C.ink, E: "#FFFFFF", W: C.paper, w: "#C8C2B8", Y: "#D6BE28", y: "#AA941E", B: "#3460BE", b: "#78A0DC",
+const NPC = {"speaker":["...........R....","...........R....","....GGGG..RR....","...GRRRRG.RR....","...GRRREKRRR....","...GRRRRRRR.....","....RRKKRRR.....",".....RRRRR......","...RRRRBRRRR....","..RRRRBBBRRR....","..RRRRBBBRR.....","..UUUUUUUUUUUU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UUUUUUUUUUUU.."],"protester":["..SSSSSS..","..SRRRRS..","..SRSSRS..","..SSSSSS..","....U.....","...ggg....","..ggggg...","..ggggg.U.","...gggUUU.","..gggggg..","..ggggg...","..ggggg...","..gg.gg...","..gg.gg...","..gg.gg..."],"kicker":["....KKKK....","...KKKKKK...","...KRRREK...","...RRRRRR...","....RRRR....","..YYYYYYYY..",".RYYYKKYYYR.",".RYYYKKYYYR.",".R.YYYYYY.R.","...YYYYYY...","...yyyyyy...","...yyy.yyy..","...RRR.RRR..","...RRR.RRR..","...SSS.SSS..","...SSS.SSS..","...SSS.SSS..","..OOO..OOO.."],"waller":["...RRRR...","..RRRRRR..","..RKRRKR..","..RRRRRR..","...RKKR...","..BbBbBB..",".BBbBbBBB.",".BBbBbBBB.",".BBRRRRBB.","..BBRRBB..","..BbBbBB..","..SS..SS..","..RR..RR..","..RR..RR..","..SS..SS..","..SS..SS..","..SS..SS..",".KKK..KKK."],"keeper":["......KKK.....",".....RRRRR....",".....RKRKR....",".....RRRRR....","..YY.GGGGG.YY.","..YRGGGGGGGRY.","...RGGGGGGGR..",".....GGGGG....",".....ggggg....","....RR...RR...","...RR.....RR..","...SS.....SS..","..KKK.....KKK."],"archer":["....SSSS........","...SSSSSS....N..","...SgggSS.....N.","...SRRRSS.....N.","....RRRR......N.","..GGGGGGGRRRRRNN","..GGGGGGG.....N.","..GGYYYGG.....N.","..GGYYYGG.....N.","...YYYYY.....N..","...YYYYY........","...yyyyy........","...RR.RR........","...RR.RR........","...RR.RR........","..KKK.KKK......."],"girl":["..U.UUU.U.","..UUUUUUU.","...UPPPU..","...PKPKP..","...PPPPP..","....PPP...","...BBBBB..","..PBBBBBP.","..PBBBBBP.","...BBBBB..","..BBBBBBB.","...PP.PP..","...pp.pp..","...KK.KK.."],"knight":["....RRRR.....","...RRRRRR....","...RKRRKR....","...RRRRRR....","..GGGGGGGG...",".GGGGGGGGGG..",".GGgGGGGgGG..",".GGgGGGGgGG..","..GGGGGGGG...","..GGGGGGGGGGG","..gggggggggg.","..........GG.",".........KKK."],"centaur":[".........S......","........S.......",".......S........","...KKK.R........","..KRRERR........","..RRRRR.........","...RRRR.........","..RRRRRR........","..RRRRRR........","..RRRRRRTTTTTT..","..TTTTTTTTTTTTTY","..TTTTTTTTTTTTYY","...TTTTTTTTTTT.Y","...TT..TT..TT...","...TT..TT...T...","...tt..tt...tt.."],"can":["SS","RR","SR","RR","SS"],"ball":[".SS.","SKSS","SSKS",".SS."],"helmet":[".GGG.","GGGGG","GgggG","G...G"],"stick":["SS........","SS........","..U.......","...U......","....U.....",".....U....","......U...",".......U..","........U.",".........."],"sunbather":["...KKKK.................","..KKKKKK................","..KBBBKKK...............",".KKZKZKBKK...BBBYYBBBBB.",".KKBBRRBKK..BBBBYYBBBBBB","..KBBBBBYYBBBBBBBBBBBBB.","...BB..BBBBBBB..........","....BBBB................"],"mom":["....KKKKK...","...KKKKKKK..","..KKVVVVKKK.","..KVKVVKVKK.","..KVVVVVVKK.","..KVVKKVVKK.","..KKVVVVKKK.","..VVVVVVVVK.",".VVLOVVLOVV.","VVVLLVVLLVVV","VV.VVVVVVVVV","VV.VVVVVV.VV","VV.vvvvvv.VV","...LLLLLL...","...VVV.VVV..","...VVV.VVV..","...VVV.VVV..","..VVVV.VVVV."],"kid":["..KKKKK...",".KKKKKKK..",".KVVVVVK..",".KVVVVVK..","..VVVVV...",".LLOLLOL..",".LOLLLLL..",".LLLOLLO..","..VV.VV...","..VV.VV..."],"mush":["..SSSS..",".SMSSMS.","SSSSMSSS","SMSSSSMS","SSSSSSSS","...MM...","...MM...","...MM...","..MMMM.."],"shroom":[".SSS.","SMSMS","SSSSS","..M..","..M.."]};
+const PAL = { V: "#C86ED2", v: "#964696", M: "#8228AA", L: "#6EAAE6", Z: "#FAFAFA", R: C.red, r: "#B21A10", K: C.ink, E: "#FFFFFF", W: C.paper, w: "#C8C2B8", Y: "#D6BE28", y: "#AA941E", B: "#3460BE", b: "#78A0DC", 
   G: "#969696", g: "#6E6E6E", N: "#6E4628", P: "#D68CC8", p: "#965A96", T: "#C4A078", t: "#96734F", S: "#E6E6E6", O: "#F09628", U: "#96643C" };
 // thin 1px ink outline (4-neighbour), like the comics' line work
 function sprite(rows) {
@@ -229,7 +232,8 @@ function quote() { let q; do { q = Math.floor(Math.random() * QUOTES.length); } 
 /* ============ comic panels ============ */
 const SERIES = {
   taxi: { name: "Pink Taxi", total: 13, first: 1 }, kick: { name: "Free Kick", total: 9, first: 18 },
-  arch: { name: "Archers", total: 8, first: 27 },  camp: { name: "Campfire", total: 4, first: 14 }
+  arch: { name: "Archers", total: 8, first: 27 },  camp: { name: "Campfire", total: 4, first: 14 },
+  shroom: { name: "Shrooms", total: 10, first: 35 }
 };
 const IMG = {};
 function pixelate(img, n) {
@@ -252,7 +256,7 @@ function loadPanel(num) {
 }
 
 /* ============ level data ============ */
-const LEN = 1000, END = 4 * LEN;
+const LEN = 1000, END = 5 * LEN, NW = 5;
 const WORLDS = [
   { key: "taxi", title: "PINK TAXI", panels: [["01", 1], ["05", 5], ["13", 13]],
     obs: [["case", 300], ["taxi", 430], ["sign", 600], ["case", 690], ["taxi", 760], ["sign", 930]],
@@ -277,7 +281,13 @@ const WORLDS = [
     target: ["campfire", 900],
     props: [["stick", 210], ["stick", 525]],
     npcs: [["knight", 468, -1, "Pull up a log."], ["knight", 490, -1], ["centaur", 640, -1, "Don't ask."]],
-    captions: [[30, "Warm night. Odd company."], [820, "Almost there."]] }
+    captions: [[30, "Warm night. Odd company."]] },
+  { key: "shroom", title: "SHROOMS", panels: [["35", 1], ["39", 5], ["44", 10]],
+    obs: [["mush", 160], ["frisbee", 320], ["mush", 450], ["mush", 478], ["frisbee", 640], ["mush", 760], ["frisbee", 880]],
+    target: ["patch", 690],
+    props: [["shroom", 112], ["shroom", 560]],
+    npcs: [["sunbather", 300, 1, "Excuse me?!"], ["mom", 872, -1, "Not in front of my kid."], ["kid", 890, -1]],
+    captions: [[30, "Sunny day at the park."], [96, isTouch ? "A mushroom. Tap HIT to eat it." : "A mushroom. F to eat it."], [820, "Almost there."]] }
 ];
 
 // obstacle types: w,h, y = height of bottom above ground, vx = speed (0 = static)
@@ -290,7 +300,9 @@ const OT = {
   volley: { w: 46, h: 4,  y: 16, vx: -165 },
   stuck:  { w: 11, h: 10, y: 0,  vx: 0 },
   fire:   { w: 10, h: 12, y: 0,  vx: 0 },
-  bat:    { w: 11, h: 7,  y: 15, vx: -115 }
+  bat:    { w: 11, h: 7,  y: 15, vx: -115 },
+  mush:   { w: 9,  h: 10, y: 0,  vx: -70 },
+  frisbee:{ w: 10, h: 3,  y: 17, vx: -150 }
 };
 
 /* ============ state ============ */
@@ -309,7 +321,7 @@ function reset() {
     w.props.forEach(([kind, x]) => S.props.push({ kind, x: s + x }));
     w.npcs.forEach(([kind, x, face, line]) => S.npcs.push({ kind, x: s + x, face, line, said: false }));
   });
-  $("score").textContent = "0 / 4";
+  $("score").textContent = `0 / ${NW}`; S.trip = 0; stage.classList.remove("trip");
   hideCaption(); $("end").classList.remove("on");
 }
 
@@ -447,7 +459,8 @@ function update(dt) {
   // hit / throw
   if (atkEdge && !p.pee && p.atk <= 0 && p.kb <= 0) {
     p.atk = 0.28; p.duck = false;
-    if (p.hold) { S.proj.push({ kind: p.hold, x: p.x + 8 * p.face, y: p.y + (p.hold === "ball" ? 4 : 18), vx: 210 * p.face + vx * .5, vy: p.hold === "ball" ? 30 : 45, b: 0, t: 0 }); p.hold = null; p.threw = true; }
+    if (p.hold === "shroom") { p.hold = null; p.threw = true; trip(); }
+    else if (p.hold) { S.proj.push({ kind: p.hold, x: p.x + 8 * p.face, y: p.y + (p.hold === "ball" ? 4 : 18), vx: 210 * p.face + vx * .5, vy: p.hold === "ball" ? 30 : 45, b: 0, t: 0 }); p.hold = null; p.threw = true; }
     else p.threw = false;
   }
   atkEdge = false;
@@ -492,7 +505,7 @@ function update(dt) {
   S.camX += (clamp(p.x - 120, 0, END + 320 - W) - S.camX) * Math.min(1, dt * 8);
 
   // world titles + HUD
-  const wi = Math.min(3, Math.floor(p.x / LEN));
+  const wi = Math.min(NW - 1, Math.floor(p.x / LEN));
   if (p.x < END) { $("world").textContent = SERIES[WORLDS[wi].key].name; if (!S.seen.has(wi) && p.x - wi * LEN > 8) { S.seen.add(wi); showTitle(WORLDS[wi].title); } }
   else $("world").textContent = "The End";
   for (const c of S.captions) if (!c.shown && p.x > c.x) { c.shown = true; showCaption(c.text); }
@@ -517,7 +530,7 @@ function update(dt) {
     if (tg.vx) tg.x += tg.vx * dt;
     if (p.pee && !tg.done && Math.abs(tg.x - p.x) < 36) {
       tg.wet += dt;
-      if (tg.wet > 0.9) { tg.done = true; tg.t = 0; S.score++; $("score").textContent = `${S.score} / 4`; react(tg); }
+      if (tg.wet > 0.9) { tg.done = true; tg.t = 0; S.score++; $("score").textContent = `${S.score} / ${NW}`; react(tg); }
     }
   }
   // puddles while peeing with no target nearby
@@ -529,6 +542,7 @@ function update(dt) {
   S.puddles.forEach(q => q.age += dt); S.puddles = S.puddles.filter(q => q.age < 7);
   S.fx.forEach(f => { f.t += dt; f.x += (f.vx || 0) * dt; f.y += (f.vy || 0) * dt; }); S.fx = S.fx.filter(f => f.t < f.life);
   if (S.card > 0) S.card -= dt;
+  if (S.trip > 0 && (S.trip -= dt) <= 0) stage.classList.remove("trip");
 
   // nearby panel
   S.near = S.panels.find(q => Math.abs(q.x - p.x) < 30) || null;
@@ -539,8 +553,8 @@ function update(dt) {
     S.ended = true;
     setTimeout(() => {
       const n = S.score;
-      $("endStats").textContent = n === 4 ? "You peed on all 4 things. Red is proud of you." :
-        `You found ${n} of 4 things to pee on. ${n ? "Respectable." : "Very restrained."} Walk again to find the rest.`;
+      $("endStats").textContent = n === NW ? `You peed on all ${NW} things. Red is proud of you.` :
+        `You found ${n} of ${NW} things to pee on. ${n ? "Respectable." : "Very restrained."} Walk again to find the rest.`;
       $("end").classList.add("on"); for (const k in K) K[k] = false;
     }, 700);
   }
@@ -551,10 +565,15 @@ function update(dt) {
   bubbles.forEach(b => { if (b.t > 0 && (b.t -= dt) <= 0) b.el.classList.remove("on"); });
 }
 
+function trip() {
+  S.trip = 9; stage.classList.add("trip"); showCaption("Uh oh.");
+  for (let i = 0; i < 6; i++) S.fx.push({ kind: "spark", x: S.p.x - 8 + i * 3, y: 30, vx: (i - 2.5) * 10, vy: 20, t: 0, life: .6 });
+}
 function react(tg) {
   if (tg.kind === "parked") { say("!!", tg.x, 26, 1.4); setTimeout(() => { tg.vx = 140; }, 700); }
   if (tg.kind === "flag") { say("FOUL.", tg.x, 34, 1.8); S.card = 2.2; }
   if (tg.kind === "bush") { say("it's thriving.", tg.x, 22, 1.8); }
+  if (tg.kind === "patch") { say("...whoa.", tg.x, 30, 1.8); }
   if (tg.kind === "campfire") { say("tssssss", tg.x, 26, 2); for (let i = 0; i < 10; i++) S.fx.push({ kind: "steam", x: tg.x - 6 + Math.random() * 12, y: 8, vx: (Math.random() - .5) * 8, vy: 14 + Math.random() * 10, t: -i * 0.12, life: 2.4 }); }
 }
 function dust(x) { for (let i = 0; i < 4; i++) S.fx.push({ kind: "dust", x: x + (i - 1.5) * 3, y: 1, vx: (i - 1.5) * 14, vy: 6, t: 0, life: .35 }); }
@@ -591,6 +610,18 @@ const BG = {
     layer(.5, 2, (x, k) => { const y = 124 + Math.sin(k * .035) * 5; R("#307d2c", x, y, 2, H); });
     R("#348a30", 0, G, W, 1); R("#2a6f27", 0, G + 1, W, 29);
     layer(1, 13, (x, k) => R("#246222", x + hash(k, 6) * 9, G + 4 + hash(k, 7) * 22, 2, 1));
+  },
+  shroom(t) {
+    [["#7fc0ec", 0], ["#8fcaf0", 40], ["#a3d4f2", 80]].forEach(([c, y]) => R(c, 0, y, W, y === 80 ? 70 : 40));
+    layer(.1, 90, (x, k) => { const y = 12 + hash(k, 13) * 30, w = 24 + Math.round(hash(k, 14) * 22); R("#f4f4f2", x, y, w, 6); R("#f4f4f2", x + 4, y - 4, w - 10, 4); R("#dcdcda", x + 2, y + 6, w - 4, 2); });
+    layer(.25, 2, (x, k) => { const y = 94 + Math.sin(k * .11) * 4 + Math.sin(k * .29) * 2; R("#2f7d2b", x, y, 2, H); });
+    R("#4e9e2c", 0, 106, W, 14);
+    layer(.4, 37, (x, k) => { if (hash(k, 15) > .45) R(["#e9d27a", "#c97fd6", "#b7b7b7"][((k % 3) + 3) % 3], x, 108 + Math.round(hash(k, 16) * 6), 7, 3); });
+    R("#8a8a8a", 0, 120, W, 3); R("#3d8fe0", 0, 123, W, 9); R("#8a8a8a", 0, 132, W, 3);
+    layer(.6, 13, (x, k) => R("#cfe8ff", x + Math.floor(t * 4 + k) % 5, 127 + (k % 2) * 2, 3, 1));
+    layer(.6, 53, (x, k) => { if (hash(k, 17) > .45) { R(C.ink, x, 123, 4, 4); R(["#E8271A", "#f3d23b", "#ff9ad5"][((k % 3) + 3) % 3], x + 1, 124, 2, 3); } });
+    R("#58ad2e", 0, 135, W, 15); R("#4c9a28", 0, G, W, 1); R("#4fa52b", 0, G + 1, W, 29);
+    layer(1, 11, (x, k) => R("#3f8d24", x + hash(k, 18) * 8, G + 4 + hash(k, 19) * 22, 2, 1));
   },
   camp(t) {
     R("#0a0c15", 0, 0, W, H);
@@ -672,6 +703,8 @@ function drawObs(o) {
     case "stuck": drawStuck(x, y); break;
     case "fire": drawFire(x, y, t + o.x); break;
     case "bat": drawBat(x, y + Math.round(Math.sin(t * 6 + o.x) * 1.5), t); break;
+    case "mush": ctx.drawImage(NS.mush, x - 1, y - 1 - (o.flung ? 0 : Math.floor(t * 8 + o.x) % 2)); break;
+    case "frisbee": R(C.ink, x, y, 10, 3); R("#ff5fa2", x + 1, y + 1, 8, 1); R(Math.floor(t * 12) % 2 ? "#ffd1e6" : "#ff5fa2", x + 3, y, 3, 1); break;
   }
 }
 function drawTarget(tg) {
@@ -682,6 +715,8 @@ function drawTarget(tg) {
   if (tg.kind === "flag") { R("#ddd", x, G - 24, 1, 24); const w = Math.floor(t * 4) % 2; R("#f2a91f", x + 1, G - 24, 7 - w, 3); R("#f2a91f", x + 1, G - 21, 5 - w, 2); R("#c46f12", x + 1, G - 24, 1, 5); }
   if (tg.kind === "bush") { R(C.ink, x - 9, G - 12, 18, 12); R("#2f7a2b", x - 8, G - 11, 16, 11); R("#3c9636", x - 6, G - 13, 9, 4); R(C.ink, x - 7, G - 14, 11, 1);
     if (tg.done) [[-5, -9], [2, -11], [5, -6], [-2, -5], [-6, -3]].forEach(([dx, dy], i) => { if (tg.t > i * .15) { R("#ff8fc4", x + dx, G + dy, 2, 2); R("#ffe17a", x + dx, G + dy, 1, 1); } }); }
+  if (tg.kind === "patch") { const big = tg.done && tg.t > 0.3, im = big ? NS.mush : NS.shroom;
+    [-9, -2, 5, 11].forEach((dx, i) => ctx.drawImage(im, x + dx - (big ? 4 : 2), G - im.height + 1 - (big && Math.floor(t * 3 + i) % 2 ? 1 : 0))); }
   if (tg.kind === "campfire") { if (!tg.done) drawFire(x - 10, G - 24, t, true); else { R("#5b3412", x - 10, G - 6, 20, 6); R("#2b2b2b", x - 6, G - 7, 12, 2); } }
 }
 
@@ -740,10 +775,24 @@ function drawPee() {
   }
 }
 function drawPuddles() { for (const q of S.puddles) { const a = clamp(1 - q.age / 7, 0, 1); ctx.globalAlpha = a; const x = Math.round(q.x - S.camX - q.w / 2); R(C.peeD, x, G, Math.round(q.w), 1); R(C.pee, x + 1, G, Math.max(0, Math.round(q.w) - 2), 1); ctx.globalAlpha = 1; } }
+function drawCloudHand() {
+  if (!(S.trip > 0)) return;
+  const k = clamp((9 - S.trip) / 2.5, 0, 1), out = clamp(S.trip / 1.5, 0, 1), d = Math.min(k, out);
+  const tx = S.p.x - S.camX, ty = G - 44 - S.p.y, sx = tx - 150, sy = -30;
+  ctx.globalAlpha = 0.92 * d; ctx.fillStyle = "#f2f2ef";
+  const ex = sx + (tx - sx) * (0.55 + 0.45 * k) - 6, ey = sy + (ty - 18 - sy) * (0.55 + 0.45 * k);
+  for (let i = 0; i <= 14; i++) { const u = i / 14, x = sx + (ex - sx) * u, y = sy + (ey - sy) * u + Math.sin(u * 3 + S.t) * 2;
+    ctx.beginPath(); ctx.arc(Math.round(x), Math.round(y), 9 - u * 2, 0, 7); ctx.fill(); }
+  ctx.beginPath(); ctx.arc(Math.round(ex + 4), Math.round(ey + 4), 9, 0, 7); ctx.fill();
+  R("#f2f2ef", ex + 5, ey + 8, 4, 10 * k + 4);
+  ctx.globalAlpha = 0.35 * d; R("#9a9a9a", ex - 2, ey + 9, 10, 2); R("#9a9a9a", ex + 8, ey + 8, 1, 10 * k + 4);
+  ctx.globalAlpha = 1;
+}
 function drawFx() {
   for (const f of S.fx) { if (f.t < 0) continue; const x = f.x - S.camX, y = G - f.y;
     if (f.kind === "steam") { ctx.globalAlpha = clamp(1 - f.t / f.life, 0, 1) * .8; R("#d6d6d6", x, y, 3, 2); ctx.globalAlpha = 1; }
     if (f.kind === "dust") R("rgba(220,220,220,.7)", x, y, 2, 1);
+    if (f.kind === "spark") R(["#c86ed2", "#f3d23b", "#6eaae6"][Math.floor(f.t * 20 + f.x) % 3], x, y, 1, 1);
     if (f.kind === "pow") { const r = 2 + Math.round(f.t * 24); R(C.paper, x - r, y, r * 2 + 1, 1); R(C.paper, x, y - r, 1, r * 2 + 1); R(C.paper, x - r + 2, y - r + 2, 1, 1); R(C.paper, x + r - 2, y - r + 2, 1, 1); R(C.paper, x - r + 2, y + r - 2, 1, 1); R(C.paper, x + r - 2, y + r - 2, 1, 1); } }
   if (S.card > 0) { const x = Math.round(S.p.x - S.camX) + 8, y = G - 52 - Math.round(S.p.y); R(C.ink, x, y, 7, 10); R("#f5d32a", x + 1, y + 1, 5, 8); R("#dcdcdc", x + 2, y + 9, 1, 4); }
 }
@@ -761,7 +810,7 @@ function render() {
   });
   endPage();
   S.panels.forEach(drawPanel);
-  for (let i = 1; i <= 4; i++) gutter(i * LEN);
+  for (let i = 1; i <= NW; i++) gutter(i * LEN);
   drawPuddles();
   S.npcs.forEach(drawNpc);
   S.targets.forEach(drawTarget);
@@ -769,6 +818,7 @@ function render() {
   drawPee();
   S.obs.forEach(o => { if (!o.dead) drawObs(o); });
   drawRed();
+  drawCloudHand();
   drawFx();
   // panel border around the whole screen (comic page feel)
   R(C.ink, 0, 0, W, 2); R(C.ink, 0, H - 2, W, 2); R(C.ink, 0, 0, 2, H); R(C.ink, W - 2, 0, 2, H);
