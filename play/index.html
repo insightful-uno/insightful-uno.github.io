@@ -107,7 +107,7 @@ body.touch #keyhint{display:none}
 <main>
   <div id="stage">
     <canvas id="screen" aria-label="Walk with Red game"></canvas>
-    <div id="hud" class="ov"><span id="world">Pink Taxi</span><span><i class="drop"></i><span id="score">0 / 5</span></span></div>
+    <div id="hud" class="ov"><span id="world">Pink Taxi</span><span><i class="drop"></i><span id="score"></span></span></div>
     <div id="caption" class="ov"></div>
     <div id="b0" class="ov bubble"></div>
     <div id="b1" class="ov bubble"></div>
@@ -256,39 +256,40 @@ function loadPanel(num) {
 }
 
 /* ============ level data ============ */
-const LEN = 1000, END = 5 * LEN, NW = 5;
+const LEN = 1000, PANEL_AT = 945;   // each world ends with its comic
 const WORLDS = [
-  { key: "taxi", title: "PINK TAXI", panels: [["01", 1], ["05", 5], ["13", 13]],
+  { key: "taxi", title: "PINK TAXI", panels: [["01", 1]],
     obs: [["case", 300], ["taxi", 430], ["sign", 600], ["case", 690], ["taxi", 760], ["sign", 930]],
     target: ["parked", 150],
     props: [["can", 250], ["can", 575]],
     npcs: [["protester", 340, -1, "Down with pink!"], ["speaker", 480, -1, "BAN THE PINK TAXI!"], ["protester", 505, -1], ["protester", 860, 1, "Never again."]],
-    captions: [[30, isTouch ? "Hold ▶ to walk." : "Hold → to walk."], [95, isTouch ? "Nature calls. Hold PEE." : "Nature calls. Hold P."], [232, isTouch ? "Grab the can. Tap HIT to throw it." : "Grab the can. F to throw it."], [400, "Pink taxis. Everywhere."], [640, "9 months later..."]] },
-  { key: "kick", title: "FREE KICK", panels: [["18", 1], ["20", 3], ["26", 9]],
+    captions: [[30, isTouch ? "Hold ▶ to walk." : "Hold → to walk."], [95, isTouch ? "Nature calls. Hold PEE." : "Nature calls. Hold P."], [232, isTouch ? "Grab the can. Tap HIT to throw it." : "Grab the can. F to throw it."], [400, "Pink taxis. Everywhere."], [640, "9 months later..."], [905, isTouch ? "The whole comic is up here. Tap LOOK." : "The whole comic is up here. Press L."]] },
+  { key: "kick", title: "FREE KICK", panels: [["18", 1]],
     obs: [["ball", 150], ["hiball", 330], ["ball", 440], ["ball", 470], ["hiball", 600], ["ball", 760], ["hiball", 900]],
     target: ["flag", 680],
     props: [["ball", 110], ["ball", 520]],
-    npcs: [["waller", 238, -1], ["waller", 250, -1, "Not the face."], ["waller", 262, -1], ["kicker", 575, 1, "Watch this."], ["keeper", 945, -1, "Go on then."]],
+    npcs: [["waller", 238, -1], ["waller", 250, -1, "Not the face."], ["waller", 262, -1], ["kicker", 575, 1, "Watch this."], ["keeper", 900, -1, "Go on then."]],
     captions: [[30, "Home crowd. No pressure."], [300, isTouch ? "Keep your head down. Or HIT it." : "Keep your head down. Or hit it (F)."]] },
-  { key: "arch", title: "ARCHERS", panels: [["27", 1], ["28", 2], ["31", 5]],
+  { key: "arch", title: "ARCHERS", panels: [["27", 1]],
     obs: [["stuck", 160], ["volley", 300], ["stuck", 560], ["volley", 640], ["stuck", 720], ["volley", 880]],
     target: ["bush", 440],
     props: [["helmet", 225], ["helmet", 600]],
-    npcs: [["girl", 105, -1, "Wanna walk with me?"], ["archer", 958, -1, "Nothing personal."], ["archer", 972, -1], ["archer", 986, -1]],
+    npcs: [["girl", 105, -1, "Wanna walk with me?"], ["archer", 868, -1, "Nothing personal."], ["archer", 882, -1], ["archer", 896, -1]],
     captions: [[30, "Lovely day for a walk."], [270, "Heads up."]] },
-  { key: "camp", title: "CAMPFIRE", panels: [["14", 1], ["15", 2], ["16", 3]],
+  { key: "camp", title: "CAMPFIRE", panels: [["14", 1]],
     obs: [["fire", 150], ["bat", 300], ["fire", 430], ["bat", 580], ["fire", 700], ["bat", 760]],
-    target: ["campfire", 900],
+    target: ["campfire", 860],
     props: [["stick", 210], ["stick", 525]],
     npcs: [["knight", 468, -1, "Pull up a log."], ["knight", 490, -1], ["centaur", 640, -1, "Don't ask."]],
     captions: [[30, "Warm night. Odd company."]] },
-  { key: "shroom", title: "SHROOMS", panels: [["35", 1], ["39", 5], ["44", 10]],
+  { key: "shroom", title: "SHROOMS", panels: [["35", 1]],
     obs: [["mush", 160], ["frisbee", 320], ["mush", 450], ["mush", 478], ["frisbee", 640], ["mush", 760], ["frisbee", 880]],
     target: ["patch", 690],
     props: [["shroom", 112], ["shroom", 560]],
     npcs: [["sunbather", 300, 1, "Excuse me?!"], ["mom", 872, -1, "Not in front of my kid."], ["kid", 890, -1]],
     captions: [[30, "Sunny day at the park."], [96, isTouch ? "A mushroom. Tap HIT to eat it." : "A mushroom. F to eat it."], [820, "Almost there."]] }
 ];
+const NW = WORLDS.length, END = NW * LEN;
 
 // obstacle types: w,h, y = height of bottom above ground, vx = speed (0 = static)
 const OT = {
@@ -316,7 +317,7 @@ function reset() {
     const s = i * LEN;
     w.obs.forEach(([type, x]) => S.obs.push({ type, x: s + x, ...OT[type], active: OT[type].vx === 0, dead: false }));
     S.targets.push({ kind: w.target[0], x: s + w.target[1], wet: 0, done: false, t: 0, vx: 0 });
-    w.panels.forEach(([num, n]) => S.panels.push({ num, n, key: w.key, x: s + 230 + S.panels.filter(p => p.key === w.key).length * 290 }));
+    w.panels.forEach(([num, n]) => S.panels.push({ num, n, key: w.key, x: s + PANEL_AT }));
     w.captions.forEach(([x, text]) => S.captions.push({ x: s + x, text, shown: false }));
     w.props.forEach(([kind, x]) => S.props.push({ kind, x: s + x }));
     w.npcs.forEach(([kind, x, face, line]) => S.npcs.push({ kind, x: s + x, face, line, said: false }));
