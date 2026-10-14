@@ -56,9 +56,19 @@ body.touch #stage{width:min(100%, calc((100svh - 250px) * 16 / 9))}
 .blinky{animation:bl 1.2s steps(2) infinite}
 @keyframes bl{50%{opacity:.25}}
 
-#look{background:rgba(20,17,15,.92);flex-direction:row;gap:3cqw;cursor:pointer}
-#look img{height:86%;aspect-ratio:1;object-fit:cover;outline:3px solid var(--paper);background:#222}
-#look .meta{color:var(--paper);text-align:left;display:flex;flex-direction:column;gap:1.2cqw;max-width:30%}
+#look{background:rgba(20,17,15,.94);flex-direction:row;gap:1.6cqw;padding:3cqw}
+#look .lk-frame{height:88%;aspect-ratio:1;outline:3px solid var(--paper);background:#222;touch-action:pan-y;overflow:hidden;flex:none}
+#look img{width:100%;height:100%;object-fit:cover;transition:opacity .15s;pointer-events:none}
+#look img.fade{opacity:0}
+.lk-arrow{background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:50%;width:max(36px,4.6cqw);height:max(36px,4.6cqw);font-size:max(13px,1.6cqw);cursor:pointer;flex:none;padding:0}
+.lk-arrow:hover{background:var(--red);color:#fff}
+.lk-arrow:disabled{opacity:.25;cursor:default;background:var(--paper);color:var(--ink)}
+.lk-close{position:absolute;top:1.6cqw;right:1.8cqw;background:none;border:0;color:var(--paper);font-size:max(26px,3.6cqw);line-height:1;cursor:pointer;padding:.2em}
+.lk-close:hover{color:var(--red)}
+#look .dots{display:flex;flex-wrap:wrap;gap:5px;max-width:100%}
+#look .dots i{width:7px;height:7px;background:#555;display:block}
+#look .dots i.on{background:var(--red)}
+#look .meta{color:var(--paper);text-align:left;display:flex;flex-direction:column;gap:1.2cqw;width:24%;margin-left:1.4cqw}
 #look .meta h2{font-family:var(--display);font-weight:400;font-size:5cqw;margin:0;line-height:1}
 #look .meta .label{color:#bbb;font-size:max(10px,1.3cqw)}
 #look .btn{background:var(--paper);color:var(--ink)}
@@ -72,6 +82,8 @@ body.touch #touch{display:flex}
 .tb.arrow{font-size:22px}
 .tb.down{background:var(--ink);color:var(--paper)}
 .tb.pee{background:var(--pee)}
+.tb.pee span{display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+.tb small{font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;opacity:.7}
 .tb.look{width:auto;border-radius:999px;padding:0 18px;height:44px;background:var(--red);color:#fff;opacity:.25}
 .tb.look.ready{opacity:1}
 #keyhint{color:var(--soft)}
@@ -94,13 +106,16 @@ body.touch #keyhint{display:none}
     <div id="prompt" class="ov">Look</div>
     <div id="title" class="ov"></div>
 
-    <div id="look" class="screen" role="dialog" aria-label="Comic panel">
-      <img id="lookImg" alt="">
+    <div id="look" class="screen" role="dialog" aria-label="Comic viewer">
+      <button class="lk-close" id="lookClose" aria-label="Close">&times;</button>
+      <button class="lk-arrow" id="lookPrev" aria-label="Previous panel">&#9664;</button>
+      <div class="lk-frame" id="lookFrame"><img id="lookImg" alt="" draggable="false"></div>
+      <button class="lk-arrow" id="lookNext" aria-label="Next panel">&#9654;</button>
       <div class="meta">
-        <span class="label" id="lookNum"></span>
         <h2 id="lookTitle"></h2>
-        <a class="btn" href="../#comics" id="lookRead">Read the comic</a>
-        <span class="label">Tap anywhere to keep walking</span>
+        <span class="label" id="lookNum"></span>
+        <div class="dots" id="lookDots"></div>
+        <button class="btn" id="lookBack">Keep walking</button>
       </div>
     </div>
 
@@ -126,11 +141,11 @@ body.touch #keyhint{display:none}
     <div class="grp">
       <button class="tb arrow" data-k="left">&#9664;</button>
       <button class="tb arrow" data-k="right">&#9654;</button>
+      <button class="tb pee" data-k="pee"><span>Pee<small>hold</small></span></button>
     </div>
     <button class="tb look" data-k="look" id="lookBtn">Look</button>
     <div class="grp">
       <button class="tb" data-k="duck">Duck</button>
-      <button class="tb pee" data-k="pee">Pee</button>
       <button class="tb" data-k="jump">Jump</button>
     </div>
   </div>
@@ -146,6 +161,7 @@ const buf = document.createElement("canvas"); buf.width = W; buf.height = H;
 const ctx = buf.getContext("2d"); ctx.imageSmoothingEnabled = false;
 const screen = document.getElementById("screen"), sctx = screen.getContext("2d");
 const stage = document.getElementById("stage");
+const up = document.createElement("canvas"), uctx = up.getContext("2d");
 const $ = id => document.getElementById(id);
 const C = { ink:"#14110F", red:"#E8271A", redD:"#A8170D", redH:"#FF7A5E", paper:"#F7F4EE", paperD:"#CFC8BE", pee:"#F3D23B", peeD:"#C9A51E" };
 
@@ -168,18 +184,18 @@ const hash = (k, s = 0) => { const v = Math.sin(k * 127.1 + s * 311.7) * 43758.5
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /* ============ Red sprite ============ */
-const HEAD = [".....RRRR.......","...RRRRRRRR.....","..RHRRRRRRRR....","..RRRRRRRKRR....","..RRRRRRRRRRR...","..rRRRRRRRRR....","...rrRRRRRRR....",".....rRRRR......"];
-const TORSO = ["....RRRRRRR.....","...RRRRRRRRR....","...RRrRRRRRR....","...RRrRRRRRR....","...RRrRRRRRR....","...RR.rRRRRR...."];
-const BRIEFS = ["....WWWWWWW.....","....WWWWWWW.....","....wWW.WWw....."];
+const HEAD = ["......RRRR......",".....RRRRRR.....",".....RHRRRKR....",".....RRRRRRRR...",".....rRRRRRR....","......rRRRR.....",".......RR......."];
+const TORSO = [".....RRRRRR.....",".....RRRRRR.....",".....RRrRRR.....",".....RRrRRR.....","......RrRR......","......RrRR......","......RrRR......","......RrRR......"];
+const BRIEFS = [".....WWrWWW.....",".....WWrWWW.....",".....wWr.WWw...."];
 const LEGS = {
-  stand:[".....RR.RR......",".....RR.RR......",".....RR.RR......",".....RR.RR......",".....RRR.RRR...."],
-  a:    [".....RR.RR......","....RR...RR.....","...RR.....RR....","..RR.......RR...",".RRR.......RRR.."],
-  b:    [".....RR.RR......",".....RRRR.......","......RRR.......","......RR.R......","......RRRRR....."],
-  c:    [".....RR.RR......","....RR..RR......","...RR....RR.....","...RR.....RR....","..RRR.....RRR..."],
-  jump: [".....RR.RR......","....RRR.RRR.....","...RR.....RR....","....RRR..RRR....","................"]
+  stand: ["......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RRR.RRR..."],
+  a: ["......RR.RR.....","......RR.RR.....",".....RR...RR....",".....RR...RR....",".....RR....RR...","....RR.....RR...","....RR......RR..","...RR.......RR..","...RR.......RR..","..RRR.......RRR."],
+  b: ["......RR.RR.....","......RR.RR.....","......RR.RR.....","......RRRR......",".......RRR......",".......RR.R.....",".......RR..R....",".......RR..R....",".......RR.RR....",".......RRRR....."],
+  c: ["......RR.RR.....","......RR.RR.....","......RR..RR....",".....RR...RR....",".....RR....RR...",".....RR....RR...","....RR.....RR...","....RR......RR..","....RR......RR..","...RRR......RRR."],
+  jump: ["......RR.RR.....",".....RR..RR.....","....RR...RR.....","....RR....RR....",".....RR...RR....","......RRR.RRR...","................","................","................","................"]
 };
-const DUCK = [".....RRRR.......","...RRRRRRRR.....","..RHRRRRRRRR....","..RRRRRRRKRR....","..RRRRRRRRRRR...",".RRrRRRRRRRR....",".RRRrrRRRRR.....",".RRRRRRRRRRR....",".RWWWWWWWRRR....",".RWWWWWWWRRR....",".RRR....RRRR....","RRRR....RRRRR..."];
-const BACK = [".....RRRRR......","...RRRRRRRRR....","..RRHRRRRRRRR...","..RRRRRRRRRRR...","..RRRRRRRRRRR...","..rRRRRRRRRRr...","...rRRRRRRRr....","......RRR.......","...RRRRRRRRR....","..RRRRRRRRRRR...","..RRRRRrRRRRR...","..rR.RRrRR.Rr...","..rR.RRrRR.Rr...","....RRRrRRR.....","...WWWWWWWWW....","...WWWWWWWWW....","...wWWWWWWWw....","....RRR.RRR.....","....RRR.RRR.....","....RRR.RRR.....","....RRR.RRR.....","...RRRR.RRRR...."];
+const DUCK = [".........RRRR...","........RRRRRR..","........RHRRRKR.","......RRRRRRRRRR",".....RRRRRRRRR..","....RRRRrRRRRR..","...RRRRRrRRRR...","..WWWWRRrRRR....","..WWWWWRRrRR....","...RR...RRRR....","...RR....RRR....","..RRR....RRRR..."];
+const BACK = ["......RRRR......",".....RRRRRR.....",".....RHRRRR.....",".....RRRRRR.....",".....rRRRRr.....","......rRRr......",".......RR.......","....RRRRRRRR....","....RRRRRRRR....","...RR.RRRR.RR...","...RR.RrRR.RR...","....R.RrRR.R....","......RrRR......","......RRRR......","......RRRR......",".....WWWWWW.....",".....WWWWWW.....",".....wWW.WWw....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....","....RRR..RRR...."];
 const PAL = { R:C.red, r:C.redD, H:C.redH, W:C.paper, w:C.paperD, K:C.ink };
 
 function sprite(rows) {
@@ -201,8 +217,8 @@ const WALK = ["a", "b", "c", "b"];
 
 /* ============ comic panels ============ */
 const SERIES = {
-  taxi: { name: "Pink Taxi", total: 13 }, kick: { name: "Free Kick", total: 9 },
-  arch: { name: "Archers", total: 8 },  camp: { name: "Campfire", total: 4 }
+  taxi: { name: "Pink Taxi", total: 13, first: 1 }, kick: { name: "Free Kick", total: 9, first: 18 },
+  arch: { name: "Archers", total: 8, first: 27 },  camp: { name: "Campfire", total: 4, first: 14 }
 };
 const IMG = {};
 function pixelate(img, n) {
@@ -282,7 +298,12 @@ let jumpEdge = false;
 const MAP = { ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", ArrowUp: "jump", KeyW: "jump", Space: "jump",
               ArrowDown: "duck", KeyS: "duck", KeyP: "pee", KeyE: "pee" };
 addEventListener("keydown", e => {
-  if ($("look").classList.contains("on")) { if (!e.metaKey && !e.ctrlKey) { closeLook(); e.preventDefault(); } return; }
+  if ($("look").classList.contains("on")) {
+    if (e.metaKey || e.ctrlKey) return; e.preventDefault();
+    if (e.code === "ArrowRight" || e.code === "KeyD") showPanel(LK.n + 1);
+    else if (e.code === "ArrowLeft" || e.code === "KeyA") showPanel(LK.n - 1);
+    else if (["Escape", "KeyL", "Enter", "Space"].includes(e.code)) closeLook();
+    return; }
   if ($("start").classList.contains("on") && (e.code === "Enter" || e.code === "Space")) { start(); e.preventDefault(); return; }
   if (e.code === "KeyL" || e.code === "Enter") { openLook(); e.preventDefault(); return; }
   const k = MAP[e.code]; if (!k) return;
@@ -316,7 +337,7 @@ screen.addEventListener("pointerdown", e => {
 
 $("go").addEventListener("click", start);
 $("again").addEventListener("click", () => { reset(); start(); });
-$("look").addEventListener("click", e => { if (e.target.closest("a")) return; closeLook(); });
+$("look").addEventListener("click", e => { if (e.target === $("look")) closeLook(); });
 document.addEventListener("visibilitychange", () => { if (document.hidden) for (const k in K) K[k] = false; });
 
 function start() { $("start").classList.remove("on"); S.running = true; S.paused = false; }
@@ -331,23 +352,48 @@ function say(text, x, y, dur = 1.6, follow = false) {
   const b = bubbles.find(b => b.t <= 0) || bubbles[0];
   b.el.textContent = text; b.x = x; b.y = y; b.t = dur; b.follow = follow; b.el.classList.add("on");
 }
+const LK = { key: null, n: 1 };
+const panelSrc = (key, n) => `../assets/comic-${String(SERIES[key].first + n - 1).padStart(2, "0")}.jpg`;
+function showPanel(n) {
+  const s = SERIES[LK.key]; n = clamp(n, 1, s.total); if (n === LK.n) return;
+  LK.n = n;
+  const img = $("lookImg"), src = panelSrc(LK.key, n), pre = new Image();
+  img.classList.add("fade");
+  pre.onload = pre.onerror = () => { if (LK.n !== n) return; img.src = src; img.alt = `${s.name}, panel ${n} of ${s.total}`; img.classList.remove("fade"); };
+  pre.src = src;
+  if (n < s.total) new Image().src = panelSrc(LK.key, n + 1);   // preload next
+  $("lookNum").textContent = `Panel ${n} of ${s.total}`;
+  $("lookPrev").disabled = n <= 1; $("lookNext").disabled = n >= s.total;
+  [...$("lookDots").children].forEach((d, i) => d.classList.toggle("on", i === n - 1));
+}
 function openLook(p) {
   p = p || S.near; if (!p || !S.running) return;
-  const im = IMG[p.num], s = SERIES[p.key];
-  $("lookImg").src = im ? im.full : `../assets/comic-${p.num}.jpg`;
-  $("lookImg").alt = `${s.name}, panel ${p.n} of ${s.total}`;
+  const s = SERIES[p.key]; LK.key = p.key; LK.n = 0;
   $("lookTitle").textContent = s.name;
-  $("lookNum").textContent = `Panel ${p.n} of ${s.total}`;
+  $("lookDots").innerHTML = "<i></i>".repeat(s.total);
+  showPanel(p.n);
   $("look").classList.add("on"); S.paused = true; for (const k in K) K[k] = false;
 }
 function closeLook() { $("look").classList.remove("on"); S.paused = false; }
+$("lookPrev").addEventListener("click", e => { e.stopPropagation(); showPanel(LK.n - 1); });
+$("lookNext").addEventListener("click", e => { e.stopPropagation(); showPanel(LK.n + 1); });
+$("lookClose").addEventListener("click", closeLook);
+$("lookBack").addEventListener("click", closeLook);
+{ // swipe or tap the panel to page through
+  let sx = null, sy = 0; const fr = $("lookFrame");
+  fr.addEventListener("pointerdown", e => { sx = e.clientX; sy = e.clientY; });
+  fr.addEventListener("pointerup", e => { if (sx === null) return; const dx = e.clientX - sx, dy = e.clientY - sy; sx = null;
+    if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) showPanel(LK.n + (dx < 0 ? 1 : -1));
+    else if (Math.abs(dx) < 8 && Math.abs(dy) < 8) { const r = fr.getBoundingClientRect(); showPanel(LK.n + (e.clientX > r.left + r.width / 2 ? 1 : -1)); } });
+  fr.addEventListener("pointercancel", () => sx = null);
+}
 
 reset();
 if (/[?&]debug/.test(location.search)) window.__red = { get S() { return S; } };
 
 /* ============ update ============ */
 const SPEED = 70, GRAV = 820, JUMP = 265;
-function hitbox(p) { return p.duck ? { l: p.x - 6, r: p.x + 6, b: p.y, t: p.y + 11 } : { l: p.x - 4, r: p.x + 4, b: p.y, t: p.y + 21 }; }
+function hitbox(p) { return p.duck ? { l: p.x - 6, r: p.x + 6, b: p.y, t: p.y + 11 } : { l: p.x - 3, r: p.x + 3, b: p.y, t: p.y + 27 }; }
 const OUCH = ["ow.", "rude.", "ouch!", "my good briefs", "hey!", "noted."];
 
 function update(dt) {
@@ -391,7 +437,7 @@ function update(dt) {
     const pad = 1;
     if (hb.r > o.x + pad && hb.l < o.x + o.w - pad && hb.t > o.y + pad && hb.b < o.y + o.h - pad) {
       p.inv = 1.3; p.kb = 0.16; p.vy = Math.max(p.vy, 120); p.onG = false;
-      say(OUCH[Math.floor(Math.random() * OUCH.length)], p.x, 26, 1.2, true);
+      say(OUCH[Math.floor(Math.random() * OUCH.length)], p.x, 33, 1.2, true);
     }
   }
 
@@ -450,7 +496,7 @@ function layer(f, spacing, fn) {
 }
 const BG = {
   taxi(t) {
-    [["#202024", 0], ["#29292d", 30], ["#323236", 60], ["#3b3b40", 90]].forEach(([c, y]) => R(c, 0, y, W, 40));
+    [["#202024", 0], ["#29292d", 30], ["#323236", 60], ["#3b3b40", 90]].forEach(([c, y]) => R(c, 0, y, W, y === 90 ? 90 : 40));
     layer(.25, 34, (x, k) => { const h = 40 + hash(k, 1) * 55, w = 22 + hash(k, 2) * 12; R("#18181b", x, G - 22 - h, w, h + 22);
       for (let j = 0; j < 6; j++) if (hash(k * 7 + j, 3) > .62) R("#7c7c84", x + 4 + (j % 2) * 9, G - 18 - h + 6 + Math.floor(j / 2) * 10, 2, 3); });
     layer(.55, 9, (x, k) => { const h = 6 + hash(k, 4) * 5; R("#141417", x, G - 10 - h, 7, h + 10); R("#141417", x + 1, G - 14 - h, 5, 4);
@@ -602,13 +648,13 @@ function drawFx() {
   for (const f of S.fx) { if (f.t < 0) continue; const x = f.x - S.camX, y = G - f.y;
     if (f.kind === "steam") { ctx.globalAlpha = clamp(1 - f.t / f.life, 0, 1) * .8; R("#d6d6d6", x, y, 3, 2); ctx.globalAlpha = 1; }
     if (f.kind === "dust") R("rgba(220,220,220,.7)", x, y, 2, 1); }
-  if (S.card > 0) { const x = Math.round(S.p.x - S.camX) + 8, y = G - 40 - Math.round(S.p.y); R(C.ink, x, y, 7, 10); R("#f5d32a", x + 1, y + 1, 5, 8); R("#dcdcdc", x + 2, y + 9, 1, 4); }
+  if (S.card > 0) { const x = Math.round(S.p.x - S.camX) + 8, y = G - 46 - Math.round(S.p.y); R(C.ink, x, y, 7, 10); R("#f5d32a", x + 1, y + 1, 5, 8); R("#dcdcdc", x + 2, y + 9, 1, 4); }
 }
 
 /* ============ frame ============ */
 function render() {
   const cam = S.camX;
-  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = C.ink; ctx.fillRect(0, 0, W, H);
   WORLDS.forEach((w, i) => {
     const a = i * LEN - cam, b = a + LEN;
     if (b < 0 || a > W) return;
@@ -628,8 +674,11 @@ function render() {
   // panel border around the whole screen (comic page feel)
   R(C.ink, 0, 0, W, 2); R(C.ink, 0, H - 2, W, 2); R(C.ink, 0, 0, 2, H); R(C.ink, W - 2, 0, 2, H);
 
-  sctx.imageSmoothingEnabled = false;
-  sctx.drawImage(buf, 0, 0, screen.width, screen.height);
+  const n = Math.max(1, Math.ceil(screen.width / W));
+  if (up.width !== W * n) { up.width = W * n; up.height = H * n; }
+  uctx.imageSmoothingEnabled = false; uctx.clearRect(0, 0, up.width, up.height); uctx.drawImage(buf, 0, 0, up.width, up.height);
+  sctx.imageSmoothingEnabled = true; sctx.imageSmoothingQuality = "high";
+  sctx.drawImage(up, 0, 0, screen.width, screen.height);
 
   // HTML overlays that follow world positions
   const sc = 100 / W, scy = 100 / H;
