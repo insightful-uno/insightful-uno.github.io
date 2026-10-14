@@ -34,9 +34,13 @@ body.touch #stage{width:min(100%, calc((100svh - 250px) * 16 / 9))}
 #hud .drop{display:inline-block;width:.8em;height:1em;background:var(--pee);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;vertical-align:-.12em;margin-right:.5em;box-shadow:0 0 0 1px var(--ink)}
 #caption{top:7cqw;left:2.6cqw;max-width:44%;background:var(--paper);border:2px solid var(--ink);padding:.6em .8em;font-size:max(11px,1.7cqw);font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.3;opacity:0;transform:translateY(-6px);transition:opacity .25s,transform .25s}
 #caption.on{opacity:1;transform:none}
-.bubble{position:absolute;transform:translate(-50%,-100%);background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:.35em .8em;font-size:max(11px,1.6cqw);font-weight:700;white-space:nowrap;opacity:0;transition:opacity .15s}
-.bubble::after{content:"";position:absolute;left:50%;bottom:-8px;width:10px;height:10px;background:var(--paper);border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:translateX(-50%) rotate(45deg) skew(8deg,8deg)}
-.bubble.on{opacity:1}
+.bubble{position:absolute;left:0;top:0;width:max-content;max-width:min(270px,48cqw);background:#fff;color:var(--ink);border:2.5px solid var(--ink);border-radius:22px;padding:.6em .95em;font-size:max(12px,1.55cqw);font-weight:500;line-height:1.35;letter-spacing:.01em;box-shadow:3px 3px 0 var(--ink);white-space:normal;text-align:left;opacity:0;transform:translate(-50%,-100%)}
+.bubble::before,.bubble::after{content:"";position:absolute;width:0;height:0;border-style:solid;left:var(--tail,50%)}
+.bubble::before{bottom:-17px;margin-left:-6px;border-width:17px 4px 0 10px;border-color:var(--ink) transparent transparent transparent}
+.bubble::after{bottom:-11px;margin-left:-3px;border-width:12px 3px 0 7px;border-color:#fff transparent transparent transparent}
+.bubble.on{opacity:1;animation:pop .35s cubic-bezier(.2,1.4,.4,1) both}
+.bubble.short{font-weight:700;letter-spacing:.04em}
+@keyframes pop{from{transform:translate(-50%,-100%) scale(.4) rotate(-6deg);opacity:0}to{transform:translate(-50%,-100%);opacity:1}}
 #title{inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:12cqw;letter-spacing:.02em;color:var(--paper);-webkit-text-stroke:.35cqw var(--ink);paint-order:stroke fill;text-shadow:.6cqw .6cqw 0 var(--ink);opacity:0;transform:scale(.96);transition:opacity .35s,transform .35s}
 #title.on{opacity:1;transform:none}
 #prompt{transform:translate(-50%,-100%);background:var(--red);color:#fff;font-size:max(10px,1.3cqw);font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:.3em .6em;opacity:0;transition:opacity .2s;border:2px solid var(--ink)}
@@ -82,6 +86,7 @@ body.touch #touch{display:flex}
 .tb.arrow{font-size:22px}
 .tb.down{background:var(--ink);color:var(--paper)}
 .tb.pee{background:var(--pee)}
+.tb.hit{background:var(--red);color:#fff}
 .tb.pee span{display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
 .tb small{font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;opacity:.7}
 .tb.look{width:auto;border-radius:999px;padding:0 18px;height:44px;background:var(--red);color:#fff;opacity:.25}
@@ -122,7 +127,7 @@ body.touch #keyhint{display:none}
     <div id="start" class="screen on">
       <h1>Walk with <span>Red</span></h1>
       <p>A short walk through four comics. No fighting. Just keep moving.</p>
-      <p class="keys" id="startKeys"><b>&larr; &rarr;</b> walk &nbsp; <b>&uarr;</b> jump &nbsp; <b>&darr;</b> duck &nbsp; <b>P</b> pee &nbsp; <b>L</b> look at a panel</p>
+      <p class="keys" id="startKeys"><b>&larr; &rarr;</b> walk &nbsp; <b>&uarr;</b> jump &nbsp; <b>&darr;</b> duck &nbsp; <b>F</b> hit / throw &nbsp; <b>P</b> pee &nbsp; <b>L</b> look at a panel</p>
       <button class="btn" id="go">Start walking</button>
       <span class="label blinky" id="loading">Loading the comics</span>
     </div>
@@ -146,10 +151,11 @@ body.touch #keyhint{display:none}
     <button class="tb look" data-k="look" id="lookBtn">Look</button>
     <div class="grp">
       <button class="tb" data-k="duck">Duck</button>
+      <button class="tb hit" data-k="atk">Hit</button>
       <button class="tb" data-k="jump">Jump</button>
     </div>
   </div>
-  <p class="label" id="keyhint">&larr; &rarr; walk &middot; &uarr; jump &middot; &darr; duck &middot; P pee &middot; L look</p>
+  <p class="label" id="keyhint">&larr; &rarr; walk &middot; &uarr; jump &middot; &darr; duck &middot; F hit/throw &middot; P pee &middot; L look</p>
 </main>
 
 <script>
@@ -184,36 +190,41 @@ const hash = (k, s = 0) => { const v = Math.sin(k * 127.1 + s * 311.7) * 43758.5
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /* ============ Red sprite ============ */
-const HEAD = ["......RRRR......",".....RRRRRR.....",".....RHRRRKR....",".....RRRRRRRR...",".....rRRRRRR....","......rRRRR.....",".......RR......."];
-const TORSO = [".....RRRRRR.....",".....RRRRRR.....",".....RRrRRR.....",".....RRrRRR.....","......RrRR......","......RrRR......","......RrRR......","......RrRR......"];
-const BRIEFS = [".....WWrWWW.....",".....WWrWWW.....",".....wWr.WWw...."];
-const LEGS = {
-  stand: ["......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RRR.RRR..."],
-  a: ["......RR.RR.....","......RR.RR.....",".....RR...RR....",".....RR...RR....",".....RR....RR...","....RR.....RR...","....RR......RR..","...RR.......RR..","...RR.......RR..","..RRR.......RRR."],
-  b: ["......RR.RR.....","......RR.RR.....","......RR.RR.....","......RRRR......",".......RRR......",".......RR.R.....",".......RR..R....",".......RR..R....",".......RR.RR....",".......RRRR....."],
-  c: ["......RR.RR.....","......RR.RR.....","......RR..RR....",".....RR...RR....",".....RR....RR...",".....RR....RR...","....RR.....RR...","....RR......RR..","....RR......RR..","...RRR......RRR."],
-  jump: ["......RR.RR.....",".....RR..RR.....","....RR...RR.....","....RR....RR....",".....RR...RR....","......RRR.RRR...","................","................","................","................"]
-};
-const DUCK = [".........RRRR...","........RRRRRR..","........RHRRRKR.","......RRRRRRRRRR",".....RRRRRRRRR..","....RRRRrRRRRR..","...RRRRRrRRRR...","..WWWWRRrRRR....","..WWWWWRRrRR....","...RR...RRRR....","...RR....RRR....","..RRR....RRRR..."];
-const BACK = ["......RRRR......",".....RRRRRR.....",".....RHRRRR.....",".....RRRRRR.....",".....rRRRRr.....","......rRRr......",".......RR.......","....RRRRRRRR....","....RRRRRRRR....","...RR.RRRR.RR...","...RR.RrRR.RR...","....R.RrRR.R....","......RrRR......","......RRRR......","......RRRR......",".....WWWWWW.....",".....WWWWWW.....",".....wWW.WWw....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....","....RRR..RRR...."];
-const PAL = { R:C.red, r:C.redD, H:C.redH, W:C.paper, w:C.paperD, K:C.ink };
-
+const SP = {"stand":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RRR.RRR..."],"a":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......rR.RR.....","......rr.RR.....",".....rr...RR....",".....rr...RR....",".....rr....RR...","....rr.....RR...","....rr......RR..","...rr.......RR..","...rr.......RR..","..rrr.......RRR."],"b":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.rr.....","......RR.rr.....","......RR.rr.....","......RR.rr.....","......RR..rr....","......RR...rr...","......RR...rr...","......RR..rr....","......RR........","......RRR......."],"c":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.rr.....","......RR.rr.....",".....RR...rr....",".....RR...rr....","....RR.....rr...","....RR.....rr...","...RR......rr...","...RR.......rr..","...RR.......rr..","..RRR.......rrr."],"d":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......rr.RR.....","......rr.RR.....","......rr.RR.....","......rr.RR.....",".....rr..RR.....","....rr...RR.....","....rr...RR.....",".....rr..RR.....",".........RR.....",".........RRR...."],"jump":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.RR.....","......RR.RR.....",".....RR..RR.....","....RR...RR.....","....RR....RR....",".....RR...RR....",".....RRR..RRR...","................","................","................"],"blink":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRRKKR...","...KKRRRRRKKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRR....","....RRRKRRRR....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....RRKRRR.....",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RRR.RRR..."],"duck":["..........KKKK....","........KKKKKKK...",".......KKKKKKKKR..",".......KKKKRRREER.",".......KKRRRRREKR.",".......KRKRRRRRRRR","...RRRRKRKRRRRRRR.","..RRRRRRRRRRRKKR..",".RRRRRRRRRRRRRR...",".WWWWWRRRRRRRR....",".WWWWWRRRRRRR.....","..rr....RRRRR.....",".rrr.....RRRRR...."],"attack":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRRRRRR","....RRRRRRRRRRRR","....RRRRRRR.....",".....RRRRR......",".....RRRRR......",".....RRRRR......",".....RRRRR......",".....RRRRR......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.rr.....","......RR.rr.....",".....RR...rr....",".....RR...rr....","....RR.....rr...","....RR.....rr...","...RR......rr...","...RR.......rr..","...RR.......rr..","..RRR.......rrr."],"carry":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RR.RR.....","......RRR.RRR..."],"carryA":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......rR.RR.....","......rr.RR.....",".....rr...RR....",".....rr...RR....",".....rr....RR...","....rr.....RR...","....rr......RR..","...rr.......RR..","...rr.......RR..","..rrr.......RRR."],"carryB":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.rr.....","......RR.rr.....","......RR.rr.....","......RR.rr.....","......RR..rr....","......RR...rr...","......RR...rr...","......RR..rr....","......RR........","......RRR......."],"carryC":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.rr.....","......RR.rr.....",".....RR...rr....",".....RR...rr....","....RR.....rr...","....RR.....rr...","...RR......rr...","...RR.......rr..","...RR.......rr..","..RRR.......rrr."],"carryD":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......rr.RR.....","......rr.RR.....","......rr.RR.....","......rr.RR.....",".....rr..RR.....","....rr...RR.....","....rr...RR.....",".....rr..RR.....",".........RR.....",".........RRR...."],"carryJ":["......KKKK......","....KKKKKKK.....","...KKKKKKKKR....","...KKKKKRRRRR...","...KKKRRRREER...","...KKRRRRREKR...","...KRKRRRRRRRR..","...KRKRRRRRRR...","....RRRRRRKKR...",".....RRRRRRR....","......RRRR......",".....RRRRRR.....","....RRRRRRRR....","....RRRRRRRRR...","....RRRRRKRRRR..",".....RRRRRKRRR..",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....RRRR.......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....","......RR.RR.....","......RR.RR.....",".....RR..RR.....","....RR...RR.....","....RR....RR....",".....RR...RR....",".....RRR..RRR...","................","................","................"],"back":["......KKKK......","....KKKKKKKK....","...KKKKKKKKKK...","...KKKKKKKKKK...","..RKKKKKKKKKKR..","..RKKKKKKKKKKR..","...RRKKKKKKRR...","...RRRRRRRRRR...","....RRRRRRRR....",".....RRRRRR.....","......RRRR......","....RRRRRRRR....","...RRRRRRRRRR...","..RRRRRRRRRRRR..","..RRR.RRRR.RRR..","..RR..RRRR..RR..","..RR..RRRR..RR..","...R..RRRR..R...","......RRRR......","......RRRR......",".....WWWWWW.....",".....WWWWWW.....",".....wWWWWw.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....","....RRR..RRR...."],"backLow":["......KKKK......","....KKKKKKKK....","...KKKKKKKKKK...","...KKKKKKKKKK...","..RKKKKKKKKKKR..","..RKKKKKKKKKKR..","...RRKKKKKKRR...","...RRRRRRRRRR...","....RRRRRRRR....",".....RRRRRR.....","......RRRR......","....RRRRRRRR....","...RRRRRRRRRR...","..RRRRRRRRRRRR..","..RRR.RRRR.RRR..","..RR..RRRR..RR..","..RR..RRRR..RR..","...R..RRRR..R...","......RRRR......",".....RRKrRR.....",".....RRKrRR.....",".....WWWWWW.....",".....wWWWWw.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....",".....RR..RR.....","....RRR..RRR...."]};
+const NPC = {"speaker":["...........R....","...........R....","....GGGG..RR....","...GRRRRG.RR....","...GRRREKRRR....","...GRRRRRRR.....","....RRKKRRR.....",".....RRRRR......","...RRRRBRRRR....","..RRRRBBBRRR....","..RRRRBBBRR.....","..UUUUUUUUUUUU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UNNNNNNNNNNU..","..UUUUUUUUUUUU.."],"protester":["..SSSSSS..","..SRRRRS..","..SRSSRS..","..SSSSSS..","....U.....","...ggg....","..ggggg...","..ggggg.U.","...gggUUU.","..gggggg..","..ggggg...","..ggggg...","..gg.gg...","..gg.gg...","..gg.gg..."],"kicker":["....KKKK....","...KKKKKK...","...KRRREK...","...RRRRRR...","....RRRR....","..YYYYYYYY..",".RYYYKKYYYR.",".RYYYKKYYYR.",".R.YYYYYY.R.","...YYYYYY...","...yyyyyy...","...yyy.yyy..","...RRR.RRR..","...RRR.RRR..","...SSS.SSS..","...SSS.SSS..","...SSS.SSS..","..OOO..OOO.."],"waller":["...RRRR...","..RRRRRR..","..RKRRKR..","..RRRRRR..","...RKKR...","..BbBbBB..",".BBbBbBBB.",".BBbBbBBB.",".BBRRRRBB.","..BBRRBB..","..BbBbBB..","..SS..SS..","..RR..RR..","..RR..RR..","..SS..SS..","..SS..SS..","..SS..SS..",".KKK..KKK."],"keeper":["......KKK.....",".....RRRRR....",".....RKRKR....",".....RRRRR....","..YY.GGGGG.YY.","..YRGGGGGGGRY.","...RGGGGGGGR..",".....GGGGG....",".....ggggg....","....RR...RR...","...RR.....RR..","...SS.....SS..","..KKK.....KKK."],"archer":["....SSSS........","...SSSSSS....N..","...SgggSS.....N.","...SRRRSS.....N.","....RRRR......N.","..GGGGGGGRRRRRNN","..GGGGGGG.....N.","..GGYYYGG.....N.","..GGYYYGG.....N.","...YYYYY.....N..","...YYYYY........","...yyyyy........","...RR.RR........","...RR.RR........","...RR.RR........","..KKK.KKK......."],"girl":["..U.UUU.U.","..UUUUUUU.","...UPPPU..","...PKPKP..","...PPPPP..","....PPP...","...BBBBB..","..PBBBBBP.","..PBBBBBP.","...BBBBB..","..BBBBBBB.","...PP.PP..","...pp.pp..","...KK.KK.."],"knight":["....RRRR.....","...RRRRRR....","...RKRRKR....","...RRRRRR....","..GGGGGGGG...",".GGGGGGGGGG..",".GGgGGGGgGG..",".GGgGGGGgGG..","..GGGGGGGG...","..GGGGGGGGGGG","..gggggggggg.","..........GG.",".........KKK."],"centaur":[".........S......","........S.......",".......S........","...KKK.R........","..KRRERR........","..RRRRR.........","...RRRR.........","..RRRRRR........","..RRRRRR........","..RRRRRRTTTTTT..","..TTTTTTTTTTTTTY","..TTTTTTTTTTTTYY","...TTTTTTTTTTT.Y","...TT..TT..TT...","...TT..TT...T...","...tt..tt...tt.."],"can":["SS","RR","SR","RR","SS"],"ball":[".SS.","SKSS","SSKS",".SS."],"helmet":[".GGG.","GGGGG","GgggG","G...G"],"stick":["SS........","SS........","..U.......","...U......","....U.....",".....U....","......U...",".......U..","........U.",".........."]};
+const PAL = { R: C.red, r: "#B21A10", K: C.ink, E: "#FFFFFF", W: C.paper, w: "#C8C2B8", Y: "#D6BE28", y: "#AA941E", B: "#3460BE", b: "#78A0DC",
+  G: "#969696", g: "#6E6E6E", N: "#6E4628", P: "#D68CC8", p: "#965A96", T: "#C4A078", t: "#96734F", S: "#E6E6E6", O: "#F09628", U: "#96643C" };
+// thin 1px ink outline (4-neighbour), like the comics' line work
 function sprite(rows) {
-  const w = 16, h = rows.length, c = document.createElement("canvas");
+  const h = rows.length, w = rows[0].length, c = document.createElement("canvas");
   c.width = w + 2; c.height = h + 2; const x = c.getContext("2d");
-  x.fillStyle = C.ink;   // ink outline pass
-  rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== ".") x.fillRect(i, j, 3, 3); }));
-  rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== "." && ch !== "K") { x.fillStyle = PAL[ch]; x.fillRect(i + 1, j + 1, 1, 1); } }));
+  const f = (i, j) => j >= 0 && j < h && i >= 0 && i < w && rows[j][i] !== ".";
+  for (let j = -1; j <= h; j++) for (let i = -1; i <= w; i++) {
+    if (f(i, j)) { x.fillStyle = PAL[rows[j][i]]; x.fillRect(i + 1, j + 1, 1, 1); }
+    else if (f(i + 1, j) || f(i - 1, j) || f(i, j + 1) || f(i, j - 1)) { x.fillStyle = C.ink; x.fillRect(i + 1, j + 1, 1, 1); }
+  }
   return c;
 }
 function flip(c) { const o = document.createElement("canvas"); o.width = c.width; o.height = c.height; const x = o.getContext("2d"); x.translate(c.width, 0); x.scale(-1, 1); x.drawImage(c, 0, 0); return o; }
-function body(legs, blink) { const head = blink ? HEAD.map(r => r.replace("K", "R")) : HEAD; return sprite([...head, ...TORSO, ...BRIEFS, ...legs]); }
-const SPR = {};
-for (const k of Object.keys(LEGS)) { SPR[k] = body(LEGS[k]); SPR[k + "L"] = flip(SPR[k]); }
-SPR.blink = body(LEGS.stand, true); SPR.blinkL = flip(SPR.blink);
-SPR.duck = sprite(DUCK); SPR.duckL = flip(SPR.duck);
-SPR.back = sprite(BACK);
-const WALK = ["a", "b", "c", "b"];
+const SPR = {}, NS = {};
+for (const k of Object.keys(SP)) { SPR[k] = sprite(SP[k]); SPR[k + "L"] = flip(SPR[k]); }
+for (const k of Object.keys(NPC)) { NS[k] = sprite(NPC[k]); NS[k + "L"] = flip(NS[k]); }
+const WALK = ["a", "b", "c", "d"];
+
+/* lines from the Red Man on the main page */
+const QUOTES = [
+  "Inside you are two wolves, and they both can’t stop fuckin!",
+  "Are you from China? Cause I’m China fuck",
+  "Liquor? Yea if she’ll let me",
+  "Sorry for what I said yesterday, I had two White Claws and I let it create a third",
+  "Our Father, who art in heaven, Baja be thy blast",
+  "She calls me Anthony Bourdain the way I eat her parts unknown",
+  "She’s Cuban on my missile, til I cry sis",
+  "She slop on my AI till I generate",
+  "Call it necrophilia the way I crack a cold one"
+];
+let lastQ = -1;
+function quote() { let q; do { q = Math.floor(Math.random() * QUOTES.length); } while (q === lastQ); lastQ = q; return QUOTES[q]; }
 
 /* ============ comic panels ============ */
 const SERIES = {
@@ -246,18 +257,26 @@ const WORLDS = [
   { key: "taxi", title: "PINK TAXI", panels: [["01", 1], ["05", 5], ["13", 13]],
     obs: [["case", 300], ["taxi", 430], ["sign", 600], ["case", 690], ["taxi", 760], ["sign", 930]],
     target: ["parked", 150],
-    captions: [[30, isTouch ? "Hold ▶ to walk." : "Hold → to walk."], [95, isTouch ? "Nature calls. Hold PEE." : "Nature calls. Hold P."], [380, "Pink taxis. Everywhere."], [640, "9 months later..."]] },
+    props: [["can", 250], ["can", 575]],
+    npcs: [["protester", 340, -1, "Down with pink!"], ["speaker", 480, -1, "BAN THE PINK TAXI!"], ["protester", 505, -1], ["protester", 860, 1, "Never again."]],
+    captions: [[30, isTouch ? "Hold ▶ to walk." : "Hold → to walk."], [95, isTouch ? "Nature calls. Hold PEE." : "Nature calls. Hold P."], [232, isTouch ? "Grab the can. Tap HIT to throw it." : "Grab the can. F to throw it."], [400, "Pink taxis. Everywhere."], [640, "9 months later..."]] },
   { key: "kick", title: "FREE KICK", panels: [["18", 1], ["20", 3], ["26", 9]],
     obs: [["ball", 150], ["hiball", 330], ["ball", 440], ["ball", 470], ["hiball", 600], ["ball", 760], ["hiball", 900]],
     target: ["flag", 680],
-    captions: [[30, "Home crowd. No pressure."], [300, "Keep your head down."]] },
+    props: [["ball", 110], ["ball", 520]],
+    npcs: [["waller", 238, -1], ["waller", 250, -1, "Not the face."], ["waller", 262, -1], ["kicker", 575, 1, "Watch this."], ["keeper", 945, -1, "Go on then."]],
+    captions: [[30, "Home crowd. No pressure."], [300, isTouch ? "Keep your head down. Or HIT it." : "Keep your head down. Or hit it (F)."]] },
   { key: "arch", title: "ARCHERS", panels: [["27", 1], ["28", 2], ["31", 5]],
     obs: [["stuck", 160], ["volley", 300], ["stuck", 560], ["volley", 640], ["stuck", 720], ["volley", 880]],
     target: ["bush", 440],
+    props: [["helmet", 225], ["helmet", 600]],
+    npcs: [["girl", 105, -1, "Wanna walk with me?"], ["archer", 958, -1, "Nothing personal."], ["archer", 972, -1], ["archer", 986, -1]],
     captions: [[30, "Lovely day for a walk."], [270, "Heads up."]] },
   { key: "camp", title: "CAMPFIRE", panels: [["14", 1], ["15", 2], ["16", 3]],
     obs: [["fire", 150], ["bat", 300], ["fire", 430], ["bat", 580], ["fire", 700], ["bat", 760]],
     target: ["campfire", 900],
+    props: [["stick", 210], ["stick", 525]],
+    npcs: [["knight", 468, -1, "Pull up a log."], ["knight", 490, -1], ["centaur", 640, -1, "Don't ask."]],
     captions: [[30, "Warm night. Odd company."], [820, "Almost there."]] }
 ];
 
@@ -278,8 +297,8 @@ const OT = {
 let S;
 function reset() {
   S = { t: 0, camX: 0, running: false, paused: false, ended: false,
-        p: { x: 30, y: 0, vy: 0, face: 1, dist: 0, duck: false, pee: false, inv: 0, kb: 0, onG: true, blink: 0 },
-        obs: [], targets: [], panels: [], captions: [], puddles: [], fx: [], card: 0,
+        p: { x: 30, y: 0, vy: 0, face: 1, dist: 0, duck: false, pee: false, peeT: 0, inv: 0, kb: 0, onG: true, blink: 0, atk: 0, hold: null, idle: 0 },
+        obs: [], targets: [], panels: [], captions: [], puddles: [], fx: [], card: 0, props: [], proj: [], npcs: [],
         seen: new Set(), score: 0, near: null, lastBubble: 0 };
   WORLDS.forEach((w, i) => {
     const s = i * LEN;
@@ -287,16 +306,18 @@ function reset() {
     S.targets.push({ kind: w.target[0], x: s + w.target[1], wet: 0, done: false, t: 0, vx: 0 });
     w.panels.forEach(([num, n]) => S.panels.push({ num, n, key: w.key, x: s + 230 + S.panels.filter(p => p.key === w.key).length * 290 }));
     w.captions.forEach(([x, text]) => S.captions.push({ x: s + x, text, shown: false }));
+    w.props.forEach(([kind, x]) => S.props.push({ kind, x: s + x }));
+    w.npcs.forEach(([kind, x, face, line]) => S.npcs.push({ kind, x: s + x, face, line, said: false }));
   });
   $("score").textContent = "0 / 4";
   hideCaption(); $("end").classList.remove("on");
 }
 
 /* ============ input ============ */
-const K = { left: false, right: false, jump: false, duck: false, pee: false };
-let jumpEdge = false;
+const K = { left: false, right: false, jump: false, duck: false, pee: false, atk: false };
+let jumpEdge = false, atkEdge = false;
 const MAP = { ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", ArrowUp: "jump", KeyW: "jump", Space: "jump",
-              ArrowDown: "duck", KeyS: "duck", KeyP: "pee", KeyE: "pee" };
+              ArrowDown: "duck", KeyS: "duck", KeyP: "pee", KeyE: "pee", KeyF: "atk", KeyX: "atk", KeyJ: "atk" };
 addEventListener("keydown", e => {
   if ($("look").classList.contains("on")) {
     if (e.metaKey || e.ctrlKey) return; e.preventDefault();
@@ -309,6 +330,7 @@ addEventListener("keydown", e => {
   const k = MAP[e.code]; if (!k) return;
   e.preventDefault();
   if (k === "jump" && !K.jump && !e.repeat) jumpEdge = true;
+  if (k === "atk" && !K.atk && !e.repeat) atkEdge = true;
   K[k] = true;
 });
 addEventListener("keyup", e => { const k = MAP[e.code]; if (k) K[k] = false; });
@@ -319,7 +341,7 @@ document.querySelectorAll("#touch .tb").forEach(b => {
   const down = e => { e.preventDefault(); b.classList.add("down");
     if (k === "look") { openLook(); return; }
     if (!S.running && $("start").classList.contains("on")) start();
-    if (k === "jump" && !K.jump) jumpEdge = true; K[k] = true; try { b.setPointerCapture(e.pointerId); } catch (_) {} };
+    if (k === "jump" && !K.jump) jumpEdge = true; if (k === "atk" && !K.atk) atkEdge = true; K[k] = true; try { b.setPointerCapture(e.pointerId); } catch (_) {} };
   const up = e => { b.classList.remove("down"); if (k !== "look") K[k] = false; };
   b.addEventListener("pointerdown", down);
   ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => b.addEventListener(ev, up));
@@ -347,11 +369,15 @@ let capTimer = 0, titleTimer = 0;
 function showCaption(t) { const c = $("caption"); c.textContent = t; c.classList.add("on"); capTimer = 3.6; }
 function hideCaption() { $("caption").classList.remove("on"); capTimer = 0; }
 function showTitle(t) { const el = $("title"); el.textContent = t; el.classList.add("on"); titleTimer = 1.8; }
-const bubbles = [{ el: $("b0"), t: 0, x: 0, y: 0, follow: false }, { el: $("b1"), t: 0, x: 0, y: 0, follow: false }];
+const bubbles = [{ el: $("b0"), t: 0, x: 0, y: 0, follow: true }, { el: $("b1"), t: 0, x: 0, y: 0, follow: false }];
+// bubble 0 belongs to Red; bubble 1 is for everyone else
 function say(text, x, y, dur = 1.6, follow = false) {
-  const b = bubbles.find(b => b.t <= 0) || bubbles[0];
-  b.el.textContent = text; b.x = x; b.y = y; b.t = dur; b.follow = follow; b.el.classList.add("on");
+  const b = follow ? bubbles[0] : bubbles[1];
+  b.el.textContent = text; b.el.classList.toggle("short", text.length < 22);
+  b.x = x; b.y = y; b.t = dur; b.follow = follow;
+  b.el.classList.remove("on"); void b.el.offsetWidth; b.el.classList.add("on");
 }
+const redSays = (text, dur) => say(text, 0, 40, dur || clamp(text.length * 0.07, 2.4, 5), true);
 const LK = { key: null, n: 1 };
 const panelSrc = (key, n) => `../assets/comic-${String(SERIES[key].first + n - 1).padStart(2, "0")}.jpg`;
 function showPanel(n) {
@@ -393,13 +419,21 @@ if (/[?&]debug/.test(location.search)) window.__red = { get S() { return S; } };
 
 /* ============ update ============ */
 const SPEED = 70, GRAV = 820, JUMP = 265;
-function hitbox(p) { return p.duck ? { l: p.x - 6, r: p.x + 6, b: p.y, t: p.y + 11 } : { l: p.x - 3, r: p.x + 3, b: p.y, t: p.y + 27 }; }
-const OUCH = ["ow.", "rude.", "ouch!", "my good briefs", "hey!", "noted."];
+function hitbox(p) { return p.duck ? { l: p.x - 6, r: p.x + 6, b: p.y, t: p.y + 12 } : { l: p.x - 3, r: p.x + 3, b: p.y, t: p.y + 31 }; }
+const overlap = (a, o) => a.r > o.x + 1 && a.l < o.x + o.w - 1 && a.t > o.y + 1 && a.b < o.y + o.h - 1;
+const TOUGH = { taxi: "HONK!", fire: "hot hot hot" };   // can't be swatted away
+function fling(o, dir) {
+  if (TOUGH[o.type]) { if (!o.honk || S.t - o.honk > 1) { o.honk = S.t; say(TOUGH[o.type], o.x + o.w / 2, o.y + o.h + 8, 0.9); } return false; }
+  o.flung = true; o.vx = 170 * dir; o.vy = 150; o.active = true;
+  S.fx.push({ kind: "pow", x: o.x + o.w / 2, y: o.y + o.h / 2, t: 0, life: .25 });
+  return true;
+}
 
 function update(dt) {
   const p = S.p; S.t += dt;
   // controls
   p.pee = K.pee && p.onG && !K.duck && p.kb <= 0;
+  p.peeT = p.pee ? p.peeT + dt : 0;
   p.duck = K.duck && p.onG && !p.pee;
   let vx = 0;
   if (p.kb > 0) { p.kb -= dt; vx = -110; }
@@ -410,6 +444,14 @@ function update(dt) {
   }
   if (jumpEdge && p.onG && !p.pee) { p.vy = JUMP; p.onG = false; p.duck = false; }
   jumpEdge = false;
+  // hit / throw
+  if (atkEdge && !p.pee && p.atk <= 0 && p.kb <= 0) {
+    p.atk = 0.28; p.duck = false;
+    if (p.hold) { S.proj.push({ kind: p.hold, x: p.x + 8 * p.face, y: p.y + (p.hold === "ball" ? 4 : 18), vx: 210 * p.face + vx * .5, vy: p.hold === "ball" ? 30 : 45, b: 0, t: 0 }); p.hold = null; p.threw = true; }
+    else p.threw = false;
+  }
+  atkEdge = false;
+  if (p.atk > 0) p.atk -= dt;
   if (!K.jump && p.vy > 80) p.vy = 80;           // short hop when released early
   p.vy -= GRAV * dt; p.y += p.vy * dt;
   if (p.y <= 0) { if (!p.onG && p.vy < -200) dust(p.x); p.y = 0; p.vy = 0; p.onG = true; }
@@ -417,6 +459,34 @@ function update(dt) {
   if (p.onG && vx !== 0) p.dist += Math.abs(vx * dt);
   if (p.inv > 0) p.inv -= dt;
   p.blink -= dt; if (p.blink < -3.2) p.blink = 0.12;
+  // idle long enough and Red starts talking
+  const busy = K.left || K.right || K.jump || K.duck || K.pee || p.atk > 0;
+  p.idle = busy ? Math.min(p.idle, 0) : p.idle + dt;
+  if (p.idle > 4.5 && bubbles[0].t <= 0) { redSays(quote()); p.idle = -9; }
+
+  // swing connects
+  if (p.atk > 0.06 && !p.threw) {
+    const reach = p.face > 0 ? { l: p.x + 2, r: p.x + 19, b: p.y + 3, t: p.y + 30 } : { l: p.x - 19, r: p.x - 2, b: p.y + 3, t: p.y + 30 };
+    for (const o of S.obs) if (!o.dead && !o.flung && overlap(reach, o)) fling(o, p.face);
+  }
+  // thrown props
+  for (const q of S.proj) {
+    q.t += dt; q.vy -= GRAV * 0.7 * dt; q.x += q.vx * dt; q.y += q.vy * dt;
+    const box = { l: q.x - 3, r: q.x + 3, b: q.y, t: q.y + 5 };
+    for (const o of S.obs) if (!o.dead && !o.flung && q.vx && overlap(box, o)) { if (!fling(o, Math.sign(q.vx))) {} q.vx *= -0.3; q.vy = Math.max(q.vy, 60); break; }
+    if (q.y <= 0) {
+      if (q.kind === "ball" && q.b < 3 && Math.abs(q.vx) > 30) { q.y = 0; q.vy = Math.max(60, -q.vy * 0.55); q.vx *= 0.75; q.b++; }
+      else { q.done = true; S.props.push({ kind: q.kind, x: q.x }); }
+    }
+  }
+  S.proj = S.proj.filter(q => !q.done && Math.abs(q.x - S.camX) < W * 2);
+  // pick up
+  if (!p.hold && p.onG && !p.pee && p.atk <= 0) {
+    const i = S.props.findIndex(q => Math.abs(q.x - p.x) < 7);
+    if (i >= 0) { p.hold = S.props[i].kind; S.props.splice(i, 1); }
+  }
+  // comic characters speak once when Red walks by
+  for (const n of S.npcs) if (!n.said && n.line && Math.abs(n.x - p.x) < 34) { n.said = true; say(n.line, n.x, NS[n.kind].height + 4, 2.4); }
 
   // camera
   S.camX += (clamp(p.x - 120, 0, END + 320 - W) - S.camX) * Math.min(1, dt * 8);
@@ -432,12 +502,12 @@ function update(dt) {
   for (const o of S.obs) {
     if (o.dead) continue;
     if (!o.active && o.x - S.camX < W + 6) o.active = true;
+    if (o.flung) { o.x += o.vx * dt; o.y += o.vy * dt; o.vy -= GRAV * 0.6 * dt; if (o.y < -40 || Math.abs(o.x - S.camX) > W * 2) o.dead = true; continue; }
     if (o.active && o.vx) { o.x += o.vx * dt; if (o.x + o.w < S.camX - 60) o.dead = true; }
     if (p.inv > 0) continue;
-    const pad = 1;
-    if (hb.r > o.x + pad && hb.l < o.x + o.w - pad && hb.t > o.y + pad && hb.b < o.y + o.h - pad) {
+    if (overlap(hb, o)) {
       p.inv = 1.3; p.kb = 0.16; p.vy = Math.max(p.vy, 120); p.onG = false;
-      say(OUCH[Math.floor(Math.random() * OUCH.length)], p.x, 33, 1.2, true);
+      if (bubbles[0].t <= 0) redSays(quote());
     }
   }
 
@@ -483,7 +553,7 @@ function update(dt) {
 
 function react(tg) {
   if (tg.kind === "parked") { say("!!", tg.x, 26, 1.4); setTimeout(() => { tg.vx = 140; }, 700); }
-  if (tg.kind === "flag") { say("FOUL.", tg.x, 32, 1.8); S.card = 2.2; }
+  if (tg.kind === "flag") { say("FOUL.", tg.x, 34, 1.8); S.card = 2.2; }
   if (tg.kind === "bush") { say("it's thriving.", tg.x, 22, 1.8); }
   if (tg.kind === "campfire") { say("tssssss", tg.x, 26, 2); for (let i = 0; i < 10; i++) S.fx.push({ kind: "steam", x: tg.x - 6 + Math.random() * 12, y: 8, vx: (Math.random() - .5) * 8, vy: 14 + Math.random() * 10, t: -i * 0.12, life: 2.4 }); }
 }
@@ -615,18 +685,44 @@ function drawTarget(tg) {
   if (tg.kind === "campfire") { if (!tg.done) drawFire(x - 10, G - 24, t, true); else { R("#5b3412", x - 10, G - 6, 20, 6); R("#2b2b2b", x - 6, G - 7, 12, 2); } }
 }
 
+function drawProp(kind, x, y, face) {   // x,y = bottom-centre in screen space
+  const im = NS[face < 0 ? kind + "L" : kind]; ctx.drawImage(im, Math.round(x - im.width / 2), Math.round(y - im.height + 1));
+}
 function drawRed() {
   const p = S.p, sx = Math.round(p.x - S.camX), gy = G - Math.round(p.y);
   if (p.inv > 0 && Math.floor(p.inv * 14) % 2) return;
-  let spr;
-  if (p.pee) spr = SPR.back;
-  else if (p.duck) spr = p.face > 0 ? SPR.duck : SPR.duckL;
-  else if (!p.onG) spr = p.face > 0 ? SPR.jump : SPR.jumpL;
-  else if (K.left || K.right) { const f = WALK[Math.floor(p.dist / 6) % 4]; spr = p.face > 0 ? SPR[f] : SPR[f + "L"]; }
-  else spr = p.blink > 0 ? (p.face > 0 ? SPR.blink : SPR.blinkL) : (p.face > 0 ? SPR.stand : SPR.standL);
-  // shadow
+  const walking = (K.left || K.right) && p.onG && p.kb <= 0;
+  const f = WALK[Math.floor(p.dist / 7) % 4];
+  let key;
+  if (p.pee) key = p.peeT > 0.35 ? "backLow" : "back";
+  else if (p.duck) key = "duck";
+  else if (p.atk > 0) key = "attack";
+  else if (p.hold) key = !p.onG ? "carryJ" : walking ? "carry" + f.toUpperCase() : "carry";
+  else if (!p.onG) key = "jump";
+  else if (walking) key = f;
+  else key = p.blink > 0 ? "blink" : "stand";
+  const back = key.startsWith("back"), spr = SPR[back || p.face > 0 ? key : key + "L"];
+  const left = back ? sx - Math.floor(spr.width / 2) : p.face > 0 ? sx - 9 : sx - (spr.width - 9);
+  const top = gy - spr.height + 1;
   R("rgba(0,0,0,.28)", sx - 6 + Math.min(3, p.y / 12), G, 12 - Math.min(6, p.y / 8), 1);
-  ctx.drawImage(spr, sx - 9, gy - spr.height + 1);
+  ctx.drawImage(spr, left, top);
+  if (p.hold && !p.pee) {   // prop in hand
+    const hx = p.duck ? (p.face > 0 ? left + 17 : left + spr.width - 17) : (p.face > 0 ? left + 16 : left + spr.width - 16);
+    drawProp(p.hold, hx, p.duck ? top + 9 : top + 18, p.face);
+  }
+}
+function drawNpc(n) {
+  const im = NS[n.face < 0 ? n.kind + "L" : n.kind], x = Math.round(n.x - S.camX - im.width / 2);
+  if (x < -40 || x > W + 40) return;
+  const bob = (n.kind === "speaker" || n.kind === "protester") ? (Math.floor(S.t * 2 + n.x) % 2) : 0;
+  ctx.drawImage(im, x, G - im.height + 1 - bob);
+}
+function drawProps() {
+  for (const q of S.props) { const x = q.x - S.camX; if (x < -20 || x > W + 20) continue; drawProp(q.kind, x, G, 1);
+    if (Math.floor(S.t * 3) % 2) { const h = NS[q.kind].height; R(C.paper, x - 2, G - h - 6, 5, 1); R(C.paper, x - 1, G - h - 5, 3, 1); R(C.paper, x, G - h - 4, 1, 1); } }
+  for (const q of S.proj) { const x = q.x - S.camX; const im = NS[q.kind];
+    ctx.save(); ctx.translate(Math.round(x), Math.round(G - q.y - im.height / 2)); ctx.rotate(Math.round(q.t * 10) * Math.PI / 2 * Math.sign(q.vx || 1));
+    ctx.drawImage(im, -Math.floor(im.width / 2), -Math.floor(im.height / 2)); ctx.restore(); }
 }
 
 function drawPee() {
@@ -647,8 +743,9 @@ function drawPuddles() { for (const q of S.puddles) { const a = clamp(1 - q.age 
 function drawFx() {
   for (const f of S.fx) { if (f.t < 0) continue; const x = f.x - S.camX, y = G - f.y;
     if (f.kind === "steam") { ctx.globalAlpha = clamp(1 - f.t / f.life, 0, 1) * .8; R("#d6d6d6", x, y, 3, 2); ctx.globalAlpha = 1; }
-    if (f.kind === "dust") R("rgba(220,220,220,.7)", x, y, 2, 1); }
-  if (S.card > 0) { const x = Math.round(S.p.x - S.camX) + 8, y = G - 46 - Math.round(S.p.y); R(C.ink, x, y, 7, 10); R("#f5d32a", x + 1, y + 1, 5, 8); R("#dcdcdc", x + 2, y + 9, 1, 4); }
+    if (f.kind === "dust") R("rgba(220,220,220,.7)", x, y, 2, 1);
+    if (f.kind === "pow") { const r = 2 + Math.round(f.t * 24); R(C.paper, x - r, y, r * 2 + 1, 1); R(C.paper, x, y - r, 1, r * 2 + 1); R(C.paper, x - r + 2, y - r + 2, 1, 1); R(C.paper, x + r - 2, y - r + 2, 1, 1); R(C.paper, x - r + 2, y + r - 2, 1, 1); R(C.paper, x + r - 2, y + r - 2, 1, 1); } }
+  if (S.card > 0) { const x = Math.round(S.p.x - S.camX) + 8, y = G - 52 - Math.round(S.p.y); R(C.ink, x, y, 7, 10); R("#f5d32a", x + 1, y + 1, 5, 8); R("#dcdcdc", x + 2, y + 9, 1, 4); }
 }
 
 /* ============ frame ============ */
@@ -666,7 +763,9 @@ function render() {
   S.panels.forEach(drawPanel);
   for (let i = 1; i <= 4; i++) gutter(i * LEN);
   drawPuddles();
+  S.npcs.forEach(drawNpc);
   S.targets.forEach(drawTarget);
+  drawProps();
   drawPee();
   S.obs.forEach(o => { if (!o.dead) drawObs(o); });
   drawRed();
@@ -682,8 +781,11 @@ function render() {
 
   // HTML overlays that follow world positions
   const sc = 100 / W, scy = 100 / H;
-  bubbles.forEach(b => { if (b.t <= 0) return; const x = b.follow ? S.p.x : b.x, y = b.follow ? S.p.y + b.y : b.y;
-    b.el.style.left = ((x - cam) * sc) + "%"; b.el.style.top = ((G - y) * scy) + "%"; });
+  const sw = stage.clientWidth, sh = stage.clientHeight;
+  bubbles.forEach(b => { if (b.t <= 0) return; const x = b.follow ? S.p.x : b.x, y = b.follow ? S.p.y + (S.p.duck ? 18 : b.y) : b.y;
+    const bw = b.el.offsetWidth, px = (x - cam) / W * sw, lx = clamp(px, bw / 2 + 8, sw - bw / 2 - 8);
+    b.el.style.left = lx + "px"; b.el.style.top = Math.max(b.el.offsetHeight + 10, (G - y) / H * sh) + "px";
+    b.el.style.setProperty("--tail", clamp(50 + (px - lx) / bw * 100, 12, 88) + "%"); });
   const pr = $("prompt");
   if (S.near && S.running && !S.paused) { pr.style.left = ((S.near.x - cam) * sc) + "%"; pr.style.top = (25 * scy) + "%"; pr.textContent = isTouch ? "Tap look" : "L to look"; pr.classList.add("on"); }
   else pr.classList.remove("on");
