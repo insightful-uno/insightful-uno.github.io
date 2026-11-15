@@ -99,6 +99,7 @@ body.touch #keyhint{display:none}
 @media (max-width:520px){.tb{width:56px;height:56px}.tb.look{height:40px;padding:0 12px}}
 
 [hidden]{display:none!important}
+#title{padding:0 6cqw;text-align:center;line-height:1}
 #hud>span{background:rgba(20,17,15,.6);padding:.35em .7em;border-radius:2px}
 #look .lk-frame{background:#111}
 #look img{object-fit:contain}
@@ -211,6 +212,7 @@ body.touch #keyhint{display:none}
   <p class="label" id="keyhint">&larr; &rarr; walk &middot; &uarr; jump &middot; &darr; duck &middot; F hit/throw &middot; P pee &middot; L reveal</p>
 </main>
 
+<script src="levels.js"></script>
 <script>
 (() => {
 "use strict";
@@ -688,6 +690,7 @@ function drawKitTarget(tg, x, t) {
     case "lamp": R("#444", x, G - 26, 2, 26); R(C.ink, x - 6, G - 34, 14, 9); R("#e9d27a", x - 5, G - 33, 12, 7); if (d && Math.floor(t * 10) % 2) R("#fff", x - 5, G - 33, 12, 7); R(C.ink, x - 4, G - 2, 10, 2); break;
     case "throne": R(C.ink, x - 8, G - 30, 16, 30); R("#c9a24a", x - 7, G - 29, 14, 29); R("#8a2a8a", x - 5, G - 24, 10, 12); R("#8a2a8a", x - 7, G - 12, 14, 4); R("#f3d23b", x - 7, G - 31, 2, 2); R("#f3d23b", x + 5, G - 31, 2, 2); break;
     case "hay": R(C.ink, x - 9, G - 12, 18, 12); R("#e2c23a", x - 8, G - 11, 16, 11); R("#c9a24a", x - 8, G - 7, 16, 1); R("#c9a24a", x - 8, G - 3, 16, 1); break;
+    case "rock": R(C.ink, x - 10, G - 12, 20, 12); R(C.ink, x - 8, G - 15, 15, 4); R("#8a8a8a", x - 9, G - 11, 18, 11); R("#8a8a8a", x - 7, G - 14, 13, 3); R("#aaa", x - 5, G - 12, 6, 2); break;
     case "cake": R(C.ink, x - 8, G - 12, 16, 12); R("#ffd1e6", x - 7, G - 11, 14, 11); R("#fff", x - 7, G - 11, 14, 2); R("#f3d23b", x - 1, G - 15, 2, 3); R("#ff7a2a", x - 1, G - 16, 2, 1); break;
     default: return false;
   }
@@ -806,7 +809,7 @@ function start() { $("start").classList.remove("on"); S.running = true; S.paused
 let capTimer = 0, titleTimer = 0;
 function showCaption(t) { const c = $("caption"); c.textContent = t; c.classList.add("on"); capTimer = 3.6; }
 function hideCaption() { $("caption").classList.remove("on"); capTimer = 0; }
-function showTitle(t) { const el = $("title"); el.textContent = t; el.classList.add("on"); titleTimer = 1.8; }
+function showTitle(t) { const el = $("title"); el.textContent = t; el.style.fontSize = t.length > 26 ? "5.4cqw" : t.length > 16 ? "7.5cqw" : ""; el.classList.add("on"); titleTimer = 1.8; }
 const bubbles = [{ el: $("b0"), t: 0, x: 0, y: 0, follow: true }, { el: $("b1"), t: 0, x: 0, y: 0, follow: false }];
 // bubble 0 belongs to Red; bubble 1 is for everyone else
 function say(text, x, y, dur = 1.6, follow = false) {
