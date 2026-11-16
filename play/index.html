@@ -705,7 +705,7 @@ function drawKitTarget(tg, x, t) {
 }
 
 const API = { SP, WALK, R, layer, hash, clamp, sprite, flip, charKey, drawCar, sky, clouds, stars, ground, say, showCaption, dust, C, PAL, NS, THEME, W, H, G,
-  get ctx() { return ctx; }, get S() { return S; }, get redSays() { return redSays; }, get red() { return redBox(); } };
+  reskin, get __s2() { return window.RED_WORLDS.__shared2; }, get ctx() { return ctx; }, get S() { return S; }, get redSays() { return redSays; }, get red() { return redBox(); } };
 const LV = buildLevels(), NL = LV.length;
 
 /* ============ outfits ============ */
@@ -714,6 +714,10 @@ function outfit(pal) {   // per-level briefs / colours for Red, e.g. Krakussy's 
   const key = JSON.stringify(pal || null); if (key === OUTFIT) return; OUTFIT = key;
   const p = Object.assign({}, PAL, pal || {});
   for (const k of Object.keys(SP)) { SPR[k] = sprite(SP[k], p); SPR[k + "L"] = flip(SPR[k]); }
+}
+function reskin(fn, pal) {   // rebuild Red's sprites with transformed rows (e.g. Leap of Faith's fuzzy Red)
+  OUTFIT = "custom"; const p = Object.assign({}, PAL, pal || {});
+  for (const k of Object.keys(SP)) { SPR[k] = sprite(fn(SP[k], k), p); SPR[k + "L"] = flip(SPR[k]); }
 }
 function redBox() {   // where Red is on screen right now (for hats, burger heads, etc.)
   const p = S.p, spr = SPR.stand, h = p.duck ? SPR.duck.height : spr.height;
