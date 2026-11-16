@@ -213,6 +213,7 @@ body.touch #keyhint{display:none}
 </main>
 
 <script src="levels.js"></script>
+<script src="worlds.js"></script>
 <script>
 (() => {
 "use strict";
@@ -364,6 +365,12 @@ function genObs(kit, rnd, avoid) {
   return out;
 }
 function tplLevel(e) {
+  const wd = window.RED_WORLDS && RED_WORLDS[e.key] ? RED_WORLDS[e.key](API) : null;
+  if (wd) {
+    if (wd.level) e = Object.assign({}, e, wd.level);
+    Object.assign(OT, wd.obs || {});
+    for (const [k, v] of Object.entries(wd.sprites || {})) { NS[k] = sprite(v.rows, Object.assign({}, PAL, v.pal || {})); NS[k + "L"] = flip(NS[k]); }
+  }
   const rnd = seeded(e.key), tAt = e.targetAt || 640;
   const props = e.prop ? [[e.prop, e.propAt || 130], [e.prop, 520]] : [];
   return {
@@ -372,7 +379,7 @@ function tplLevel(e) {
     obs: e.obs || genObs(e.kit || ["rock", "bird"], rnd, [tAt, ...props.map(p => p[1])]),
     target: [e.target || "bush", tAt], props,
     npcs: (e.npcs || []).map(([spec, x, face, line]) => [charKey(spec), x, face == null ? -1 : face, line]),
-    captions: (e.captions || []).slice(), react: e.react, trip: e.trip
+    captions: (e.captions || []).slice(), react: e.react, trip: e.trip, world: wd
   };
 }
 function buildLevels() {
@@ -697,7 +704,21 @@ function drawKitTarget(tg, x, t) {
   return true;
 }
 
+const API = { SP, WALK, R, layer, hash, clamp, sprite, flip, charKey, drawCar, sky, clouds, stars, ground, say, showCaption, dust, C, PAL, NS, THEME, W, H, G,
+  get ctx() { return ctx; }, get S() { return S; }, get redSays() { return redSays; }, get red() { return redBox(); } };
 const LV = buildLevels(), NL = LV.length;
+
+/* ============ outfits ============ */
+let OUTFIT = null;
+function outfit(pal) {   // per-level briefs / colours for Red, e.g. Krakussy's swim trunks
+  const key = JSON.stringify(pal || null); if (key === OUTFIT) return; OUTFIT = key;
+  const p = Object.assign({}, PAL, pal || {});
+  for (const k of Object.keys(SP)) { SPR[k] = sprite(SP[k], p); SPR[k + "L"] = flip(SPR[k]); }
+}
+function redBox() {   // where Red is on screen right now (for hats, burger heads, etc.)
+  const p = S.p, spr = SPR.stand, h = p.duck ? SPR.duck.height : spr.height;
+  return { x: Math.round(p.x - S.camX), top: G - Math.round(p.y) - h + 1, face: p.face, duck: p.duck, back: p.pee };
+}
 
 /* ============ progress ============ */
 const SAVE_KEY = "red-wrapped-2026";
@@ -725,6 +746,8 @@ function reset(L) {
   w.props.forEach(([kind, x]) => S.props.push({ kind, x }));
   w.npcs.forEach(([kind, x, face, line]) => S.npcs.push({ kind, x, face, line, said: false }));
   S.trip = 0; stage.classList.remove("trip");
+  outfit(w.world && w.world.outfit);
+  if (w.world && w.world.reset) w.world.reset(S, w);
   hideCaption(); hud();
   loadCover(w);
 }
@@ -867,7 +890,8 @@ function hitbox(p) { return p.duck ? { l: p.x - 6, r: p.x + 6, b: p.y, t: p.y + 
 const overlap = (a, o) => a.r > o.x + 1 && a.l < o.x + o.w - 1 && a.t > o.y + 1 && a.b < o.y + o.h - 1;
 const TOUGH = { taxi: "HONK!", fire: "hot hot hot", car: "BEEP!" };   // can't be swatted away
 function fling(o, dir) {
-  if (TOUGH[o.type]) { if (!o.honk || S.t - o.honk > 1) { o.honk = S.t; say(TOUGH[o.type], o.x + o.w / 2, o.y + o.h + 8, 0.9); } return false; }
+  const tough = TOUGH[o.type] || o.tough;
+  if (tough) { if (!o.honk || S.t - o.honk > 1) { o.honk = S.t; say(tough, o.x + o.w / 2, o.y + o.h + 8, 0.9); } return false; }
   o.flung = true; o.vx = 170 * dir; o.vy = 150; o.active = true;
   S.fx.push({ kind: "pow", x: o.x + o.w / 2, y: o.y + o.h / 2, t: 0, life: .25 });
   return true;
@@ -938,6 +962,7 @@ function update(dt) {
 
   if (!S.revealed && p.x >= PANEL_AT + 20 && !S.nudged) { S.nudged = true; showCaption(T(["Unwrap the comic to keep going. Tap REVEAL.", "Unwrap the comic to keep going. Press L."])); }
   for (const c of S.captions) if (!c.shown && p.x > c.x) { c.shown = true; showCaption(c.text); }
+  if (S.lv.world && S.lv.world.update) S.lv.world.update(dt, S, p);
 
   // obstacles
   const hb = hitbox(p);
@@ -946,8 +971,9 @@ function update(dt) {
     if (!o.active && o.x - S.camX < W + 6) o.active = true;
     if (o.flung) { o.x += o.vx * dt; o.y += o.vy * dt; o.vy -= GRAV * 0.6 * dt; if (o.y < -40 || Math.abs(o.x - S.camX) > W * 2) o.dead = true; continue; }
     if (o.active && o.vx) { o.x += o.vx * dt; if (o.x + o.w < S.camX - 60) o.dead = true; }
-    if (p.inv > 0) continue;
+    if (p.inv > 0 || o.off) continue;
     if (overlap(hb, o)) {
+      if (o.onHit) o.onHit(o);
       p.inv = 1.3; p.kb = 0.16; p.vy = Math.max(p.vy, 120); p.onG = false;
       SV.st.hits++;
       if (bubbles[0].t <= 0) redSays(quote());
@@ -993,6 +1019,8 @@ function trip() {
 }
 const LEGACY_T = new Set(["parked", "flag", "bush", "hamper", "patch", "campfire"]);
 function react(tg) {
+  const wt = S.lv.world && S.lv.world.targets && S.lv.world.targets[tg.kind];
+  if (wt) { say(wt.line || S.lv.react || "Ahh.", tg.x, wt.lineY || 34, 1.8); if (wt.react) wt.react(tg, S); return; }
   if (tg.kind === "parked") { say("!!", tg.x, 26, 1.4); setTimeout(() => { tg.vx = 140; }, 700); }
   if (tg.kind === "flag") { say("FOUL.", tg.x, 34, 1.8); S.card = 2.2; }
   if (tg.kind === "bush") { say("it's thriving.", tg.x, 22, 1.8); }
@@ -1142,6 +1170,8 @@ function drawObs(o) {
   const x = Math.round(o.x - S.camX), y = Math.round(G - o.y - o.h);
   if (x < -60 || x > W + 10) return;
   const t = S.t;
+  const wo = S.lv.world && S.lv.world.obs && S.lv.world.obs[o.type];
+  if (wo && wo.draw) { wo.draw(o, x, y, t); return; }
   if (drawKit(o, x, y, t)) return;
   switch (o.type) {
     case "taxi": drawTaxi(x, y, "drive", t); break;
@@ -1163,6 +1193,8 @@ function drawObs(o) {
 function drawTarget(tg) {
   const x = Math.round(tg.x - S.camX); if (x < -60 || x > W + 60) return;
   const t = S.t;
+  const wt = S.lv.world && S.lv.world.targets && S.lv.world.targets[tg.kind];
+  if (wt) { wt.draw(tg, x, t); return; }
   if (!LEGACY_T.has(tg.kind)) { drawKitTarget(tg, x, t); return; }
   if (tg.kind === "parked") drawTaxi(x - 20, G - 16, tg.done ? (tg.vx ? "drive" : "awake") : "sleep", t);
   if (tg.kind === "parked" && !tg.done && Math.floor(t * 1.5) % 2) { R(C.paper, x + 2, G - 26, 3, 1); R(C.paper, x + 4, G - 25, 1, 1); R(C.paper, x + 2, G - 24, 3, 1); }
@@ -1207,6 +1239,7 @@ function drawRed() {
 function drawNpc(n) {
   const im = NS[n.face < 0 ? n.kind + "L" : n.kind], x = Math.round(n.x - S.camX - im.width / 2);
   if (x < -40 || x > W + 40) return;
+  if (S.lv.world && S.lv.world.drawNpc && S.lv.world.drawNpc(n, Math.round(n.x - S.camX), S.t)) return;
   const bob = (n.kind === "speaker" || n.kind === "protester") ? (Math.floor(S.t * 2 + n.x) % 2) : 0;
   ctx.drawImage(im, x, G - im.height + 1 - bob);
 }
@@ -1260,17 +1293,19 @@ function render() {
   const cam = S.camX;
   ctx.fillStyle = C.ink; ctx.fillRect(0, 0, W, H);
   { const w = S.lv, e = Math.min(W, Math.round(LEN - cam));
-    if (e > 0) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, e, H); ctx.clip(); if (w.bg === "tpl") TPL[w.scene](w.th, S.t); else BG[w.bg](S.t); ctx.restore(); } }
+    if (e > 0) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, e, H); ctx.clip(); if (w.world && w.world.bg) w.world.bg(S.t, S); else if (w.bg === "tpl") TPL[w.scene](w.th, S.t); else BG[w.bg](S.t); ctx.restore(); } }
   endPage();
   S.panels.forEach(drawPanel);
   gutter(LEN);
   drawPuddles();
+  if (S.lv.world && S.lv.world.mid) S.lv.world.mid(S.t, S);
   S.npcs.forEach(drawNpc);
   S.targets.forEach(drawTarget);
   drawProps();
   drawPee();
   S.obs.forEach(o => { if (!o.dead) drawObs(o); });
   drawRed();
+  if (S.lv.world && S.lv.world.fg) S.lv.world.fg(S.t, S);
   drawCloudHand();
   drawFx();
   const lx = S.p.x;
