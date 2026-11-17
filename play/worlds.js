@@ -2170,3 +2170,333 @@ W["today-vs-tomorrow"] = A => {
   };
 };
 })();
+
+/* ======================= batch 7 ======================= */
+(() => {
+const W = window.RED_WORLDS, { lerp, mix, disc, puff, sx } = W.__shared;
+const { reds, follow, onHead, heartFx, hearts, splash, dropFx, crowdText, txtFx, smoke } = W.__shared2;
+const flash = (A, a, c = "#ffffff") => { if (a <= 0) return; A.ctx.globalAlpha = Math.min(1, a); A.R(c, 0, 0, A.W, A.H); A.ctx.globalAlpha = 1; };
+const grad = (A, stops, y0 = 0, y1 = A.H) => { const g = A.ctx.createLinearGradient(0, y0, 0, y1); stops.forEach((c, i) => g.addColorStop(i / (stops.length - 1), c)); A.ctx.fillStyle = g; A.ctx.fillRect(0, y0, A.W, y1 - y0); };
+const ell = (A, c, x, y, rx, ry, rot = 0) => { A.ctx.fillStyle = c; A.ctx.beginPath(); A.ctx.ellipse(x, y, Math.max(.5, rx), Math.max(.5, ry), rot, 0, 7); A.ctx.fill(); };
+const oell = (A, c, x, y, rx, ry, rot = 0) => { ell(A, A.C.ink, x, y, rx + 1, ry + 1, rot); ell(A, c, x, y, rx, ry, rot); };
+const lock = (p, x) => { p.x = x; p.vy = 0; p.y = 0; p.inv = Math.max(p.inv, .3); };
+const text = (A, s, x, y, c, size = 6) => { A.ctx.font = `bold ${size}px monospace`; A.ctx.textAlign = "center"; A.ctx.fillStyle = c; A.ctx.fillText(s, x, y); };
+const body = (pal) => rows => rows.map((r, j) => j >= 11 && j <= 19 ? r.replace(/R/g, pal) : r);
+const vign = (A, a = .5) => { const k = A.ctx, g = k.createRadialGradient(A.W / 2, A.H / 2, 40, A.W / 2, A.H / 2, 210); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, `rgba(0,0,0,${a})`); k.fillStyle = g; k.fillRect(0, 0, A.W, A.H); };
+const lady = (pal, hair = "K") => ({ pal: Object.assign({ K: "#14110F" }, pal), rows: [
+  `..${hair}${hair}${hair}${hair}${hair}...`, `.${hair}${hair}${hair}${hair}${hair}${hair}${hair}..`, `.${hair}SSSSS${hair}${hair}.`, `.${hair}SKSSKS${hair}.`, `.${hair}SSSSS${hair}${hair}.`, `.${hair}.SRRS.${hair}.`, "....SS....", "..TTTTTT..", ".TTTTTTTT.", ".STTTTTTS.", ".STTTTTTS.", "..TTTTTT..", "..BBBBBB..", "..SSSSSS..", "..SS..SS..", "..SS..SS..", "..SS..SS..", "..SS..SS..", ".SSS.SSS.."] });
+
+/* GYATT FISH: caught a big one. She's got a following. */
+W["gyatt-fish"] = A => {
+  const R = A.R, G = A.G, POND = 200, CABIN = 560, SHOOT = 820, PUR = "#a070d0";
+  const fish = (x, t, s, shake) => { const w = Math.sin(t * (shake ? 18 : 4)) * (shake ? 3 : 1); oell(A, PUR, x, G - 9 * s, 16 * s, 9 * s); oell(A, PUR, x + 14 * s + w, G - 14 * s, 9 * s, 11 * s); oell(A, PUR, x + 22 * s - w, G - 12 * s, 8 * s, 10 * s);
+    R("#8a5ac0", x + 18 * s, G - 22 * s, 1, 18 * s); for (let i = 0; i < 6; i++) R("#c8a8f0", x - 10 * s + (i * 7) % (20 * s), G - 14 * s + (i * 3) % 10, 1, 1);
+    oell(A, "#e070b0", x - 15 * s, G - 8 * s, 4 * s, 3 * s); R(A.C.ink, x - 18 * s, G - 8 * s, 6 * s, 1); disc(A, A.C.ink, x - 8 * s, G - 13 * s, 1.5 * s); R("#5ab8e8", x - 4 * s, G - 2, 10 * s, 2); };
+  return {
+    outfit: { W: "#f4f4f2" },
+    sprites: { rod: { pal: { N: "#3a3a3a" }, rows: ["N....", ".N...", "..N..", "...N.", "....N"] }, phn: { pal: { B: "#3a8ae0" }, rows: ["KKK", "BBB", "BBB", "KKK"] } },
+    level: {
+      obs: [["bird", 300], ["gy_tip", 420], ["bird", 480], ["gy_tip", 640], ["gy_tip", 700]],
+      target: "bush", targetAt: 380, prop: "rod", propAt: 110, npcs: [],
+      captions: [[30, "Gone fishing."], [POND + 50, "Whoa. Big one."], [CABIN + 10, "She followed me home."], [SHOOT - 50, "Lights. Camera."]]
+    },
+    obs: { gy_tip: { w: 9, h: 5, y: 15, vx: -50, draw(o, x, y, t) { const yy = y + Math.round(Math.sin(t * 3 + o.x) * 2); R(A.C.ink, x, yy, 9, 5); R("#5aa83a", x + 1, yy + 1, 7, 3); text(A, "$", x + 4, yy + 4, "#f4f4f2", 4); } } },
+    reset(S) { S.gy = { f: { x: POND + 20, y: 0, d: 0, face: 1, moving: false }, caught: false, shoot: -1, tips: [] }; },
+    update(dt, S, p) {
+      const g = S.gy; if (!g.caught && p.x > POND + 20) { g.caught = true; crowdText(A, S, "SPLOSH", POND + 30, 40); A.redSays("Hey there, gorgeous.", 1.6); }
+      if (g.caught && g.shoot < 0) { follow(g.f, p.x - 34 * (p.face || 1), 90, dt); if (Math.abs(g.f.x - p.x) > 100) g.f.x = p.x - 50; }
+      if (g.shoot < 0 && p.x > SHOOT && p.x < SHOOT + 60) { g.shoot = 0; g.f.x = SHOOT + 50; A.showCaption("Gyatt fish."); }
+      if (g.shoot >= 0) { g.shoot += dt; if (Math.random() < dt * 2.5) g.tips.push({ t: 0, n: ["$5 \"wow\"", "$20 \"more!!\"", "$50 \"queen\"", "$10 \"lips 😍\""][g.tips.length % 4] }); }
+      for (const n of g.tips) n.t += dt; g.tips = g.tips.filter(n => n.t < 2.5);
+    },
+    bg(t, S) {
+      const night = S.p.x > CABIN - 40;
+      if (!night) { R("#3a9a3a", 0, 0, A.W, A.H); const k = A.ctx, gg = k.createRadialGradient(160, 80, 20, 160, 80, 220); gg.addColorStop(0, "rgba(120,220,120,.4)"); gg.addColorStop(1, "rgba(0,40,0,.5)"); k.fillStyle = gg; k.fillRect(0, 0, A.W, A.H);
+        A.layer(.5, 9, (x, kk) => R("#2f8a2f", x + A.hash(kk, 1) * 6, 20 + A.hash(kk, 2) * 120, 3, 1)); const px = sx(A, POND + 60); oell(A, "#4ab0e8", px, G - 4, 34, 8); R("#2f8a2f", 0, G, A.W, 30); }
+      else { grad(A, ["#2a1a3a", "#c8602a"], 0, 110); R("#2a6a2a", 0, 110, A.W, A.H); A.layer(.6, 6, (x) => { R("#e8e8e8", x, 100, 2, 14); R("#e8e8e8", x - 3, 104, 8, 1); });
+        const cx = sx(A, CABIN + 80, .8); R(A.C.ink, cx - 51, 60, 102, G - 60); for (let j = 0; j < 9; j++) { R("#8a5a32", cx - 50, 61 + j * 10, 100, 9); R("#6a4224", cx - 50, 69 + j * 10, 100, 1); } A.ctx.fillStyle = "#5a3a1a"; A.ctx.beginPath(); A.ctx.moveTo(cx - 58, 62); A.ctx.lineTo(cx, 30); A.ctx.lineTo(cx + 58, 62); A.ctx.fill();
+        R("#f3d23b", cx - 30, 80, 14, 12); R("#f3d23b", cx + 16, 80, 14, 12); R(A.C.ink, cx - 6, 110, 14, 40); R("#f3d23b", cx - 5, 111, 12, 39); R("#2a6a2a", 0, G, A.W, 30);
+        if (S.gy.shoot >= 0) { R("#3a2a1a", 0, 0, A.W, A.H); vign(A, .7); const lx = sx(A, SHOOT + 100); R(A.C.ink, lx, 50, 2, 100); oell(A, "#f4f4f2", lx + 1, 46, 10, 8); disc(A, "#ffffff", lx + 1, 46, 5); A.ctx.globalAlpha = .2; disc(A, "#ffffe0", lx, 60, 60); A.ctx.globalAlpha = 1;
+          const bx = sx(A, SHOOT + 50); R(A.C.ink, bx - 30, G - 10, 60, 8); R("#3aa83a", bx - 29, G - 9, 58, 6); R("#6a4224", 0, G, A.W, 30); } }
+    },
+    mid(t, S) { const g = S.gy; if (!g.caught) { if (S.p.x > POND - 60) { const a = A.red; A.ctx.strokeStyle = "#f4f4f2"; A.ctx.lineWidth = 1; A.ctx.beginPath(); A.ctx.moveTo(a.x + 8, a.top + 6); A.ctx.lineTo(sx(A, POND + 60), G - 4); A.ctx.stroke(); } return; }
+      fish(sx(A, g.f.x), t, g.shoot >= 0 ? 1.4 : .8, g.shoot >= 0); },
+    fg(t, S) { const g = S.gy; onHead(A, (x, top, face) => { R("#c8a83a", x - 5, top + 11, 10, 9); R("#8a6a2a", x - 5, top + 11, 2, 9); R("#8a6a2a", x + 3, top + 11, 2, 9); });
+      g.tips.forEach((n, i) => { const y = 30 + i * 13 - n.t * 4; A.ctx.globalAlpha = Math.min(1, (2.5 - n.t) * 2); R(A.C.ink, 10, y + 29, 98, 11); R("#f4f4f2", 11, y + 30, 96, 9); text(A, n.n, 58, y + 36, "#3a8a3a", 6); A.ctx.globalAlpha = 1; });
+      txtFx(A, S); }
+  };
+};
+
+/* SUSHI NIGHT: buy an octopus, bring it to the sushi bar, lose a hand. */
+W["sushi-night"] = A => {
+  const R = A.R, G = A.G, STORE = 220, BAR = 440, KITCHEN = 560, CHOP = 780, ORA = "#e8823a";
+  const octo = (x, y, s, t) => { for (let i = 0; i < 6; i++) { const a = Math.PI * (.1 + i * .16), w = Math.sin(t * 4 + i) * 3 * s; A.ctx.strokeStyle = A.C.ink; A.ctx.lineWidth = 4 * s; A.ctx.beginPath(); A.ctx.moveTo(x, y); A.ctx.quadraticCurveTo(x + Math.cos(a) * 14 * s + w, y + 10 * s, x + Math.cos(a) * 20 * s, y + Math.sin(a) * 18 * s); A.ctx.stroke(); A.ctx.strokeStyle = ORA; A.ctx.lineWidth = 2.5 * s; A.ctx.stroke(); }
+    oell(A, ORA, x, y - 8 * s, 9 * s, 11 * s); disc(A, "#ffffff", x - 3 * s, y - 8 * s, 2 * s); disc(A, "#ffffff", x + 3 * s, y - 8 * s, 2 * s); R(A.C.ink, x - 3 * s, y - 8 * s, 1, 1); R(A.C.ink, x + 3 * s, y - 8 * s, 1, 1); };
+  return {
+    sprites: { bag: { pal: { L: "#cfefff", O: "#e8823a" }, rows: [".KK.", "LLLL", "LOOL", "LOOL", "LLLL"] } },
+    level: {
+      obs: [["sn_fish", 120], ["sn_taxi", 320], ["sn_fish", 400], ["sn_knife", 620], ["sn_knife", 700]],
+      target: "lamp", targetAt: 480, prop: "bag", propAt: 160, npcs: [],
+      captions: [[30, "Pet store. Pick a friend."], [STORE + 20, "Date night. Sushi."], [KITCHEN + 10, "The chef's... familiar."]]
+    },
+    obs: {
+      sn_fish: { w: 7, h: 4, y: 18, vx: -40, draw(o, x, y, t) { R(A.C.ink, x, y, 7, 4); R("#5ab8e8", x + 1, y + 1, 4, 2); R("#5ab8e8", x + 5, y, 2, 4); } },
+      sn_taxi: { w: 34, h: 14, y: 0, vx: -70, draw(o, x, y, t) { R(A.C.ink, x, y + 3, 34, 10); R("#f3c83a", x + 1, y + 4, 32, 8); R(A.C.ink, x + 7, y - 3, 18, 7); R("#2a2a3a", x + 8, y - 2, 16, 5); R(A.C.ink, x + 13, y - 6, 8, 3); R("#f4f4f2", x + 14, y - 5, 6, 2); disc(A, A.C.ink, x + 7, y + 13, 3); disc(A, A.C.ink, x + 27, y + 13, 3); } },
+      sn_knife: { w: 12, h: 3, y: 16, vx: -170, draw(o, x, y) { R("#e8e8e8", x, y, 9, 2); R("#3a2a1a", x + 9, y, 4, 3); } }
+    },
+    reset(S) { S.sn = { chop: -1, dressed: false }; },
+    update(dt, S, p) {
+      const s = S.sn; if (!s.dressed) { s.dressed = true; A.reskin(rows => rows.map((r, j) => j >= 11 ? r.replace(/[RWw]/g, "P").replace(/r/g, "p") : r), { P: "#7a3ac0", p: "#5a2a9a" }); }
+      if (s.chop < 0 && p.x > CHOP && p.x < CHOP + 50) { s.chop = 0; A.redSays("Just a little closer...", 1.2); }
+      if (s.chop >= 0 && s.chop < 9) { const b = s.chop; s.chop += dt; if (s.chop < 2) lock(p, CHOP);
+        if (b < 1 && s.chop >= 1) { splash(S, CHOP + 12, 18, 18, "#5ac83a"); crowdText(A, S, "CHOP", CHOP + 20, 60); A.redSays("MY HAND!", 1.4); } if (b < 2.4 && s.chop >= 2.4) A.showCaption("Sushi night."); }
+      dropFx(A, S, dt);
+    },
+    bg(t, S) {
+      const x = S.p.x;
+      if (x < STORE) { R("#2a2a32", 0, 0, A.W, A.H); A.layer(.3, 20, xx => { R("#e8e8f0", xx, 0, 12, 4); }); A.layer(.7, 60, (xx, k) => { for (let j = 0; j < 3; j++) { R(A.C.ink, xx + 4, 50 + j * 32, 48, 28); R("#5ab8e8", xx + 5, 51 + j * 32, 46, 26); disc(A, ["#f3d23b", ORA, "#5aa83a"][(j + k) % 3], xx + 15 + (Math.floor(t * 8 + j) % 20), 64 + j * 32, 3); } }); R("#5a5a62", 0, G, A.W, 30); }
+      else if (x < KITCHEN) { R("#1a1a2a", 0, 0, A.W, A.H); grad(A, ["#2a1a4a", "#1a1a2a"], 0, 90); A.layer(.3, 50, (xx, k) => R("#2a2a3a", xx, 40 + (k % 3) * 12, 30, 90));
+        const bx = sx(A, BAR + 40); R(A.C.ink, bx - 51, 70, 102, G - 70); R("#c8c8b0", bx - 50, 71, 100, G - 71); R(A.C.ink, bx - 30, 80, 60, 12); R("#3a3a3a", bx - 29, 81, 58, 10); text(A, "SUSHI", bx, 90, "#f4f4f2", 9);
+        R(A.C.ink, bx - 14, 110, 28, 40); R("#f3d23b", bx - 13, 111, 26, 39); octo(bx - 20, 68, 1.2, t); R("#5a5a5a", 0, G, A.W, 30); A.layer(1, 30, xx => R("#f3d23b", xx, G + 14, 10, 2)); }
+      else { R("#3a3a3a", 0, 0, A.W, A.H); R("#e8e8f0", 40, 4, 240, 4); vign(A, .6); R("#9a9a9a", 0, 108, A.W, 42); R("#c8c8c8", 0, 108, A.W, 3); R(A.C.ink, 0, 111, A.W, 1); R("#6a6a6a", 0, G, A.W, 30);
+        const ox = sx(A, CHOP + 40); octo(ox, 100, 1.4, t); if (S.sn.chop >= 0 && S.sn.chop < 1.2) { const a = -1.2 + Math.min(1, S.sn.chop) * 1.8; R(A.C.ink, ox + 12 + Math.cos(a) * 10, 90 + Math.sin(a) * 10, 14, 3); R("#e8e8e8", ox + 13 + Math.cos(a) * 10, 90 + Math.sin(a) * 10, 12, 2); }
+        if (S.sn.chop >= 1.6) { const px = sx(A, CHOP + 70); oell(A, "#2a2a2a", px, 104, 26, 6); for (let i = 0; i < 4; i++) { oell(A, "#2a6a2a", px - 15 + i * 10, 100, 4, 4); disc(A, "#f4f4f2", px - 15 + i * 10, 100, 2.5); disc(A, "#E8271A", px - 15 + i * 10, 100, 1.5); } } }
+    },
+    fg(t, S) { onHead(A, (x, top) => { R(A.C.ink, x - 7, top - 1, 14, 2); R("#7a3ac0", x - 6, top - 1, 12, 1); R(A.C.ink, x - 4, top - 9, 8, 9); R("#7a3ac0", x - 3, top - 8, 6, 7); R("#f3d23b", x - 3, top - 3, 6, 1); });
+      if (S.p.x < BAR - 40) { const r = A.red; A.ctx.drawImage(A.NS.bag, r.x + r.face * 6 - 2, r.top + 14); }
+      txtFx(A, S); dropFx(A, S); }
+  };
+};
+
+/* EAT HER ON THE FIRST DATE: he's a zombie, she's the last girl alive. Flowers, a walk, a kiss. */
+W["eat-her-on-the-first-date"] = A => {
+  const R = A.R, G = A.G, HOUSE = 140, JOIN = 300, KISS = 800;
+  const zomb = rows => rows.map((r, j) => j <= 22 ? r.replace(/R/g, "Z").replace(/r/g, "z") : r.replace(/R/g, "Z").replace(/r/g, "z"));
+  return {
+    sprites: { her: lady({ S: "#E8271A", T: "#3a8ae0", B: "#3a3a5a", R: "#a81a10" }), bouq: { pal: { Y: "#f3d23b", Q: "#3a8a2a" }, rows: ["YYY", "YQY", ".Q.", ".Q."] } },
+    level: {
+      obs: [["ez_debris", 220], ["bird", 280], ["ez_debris", 420], ["ez_fire", 520], ["ez_debris", 620], ["ez_fire", 700]],
+      target: "bush", targetAt: 380, prop: "bouq", propAt: 100, npcs: [],
+      captions: [[30, "End of the world. Still dating."], [HOUSE + 30, "She said yes!"], [500, "Romantic walk. Mostly fire."], [KISS - 40, "Pucker up."]]
+    },
+    obs: {
+      ez_debris: { w: 12, h: 6, y: 0, vx: 0, draw(o, x, y) { R(A.C.ink, x, y + 2, 12, 4); R("#6a6a6a", x + 1, y + 3, 10, 3); R("#E8271A", x + 3, y, 3, 3); } },
+      ez_fire: { w: 8, h: 8, y: 0, vx: 0, tough: "hot!", draw(o, x, y, t) { const f = Math.floor(t * 10 + o.x) % 3; R(A.C.ink, x, y + 6, 8, 2); R("#f3a91f", x + 1, y + 1 + f, 6, 6 - f); R("#f3d23b", x + 2, y + 3 + f, 4, 3 - (f > 1 ? 1 : 0)); } }
+    },
+    reset(S) { S.ez = { h: { x: HOUSE + 20, y: 0, d: 0, face: 1, moving: false }, joined: false, kiss: -1, dressed: false }; },
+    update(dt, S, p) {
+      const z = S.ez; if (!z.dressed) { z.dressed = true; A.reskin(zomb, { Z: "#5ab85a", z: "#3a9a3a" }); }
+      if (!z.joined && p.x > JOIN - 120) { z.joined = true; A.say("Oh... you brought flowers.", HOUSE, 50, 2); }
+      if (z.joined && z.kiss < 0) { follow(z.h, p.x + 16, 110, dt); if (Math.abs(z.h.x - p.x) > 120) z.h.x = p.x + 30; }
+      if (z.kiss < 0 && p.x > KISS && p.x < KISS + 60) { z.kiss = 0; z.h.x = p.x + 12; hearts(S, p.x + 6, 30, 4); }
+      if (z.kiss >= 0 && z.kiss < 9) { const b = z.kiss; z.kiss += dt; if (z.kiss < 2) lock(p, KISS); if (b < 1.2 && z.kiss >= 1.2) { splash(S, z.h.x, 24, 20, "#E8271A"); crowdText(A, S, "CRUNCH", z.h.x, 50); } if (b < 2 && z.kiss >= 2) { A.showCaption("Eat her on the first date."); A.redSays("Mmm. Love.", 1.8); } }
+      dropFx(A, S, dt);
+    },
+    bg(t, S) {
+      R("#7ac0e8", 0, 0, A.W, A.H); A.layer(.2, 50, (x, k) => R("#5a6a7a", x, 50 + (k % 3) * 14, 34, 80)); A.layer(.3, 160, (x, k) => smoke(A, x + 60, 70, t + k, 8, "#2a2a2a", 40, 80));
+      R("#4aaa4a", 0, 116, A.W, G - 116); R("#c8c8c0", 0, G - 6, A.W, 6); R("#4aaa4a", 0, G, A.W, 30);
+      const hx = sx(A, HOUSE); if (hx > -80 && hx < A.W + 80) { R(A.C.ink, hx - 41, 40, 82, G - 40); for (let j = 0; j < 12; j++) R(j % 2 ? "#a8763a" : "#9a6a32", hx - 40, 41 + j * 9, 80, 9); R(A.C.ink, hx - 8, 54, 16, 16); R("#e8a0d8", hx - 7, 55, 14, 14);
+        if (!S.ez.joined) { disc(A, "#E8271A", hx, 62, 4); R(A.C.ink, hx - 5, 58, 10, 3); } [[-26, 110], [10, 112], [-10, 96]].forEach(([dx, y]) => { R(A.C.ink, hx + dx, y, 16, 14); for (let i = 0; i < 3; i++) R("#8a5a32", hx + dx + 1, y + 1 + i * 4, 14, 3); }); for (let i = 0; i < 5; i++) R("#5ac83a", hx - 30 + i * 13, 120 + (i % 2) * 6, 2, 10); }
+      const cx = sx(A, 640, .8); if (cx > -60 && cx < A.W + 60) { A.ctx.save(); A.ctx.translate(cx, 128); A.ctx.rotate(.4); R(A.C.ink, -26, -9, 52, 16); R("#f3c83a", -25, -8, 50, 14); R("#2a2a3a", -15, -14, 26, 6); A.ctx.restore(); smoke(A, cx, 110, t, 8, "#1a1a1a", 30, 80); puff(A, cx + 6, 116, 6 + Math.sin(t * 8), "#f3a91f", .9); }
+    },
+    mid(t, S) { const z = S.ez; if (!z.joined) return; const im = A.NS[z.h.face < 0 ? "herL" : "her"], x = sx(A, z.h.x); A.ctx.drawImage(im, x - 5, G - im.height + 1 - (z.h.moving ? Math.floor(z.h.d / 5) % 2 : 0));
+      if (z.kiss >= 1.2) { R("#E8271A", x - 4, G - 15, 2, 3); } },
+    fg(t, S) { const z = S.ez; onHead(A, (x, top, face) => { oell(A, "#e8a0c8", x - face * 2, top + 2, 3, 2); R("#5ac83a", x - 2, top + 20, 3, 3); if (!z.joined) A.ctx.drawImage(A.NS.bouq, x + face * 7 - 1, top + 12); });
+      heartFx(A, S); txtFx(A, S); dropFx(A, S); }
+  };
+};
+
+/* JACUZZI: two ladies, one hot tub, and Red's been under way too long. */
+W["jacuzzi"] = A => {
+  const R = A.R, G = A.G, TUB = [520, 800], SINK = 600, POP = 720;
+  return {
+    sprites: { l1: lady({ S: "#f0b8b0", T: "#c870d0", B: "#c870d0", R: "#c84a4a" }), l2: lady({ S: "#f0b8b0", T: "#5ac83a", B: "#5ac83a", R: "#c84a4a" }, "Y"), towel: { pal: { Z: "#f4f4f2", B: "#3a8ae0" }, rows: ["ZBZB", "ZBZB", "ZBZB"] } },
+    level: {
+      obs: [["jz_wet", 200], ["jz_duck", 280], ["jz_wet", 360], ["jz_duck", 440]],
+      target: "jz_drain", targetAt: 320, prop: "towel", propAt: 120, npcs: [],
+      captions: [[30, "Rooftop. Hot tub. Company."], [TUB[0] - 30, "Hop in."], [SINK + 30, "...he's been under a while."]]
+    },
+    obs: {
+      jz_wet: { w: 14, h: 2, y: 0, vx: 0, tough: "slip!", draw(o, x, y, t) { R("#7ac8e6", x, A.G - 1, 14, 2); R("#ffffff", x + 3 + Math.floor(t * 2) % 7, A.G - 1, 2, 1); } },
+      jz_duck: { w: 7, h: 6, y: 0, vx: -30, draw(o, x, y) { R(A.C.ink, x, y + 2, 7, 4); R("#f3d23b", x + 1, y + 3, 5, 2); R(A.C.ink, x + 1, y, 3, 3); R("#f3d23b", x + 1, y + 1, 2, 2); R("#f3a91f", x - 1, y + 1, 2, 1); } }
+    },
+    targets: { jz_drain: { line: "Pool water. Ish.", draw(tg, x) { R(A.C.ink, x - 6, G - 2, 12, 2); for (let i = 0; i < 4; i++) R("#8a8a8a", x - 5 + i * 3, G - 2, 1, 2); } } },
+    reset(S) { S.jz = { sink: 0, pop: -1, drag: -1 }; },
+    update(dt, S, p) {
+      const j = S.jz, inTub = p.x > TUB[0] + 10 && p.x < TUB[1] - 10;
+      if (inTub && p.x > SINK && j.pop < 0) j.sink = Math.min(1, j.sink + dt * .8); else if (!inTub) j.sink = Math.max(0, j.sink - dt * 2);
+      if (j.pop < 0 && p.x > POP && p.x < TUB[1]) { j.pop = 0; crowdText(A, S, "BLORP", POP, 40); splash(S, POP, 6, 18, "#9fd8f0"); }
+      if (j.pop >= 0 && j.pop < 9) { const b = j.pop; j.pop += dt; if (j.pop < 2.4) lock(p, POP); if (b < .6 && j.pop >= .6) A.say("EWWW!", TUB[0] + 60, 50, 1.6); if (b < 2.4 && j.pop >= 2.4) { j.sink = 0; p.x = TUB[1] + 10; A.showCaption("Jacuzzi."); A.redSays("*gasp* ...did I win?", 2); } }
+      dropFx(A, S, dt);
+    },
+    bg(t, S) {
+      R("#2a2a30", 0, 0, A.W, A.H); grad(A, ["#0a0a14", "#3a3a44"], 0, 120); A.layer(.2, 40, (x, k) => { R("#1a1a24", x, 50 + (k % 3) * 12, 30, 80); if (k % 2) R("#f3d23b", x + 8, 60 + (k % 3) * 12, 3, 3); });
+      R("#5a5a62", 0, 120, A.W, G - 120); A.layer(.8, 30, x => R("#4a4a52", x, 120, 1, 30)); R("#4a4a52", 0, G, A.W, 30);
+      const a = sx(A, TUB[0]), b = sx(A, TUB[1]); if (b > 0 && a < A.W) { R(A.C.ink, a - 2, G - 22, b - a + 4, 52); R("#c8c8c8", a - 1, G - 21, b - a + 2, 50); R("#3a8ae0", a + 2, G - 18, b - a - 4, 48); A.layer(1, 9, (x, k) => { if (x > a + 4 && x < b - 8) R("#f4f4f2", x + (Math.floor(t * 4 + k) % 4), G - 16 + (k % 4) * 3, 4, 2); });
+        R("#9a9a9a", b - 4, G - 40, 2, 20); R("#9a9a9a", b - 14, G - 40, 10, 2); }
+    },
+    fg(t, S) {
+      const j = S.jz, a = sx(A, TUB[0]), b = sx(A, TUB[1]); if (b > 0 && a < A.W) { A.ctx.globalAlpha = .85; R("#3a8ae0", a + 2, G - 14 + Math.round(j.sink * -6), b - a - 4, 44); A.ctx.globalAlpha = 1; A.layer(1, 7, (x, k) => { if (x > a + 4 && x < b - 8) R("#cfefff", x + (Math.floor(t * 3 + k) % 4), G - 14 + (k % 3) * 2, 4, 1); });
+        if (j.sink > .5 && j.pop < 0) for (let i = 0; i < 3; i++) { const yy = G - 16 - ((t * 30 + i * 9) % 20); A.ctx.strokeStyle = "#cfefff"; A.ctx.beginPath(); A.ctx.arc(A.red.x + (i - 1) * 3, yy, 1.5, 0, 7); A.ctx.stroke(); }
+        if (j.pop >= 0 && j.pop < 2.4) { const x = sx(A, POP); oell(A, "#E8271A", x, G - 14, 16, 8); R("#f4f4f2", x - 6, G - 18, 12, 4); R(A.C.ink, x, G - 21, 1, 7); } }
+      const gone = j.pop >= .6; [[TUB[0] + 40, "l1"], [TUB[0] + 64, "l2"]].forEach(([x0, k], i) => { let x = sx(A, x0), y = 8;
+        if (gone) { const u = Math.min(1, (j.pop - .6) * 2); x -= u * 70 + i * 10; y = 8 - u * 8; }
+        const im = A.NS[k]; A.ctx.drawImage(im, x - 5, G - im.height + 1 + y); });
+      if (b > 0 && a < A.W) { A.ctx.globalAlpha = .7; R("#3a8ae0", a + 2, G - 6, b - a - 4, 36); A.ctx.globalAlpha = 1; }
+      txtFx(A, S); dropFx(A, S);
+    }
+  };
+};
+
+/* SPACE JAMMED: from orbit, he sees exactly where his wife is. And who she's with. */
+W["space-jammed"] = A => {
+  const R = A.R, G = A.G, PHONE = 160, SCREEN = 300, DROP = 420, BEACH = 470, BUSTED = 820;
+  const suit = rows => rows.map((r, j) => j >= 10 ? r.replace(/[RWw]/g, "Z").replace(/r/g, "z") : r);
+  return {
+    sprites: { wife: lady({ S: "#c870d0", T: "#3a5ad0", B: "#f4f4f2", R: "#7a2a7a" }, "Y"), flag: { pal: { B: "#2a48c8", Z: "#f4f4f2" }, rows: ["BBRR", "ZZRR", "RRZZ"] } },
+    level: {
+      obs: [["sj_rock", 180], ["sj_rock", 260], ["sj_rock", 340], ["sj_meteor", 560], ["sj_meteor", 660], ["sj_meteor", 740]],
+      target: "rock", targetAt: 620, prop: "flag", propAt: 110, npcs: [],
+      captions: [[30, "Day 200 in orbit. Miss her."], [PHONE + 10, "Find My: Wife. Location: Miami."], [SCREEN + 10, "Zoom in..."], [DROP + 10, "Coming home early."]]
+    },
+    obs: {
+      sj_rock: { w: 8, h: 7, y: 20, vx: -30, draw(o, x, y, t) { const yy = y + Math.round(Math.sin(t + o.x) * 4); oell(A, "#8a8a8a", x + 4, yy + 3, 4, 3); R("#6a6a6a", x + 2, yy + 2, 2, 1); } },
+      sj_meteor: { w: 8, h: 8, y: 30, vx: -60, draw(o, x, y, t) { const yy = A.G - ((t * 60 + o.x * 3) % 140); o.y = A.G - yy; oell(A, "#8a4a2a", x + 4, yy, 4, 4); A.ctx.globalAlpha = .6; R("#3a3a3a", x + 6, yy - 12, 3, 10); A.ctx.globalAlpha = 1; R("#f3a91f", x + 2, yy + 2, 3, 2); } }
+    },
+    reset(S) { S.sj = { dressed: false, fall: -1, bust: -1 }; },
+    update(dt, S, p) {
+      const s = S.sj; if (!s.dressed) { s.dressed = true; A.reskin(suit, { Z: "#e8e8ec", z: "#c8c8d0" }); }
+      if (s.fall < 0 && p.x > DROP && p.x < BEACH) s.fall = 0; if (s.fall >= 0 && s.fall < 9) { const b = s.fall; s.fall += dt; if (s.fall < 1.6) lock(p, DROP); if (b < 1.6 && s.fall >= 1.6) { p.x = BEACH + 30; p.y = 60; p.onG = false; } }
+      if (s.bust < 0 && p.x > BUSTED && p.x < BUSTED + 60) { s.bust = 0; A.say("It's not what it looks like!", BUSTED + 30, 54, 2.2); } if (s.bust >= 0) { const b = s.bust; s.bust += dt; if (b < 2.2 && s.bust >= 2.2) { A.showCaption("Space jammed."); A.redSays("Is that... a TAN line?", 2); } }
+    },
+    bg(t, S) {
+      const x = S.p.x;
+      if (x < BEACH) { R("#0a0a14", 0, 0, A.W, A.H); A.stars({}); const ex = sx(A, 300, .1); disc(A, "#2a6ad0", ex, 260, 170); A.layer(.15, 70, (xx, k) => puff(A, xx, 110 + (k % 3) * 10, 10, "#f4f4f2", .7)); A.ctx.save(); A.ctx.beginPath(); A.ctx.arc(ex, 260, 170, 0, 7); A.ctx.clip(); disc(A, "#3aa83a", ex - 60, 140, 40); disc(A, "#3aa83a", ex + 90, 160, 50); A.ctx.restore();
+        const s = sx(A, 240, .4); R(A.C.ink, s - 31, 40, 62, 20); R("#e8e8e8", s - 30, 41, 60, 18); for (let i = 0; i < 2; i++) { R(A.C.ink, s - 90 + i * 120, 44, 52, 12); R("#2a48c8", s - 89 + i * 120, 45, 50, 10); for (let j = 0; j < 6; j++) R("#5a7ae8", s - 87 + i * 120 + j * 8, 45, 1, 10); }
+        R("#c8c8c8", 0, G, A.W, 4); R("#3a3a3a", 0, G + 4, A.W, 26); A.layer(1, 20, xx => R("#e8e8e8", xx, G + 4, 2, 26)); }
+      else { R("#8ac8e8", 0, 0, A.W, 80); A.layer(.1, 90, (xx, k) => { A.ctx.globalAlpha = .6; A.ctx.strokeStyle = "#2a2a2a"; A.ctx.lineWidth = 4; A.ctx.beginPath(); A.ctx.moveTo(xx, 0); A.ctx.lineTo(xx + 40, 60); A.ctx.stroke(); A.ctx.globalAlpha = 1; disc(A, "#8a4a2a", xx + 42, 62, 4); });
+        R("#3a8ad0", 0, 80, A.W, 20); R("#e8d090", 0, 100, A.W, G - 100); R("#e8d090", 0, G, A.W, 30);
+        const tx = sx(A, BUSTED + 40); R(A.C.ink, tx - 30, G - 4, 60, 4); for (let i = 0; i < 6; i++) R(i % 2 ? "#3a5ad0" : "#f4f4f2", tx - 29 + i * 10, G - 3, 10, 3);
+        const ax = sx(A, BUSTED + 64), b = Math.round(Math.sin(t * 2)); R(A.C.ink, ax - 9, G - 30 + b, 18, 30); R("#5ac85a", ax - 8, G - 29 + b, 16, 18); R("#a8622a", ax - 8, G - 12 + b, 16, 6); R("#5ac85a", ax - 6, G - 6, 4, 6); R("#5ac85a", ax + 2, G - 6, 4, 6);
+        R("#5ac85a", ax - 13, G - 28 + b, 4, 14); R("#5ac85a", ax + 9, G - 28 + b, 4, 14); oell(A, "#5ac85a", ax, G - 38 + b, 7, 9); oell(A, A.C.ink, ax - 3, G - 39 + b, 2, 3, .4); oell(A, A.C.ink, ax + 3, G - 39 + b, 2, 3, -.4); R(A.C.ink, ax - 2, G - 32 + b, 4, 1);
+        const wx = sx(A, BUSTED + 40), im = A.NS.wifeL; A.ctx.drawImage(im, wx - 5, G - im.height + 1); }
+    },
+    fg(t, S) {
+      const s = S.sj, x = S.p.x;
+      if (x < BEACH) onHead(A, (hx, top) => { A.ctx.globalAlpha = .45; disc(A, "#cfefff", hx, top + 5, 9); A.ctx.globalAlpha = 1; A.ctx.strokeStyle = "#e8e8ec"; A.ctx.lineWidth = 1; A.ctx.beginPath(); A.ctx.arc(hx, top + 5, 9, 0, 7); A.ctx.stroke(); });
+      if (x > PHONE && x < PHONE + 80) { R(A.C.ink, 230, 24, 72, 100); R("#f4f4f2", 232, 26, 68, 96); text(A, "Wife 💕", 266, 40, A.C.ink, 8); text(A, "Miami", 266, 50, "#3a8ae0", 6); R("#c8e8c8", 236, 56, 60, 50); R("#3a8ae0", 236, 80, 60, 26); disc(A, "#E8271A", 270, 70, 3); }
+      if (x > SCREEN && x < SCREEN + 90) { R(A.C.ink, 200, 30, 110, 72); R("#3a6a3a", 202, 32, 106, 68); R("#e8d090", 202, 70, 106, 30); R("#c870d0", 230, 74, 18, 6); R("#5ac85a", 250, 72, 16, 8); text(A, "LIVE", 290, 42, "#E8271A", 7); }
+      if (s.fall >= 0 && s.fall < 1.6) { R("#8ac8e8", 0, 0, A.W, A.H); const u = s.fall; A.ctx.strokeStyle = A.C.ink; [[-20, 0], [20, 0]].forEach(([dx]) => { A.ctx.beginPath(); A.ctx.moveTo(160 + dx, 40); A.ctx.lineTo(160 + dx / 3, 70 + u * 10); A.ctx.stroke(); }); oell(A, "#f4f4f2", 160, 36, 30, 14); R("#E8271A", 145, 26, 10, 10);
+        const im = A.NS.jump || A.NS.stand; A.ctx.drawImage(A.NS.b5_stand || im, 152, 70 + u * 10); for (let i = 0; i < 6; i++) puff(A, (i * 60 + t * 50) % A.W, 200 - ((u * 200 + i * 40) % 220), 12, "#f4f4f2", .9); }
+    }
+  };
+};
+
+/* AT THE HAND OF JOBS: unbox the new phone. It unboxes you. */
+W["at-the-hand-of-jobs"] = A => {
+  const R = A.R, G = A.G, BOX = 150, WIRE = 380, APPLE = 520, BOSS = 820;
+  const apple = rows => rows.map((r, j) => j >= 11 && j <= 19 ? r.replace(/^\.\.\.\./, "...R").replace(/\.\.\.\.$/, "R...") : r);
+  return {
+    sprites: { phone2: { pal: { G: "#c8c8c8", B: "#3a3a4a" }, rows: ["GGG", "GBG", "GBG", "GGG"] } },
+    level: {
+      obs: [["hj_cable", 230], ["hj_cable", 300], ["hj_spark", 460], ["hj_cable", 600], ["hj_spark", 680], ["hj_cable", 740]],
+      target: "lamp", targetAt: 420, prop: "phone2", propAt: BOX + 20, npcs: [],
+      captions: [[30, "New phone day."], [WIRE - 40, "The cables are... moving."], [APPLE + 20, "Upgrade complete."], [BOSS - 40, "Meet your maker."]]
+    },
+    obs: {
+      hj_cable: { w: 14, h: 3, y: 0, vx: 0, tough: "zzt", draw(o, x, y, t) { A.ctx.strokeStyle = "#e8e8e8"; A.ctx.lineWidth = 1; A.ctx.beginPath(); A.ctx.moveTo(x, A.G - 1); for (let i = 1; i <= 7; i++) A.ctx.lineTo(x + i * 2, A.G - 1 - Math.abs(Math.sin(t * 6 + i + o.x)) * 4); A.ctx.stroke(); } },
+      hj_spark: { w: 6, h: 6, y: 16, vx: -60, draw(o, x, y, t) { const f = Math.floor(t * 12) % 2; R("#ffffff", x + 2, y, 2, 6); R("#ffffff", x, y + 2, 6, 2); if (f) R("#9fe0ff", x + 1, y + 1, 4, 4); } }
+    },
+    reset(S) { S.hj = { wire: -1, boss: false }; },
+    update(dt, S, p) {
+      const h = S.hj; if (h.wire < 0 && p.x > WIRE && p.x < APPLE) { h.wire = 0; A.redSays("Hey, let go!", 1.4); }
+      if (h.wire >= 0 && h.wire < 9) { const b = h.wire; h.wire += dt; if (h.wire < 2.4) lock(p, WIRE); if (b < 2.4 && h.wire >= 2.4) { A.reskin(apple, {}); p.x = WIRE + 30; crowdText(A, S, "UPGRADED", WIRE, 60); } }
+      if (!h.boss && p.x > BOSS - 20) { h.boss = true; A.showCaption("At the hand of Jobs."); A.say("Think different.", BOSS + 30, 60, 2.2); }
+    },
+    bg(t, S) {
+      R("#2a2a30", 0, 0, A.W, A.H); vign(A, .7); A.layer(.4, 160, (x) => { R(A.C.ink, x + 40, 30, 80, 50); R("#2a5a8a", x + 41, 31, 78, 48); A.ctx.globalAlpha = .15; R("#ffffff", x + 50, 31, 20, 48); A.ctx.globalAlpha = 1; });
+      R("#3a3a40", 0, G, A.W, 30);
+      const bx = sx(A, BOX); if (bx > -50 && bx < A.W + 50) { R(A.C.ink, bx - 40, 116, 80, 4); R("#5a5a62", bx - 39, 117, 78, 2); R("#5a5a62", bx - 36, 120, 2, 30); R("#5a5a62", bx + 34, 120, 2, 30); R(A.C.ink, bx - 16, 106, 32, 10); R("#f4f4f2", bx - 15, 107, 30, 8); R("#f3a91f", bx - 13, 108, 26, 6); }
+      const ox = sx(A, BOSS + 30); if (ox > -60 && ox < A.W + 60) { R(A.C.ink, ox - 17, G - 70, 34, 70); R("#d8a83a", ox - 16, G - 69, 32, 69); for (let i = 0; i < 4; i++) R("#a8822a", ox - 16, G - 60 + i * 14, 32, 2);
+        A.ctx.globalAlpha = .5; disc(A, "#fff4a0", ox, G - 46, 9); A.ctx.globalAlpha = 1; disc(A, "#ffffff", ox, G - 46, 4); R("#3a8a2a", ox, G - 53, 2, 3);
+        A.ctx.globalAlpha = .4; disc(A, "#cfefff", ox, G - 82, 14); A.ctx.globalAlpha = 1; A.ctx.strokeStyle = "#e8e8ec"; A.ctx.beginPath(); A.ctx.arc(ox, G - 82, 14, 0, 7); A.ctx.stroke(); oell(A, "#e8c8a8", ox, G - 82, 7, 9); R(A.C.ink, ox - 5, G - 85, 4, 2); R(A.C.ink, ox + 1, G - 85, 4, 2); R(A.C.ink, ox - 1, G - 85, 2, 1); R("#9a9a9a", ox - 6, G - 78, 12, 5);
+        [-1, 1].forEach(s => { R(A.C.ink, ox + s * 20 - 2, G - 66, 4, 30); R("#d8a83a", ox + s * 20 - 1, G - 65, 2, 28); }); }
+    },
+    fg(t, S) {
+      const h = S.hj; if (h.wire >= 0 && h.wire < 2.4) { const r = A.red; A.ctx.strokeStyle = "#e8e8e8"; A.ctx.lineWidth = 1; for (let i = 0; i < 9; i++) { A.ctx.beginPath(); A.ctx.moveTo(r.x + Math.sin(i * 2 + t * 5) * 10, r.top - 4); A.ctx.bezierCurveTo(r.x - 20 + i * 5, r.top + 10, r.x + 20 - i * 5, r.top + 20, r.x + Math.cos(i + t * 4) * 8, G); A.ctx.stroke(); } flash(A, h.wire > 2 ? (2.4 - h.wire) * 2 : 0, "#ffffff"); }
+      if (h.wire >= 2.4) onHead(A, (x, top) => { R("#6a4224", x, top - 4, 2, 5); oell(A, "#3aa83a", x + 4, top - 3, 3, 2, -.4); });
+      txtFx(A, S);
+    }
+  };
+};
+
+/* INTERROGATION: tied to a chair. A masked man, a knife, one question. ¿El conejo? */
+W["interrogation"] = A => {
+  const R = A.R, G = A.G, TABLE = 600, ASK = 620;
+  return {
+    outfit: { W: "#f4f4f2" },
+    sprites: { rope: { pal: { N: "#c8a86a" }, rows: ["NNNN", "N..N", "NNNN"] } },
+    level: {
+      obs: [["it_lamp", 200], ["it_lamp", 320], ["it_drip", 400], ["it_lamp", 460], ["it_drip", 520]],
+      target: "it_bucket", targetAt: 280, prop: "rope", propAt: 120, npcs: [],
+      captions: [[30, "Woke up somewhere dark."], [300, "Someone wants answers."], [ASK - 30, "Don't say a word."]]
+    },
+    obs: {
+      it_lamp: { w: 10, h: 8, y: 22, vx: 0, draw(o, x, y, t) { const sw = Math.round(Math.sin(t * 2 + o.x) * 12), lx = x + sw; A.ctx.strokeStyle = "#3a3a3a"; A.ctx.beginPath(); A.ctx.moveTo(x + 5, 0); A.ctx.lineTo(lx + 5, A.G - y - 8); A.ctx.stroke(); o.x2 = sw; R(A.C.ink, lx, A.G - y - 8, 10, 5); R("#5a5a5a", lx + 1, A.G - y - 7, 8, 3); A.ctx.globalAlpha = .15; R("#fff4a0", lx - 10, A.G - y - 3, 30, y + 3); A.ctx.globalAlpha = 1; } },
+      it_drip: { w: 2, h: 3, y: 0, vx: 0, draw(o, x, y, t) { const yy = (t * 120 + o.x) % A.G; R("#7ac8e6", x, yy, 1, 3); } }
+    },
+    targets: { it_bucket: { line: "Bucket. Classy.", draw(tg, x) { R(A.C.ink, x - 6, G - 10, 12, 10); R("#8a8a8a", x - 5, G - 9, 10, 9); R(A.C.ink, x - 6, G - 13, 12, 1); } } },
+    reset(S) { S.it = { ask: -1 }; },
+    update(dt, S, p) { const i = S.it; if (i.ask < 0 && p.x > ASK && p.x < ASK + 60) { i.ask = 0; A.say("¿El conejo?", TABLE + 70, 60, 2.4); }
+      if (i.ask >= 0 && i.ask < 9) { const b = i.ask; i.ask += dt; if (i.ask < 4) lock(p, ASK); if (b < 2.6 && i.ask >= 2.6) A.redSays("...never heard of him.", 2); if (b < 4 && i.ask >= 4) A.showCaption("Interrogation."); } },
+    bg(t, S) {
+      R("#2a1a10", 0, 0, A.W, A.H); vign(A, .8); A.layer(.3, 70, (x) => R("#3a2a1a", x, 0, 1, A.H)); R("#4a2a14", 0, G, A.W, 30); A.layer(1, 16, x => R("#3a2010", x, G + 1, 1, 29));
+      const tx = sx(A, TABLE + 40); if (tx > -80 && tx < A.W + 80) { A.ctx.globalAlpha = .3; A.ctx.fillStyle = "#fff4c0"; A.ctx.beginPath(); A.ctx.moveTo(tx - 10, 20); A.ctx.lineTo(tx + 10, 20); A.ctx.lineTo(tx + 70, G); A.ctx.lineTo(tx - 70, G); A.ctx.fill(); A.ctx.globalAlpha = 1; R("#3a3a3a", tx - 1, 0, 2, 14); R(A.C.ink, tx - 14, 14, 28, 6); R("#5a5a5a", tx - 13, 15, 26, 4);
+        R(A.C.ink, tx - 40, 118, 80, 5); R("#6a4224", tx - 39, 119, 78, 3); R("#5a3418", tx - 36, 123, 3, 27); R("#5a3418", tx + 33, 123, 3, 27); R("#f4f4f2", tx - 6, 114, 12, 4); R(A.C.ink, tx - 3, 115, 1, 2); R(A.C.ink, tx + 1, 115, 1, 2);
+        const kx = tx + 18; R("#e8e8e8", kx, 96, 3, 18); R("#6a4224", kx - 1, 112, 5, 6); if (Math.floor(t * 2) % 2) { R("#ffffff", kx + 4, 94, 1, 5); R("#ffffff", kx + 2, 96, 5, 1); }
+        const mx = tx + 34; R(A.C.ink, mx - 10, 96, 20, 26); R("#5ac83a", mx - 9, 97, 18, 22); oell(A, "#5a5a5a", mx, 86, 11, 11); oell(A, "#7CFC6A", mx - 4, 84, 3, 2); oell(A, "#7CFC6A", mx + 4, 84, 3, 2); R(A.C.ink, mx - 3, 84, 1, 1); R(A.C.ink, mx + 3, 84, 1, 1); oell(A, "#f3d23b", mx, 92, 4, 2); }
+    },
+    fg(t, S) { const i = S.it; if (S.p.x > ASK - 120) onHead(A, (x, top) => { R("#c8a86a", x - 6, top + 15, 12, 2); R("#c8a86a", x - 6, top + 19, 12, 2); });
+      if (i.ask > .4 && i.ask < 4) onHead(A, (x, top, face) => { for (let k = 0; k < 3; k++) R("#9fd0ee", x + (k - 1) * 4, top + 2 + ((t * 20 + k * 5) % 10), 1, 2); if (i.ask > 2.6) { R(A.C.ink, x + face - 3, top + 8, 6, 2); R("#f4f4f2", x + face - 2, top + 8, 4, 1); } }); }
+  };
+};
+
+/* PARK WORKERS: three men with blades come for the meditating man. Nature handles it. */
+W["park-workers"] = A => {
+  const R = A.R, G = A.G, STUMP = 800;
+  const worker = (x, t, k, dead) => { const b = Math.floor(t * 6 + k) % 2; if (dead) { oell(A, "#5ac83a", x, G - 2, 14, 3); }
+    R(A.C.ink, x - 7, G - 30, 14, 30); R("#2a5ad0", x - 6, G - 29, 12, 14); R("#c87a2a", x - 6, G - 15, 12, 6); R("#6a4a2a", x - 5, G - 9, 4, 9 - b); R("#6a4a2a", x + 1, G - 9, 4, 8 + b);
+    oell(A, dead ? "#5ac83a" : "#E8271A", x, G - 36, 6, 6); R(A.C.ink, x - 7, G - 43, 14, 3); R("#f3d23b", x - 6, G - 43, 12, 2); R(A.C.ink, x - 1, G - 34, 3, 1);
+    const tool = ["scythe", "axe", "saw"][k % 3]; if (tool === "scythe") { R("#8a5a32", x - 10, G - 50, 2, 40); R("#e8e8e8", x - 18, G - 52, 10, 2); } else if (tool === "axe") { R("#8a5a32", x + 8, G - 30, 2, 16); R("#e8e8e8", x + 6, G - 32, 6, 5); } else { R("#f3a91f", x + 6, G - 22, 8, 6); R("#9a9a9a", x + 14, G - 20, 10, 2); } };
+  return {
+    sprites: { leaf: { pal: { Q: "#3aa83a" }, rows: ["..QQ", ".QQQ", "QQQ.", "Q..."] } },
+    level: {
+      obs: [["pw_worker", 300], ["pw_moth", 360], ["pw_worker", 480], ["pw_moth", 560], ["pw_worker", 640]],
+      target: "tree", targetAt: 400, prop: "leaf", propAt: 120, npcs: [],
+      captions: [[30, "Deep in the park. Quiet."], [260, "Park workers. They don't look friendly."], [STUMP - 50, "Breathe. Find your center."]]
+    },
+    obs: {
+      pw_worker: { w: 14, h: 36, y: 0, vx: -35, tough: "HEY!", draw(o, x, y, t) { worker(x + 7, t, Math.round(o.x / 7), false); } },
+      pw_moth: { w: 8, h: 6, y: 18, vx: -60, draw(o, x, y, t) { const f = Math.floor(t * 14) % 2; R(A.C.ink, x + 3, y, 2, 6); R("#f3d23b", x + (f ? 0 : 1), y + 1, 3, 4); R("#f3d23b", x + 5 - (f ? 0 : 1), y + 1, 3, 4); } }
+    },
+    reset(S) { S.pw = { om: -1, shots: [] }; },
+    update(dt, S, p) {
+      const w = S.pw; if (w.om < 0 && p.x > STUMP && p.x < STUMP + 50) { w.om = 0; A.redSays("Ommmm...", 2); }
+      if (w.om >= 0 && w.om < 9) { const b = w.om; w.om += dt; if (w.om < 4.2) { lock(p, STUMP); p.y = 12 + Math.sin(w.om * 3) * 2; }
+        if (b < 1.4 && w.om >= 1.4) { crowdText(A, S, "SNAP", STUMP, 60); ["rabbit", "pigeon", "moth"].forEach((k, i) => w.shots.push({ k, x: STUMP + 10, y: 30 + i * 10, tx: STUMP + 70 + i * 26, t: 0 })); }
+        if (b < 2.2 && w.om >= 2.2) for (let i = 0; i < 3; i++) splash(S, STUMP + 70 + i * 26, 36, 14, "#5ac83a");
+        if (b < 4.2 && w.om >= 4.2) A.showCaption("Park workers."); }
+      for (const s of w.shots) s.t += dt; dropFx(A, S, dt);
+    },
+    bg(t, S) {
+      R("#1a3a2a", 0, 0, A.W, A.H); grad(A, ["#0a1a2a", "#1a3a2a"], 0, 60); A.layer(.3, 30, (x, k) => R("#3a2a1a", x, 0, 8 + (k % 3) * 4, 120)); A.layer(.6, 46, (x, k) => R("#2a1a10", x, 0, 10 + (k % 2) * 6, 130));
+      R("#2a6a2a", 0, 110, A.W, G - 110); A.layer(.8, 7, (x, k) => R("#3a8a3a", x, 116 + (k % 5) * 6, 1, 4)); R("#2a6a2a", 0, G, A.W, 30);
+      const sx0 = sx(A, STUMP); oell(A, "#a8763a", sx0, G - 6, 16, 4); R(A.C.ink, sx0 - 17, G - 6, 34, 8); R("#8a5a2a", sx0 - 16, G - 6, 32, 7); ell(A, "#c8925a", sx0, G - 6, 14, 3);
+      const w = S.pw; if (w.om >= 0) [0, 1, 2].forEach(i => worker(sx(A, STUMP + 70 + i * 26), t, i, w.om > 2.2));
+    },
+    mid(t, S) { const w = S.pw; for (const s of w.shots) { if (s.t > .8) continue; const u = s.t / .8, x = lerp(sx(A, s.x), sx(A, s.tx), u), y = G - 30 - s.y * (1 - u);
+      if (s.k === "rabbit") { oell(A, "#f4f4f2", x, y, 6, 3); R("#f4f4f2", x - 6, y - 6, 2, 5); } else if (s.k === "pigeon") { oell(A, "#9a9a9a", x, y, 5, 3); R("#f3a91f", x + 5, y, 2, 1); } else { R("#f3d23b", x - 3, y - 2, 6, 4); } } },
+    fg(t, S) { const w = S.pw; if (w.om >= 0 && w.om < 4.2) { A.ctx.globalAlpha = .25 + Math.sin(t * 3) * .1; disc(A, "#fff4a0", A.red.x, A.red.top + 14, 22); A.ctx.globalAlpha = 1; } txtFx(A, S); dropFx(A, S); }
+  };
+};
+})();
