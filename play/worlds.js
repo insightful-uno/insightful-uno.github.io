@@ -1522,3 +1522,327 @@ W["soccer"] = A => {
   };
 };
 })();
+
+/* ======================= batch 5 ======================= */
+(() => {
+const W = window.RED_WORLDS, { lerp, mix, disc, puff, sx, confetti } = W.__shared;
+const { arm, reds, drawWalker, follow, onHead, heartFx, hearts, splash, dropFx, crowdText, txtFx, smoke } = W.__shared2;
+const flash = (A, a, c = "#ffffff") => { if (a <= 0) return; A.ctx.globalAlpha = Math.min(1, a); A.R(c, 0, 0, A.W, A.H); A.ctx.globalAlpha = 1; };
+const clouds = (A, c = "#f4f4f2") => A.layer(.06, 110, (x, k) => { puff(A, x + 30, 18 + (k % 3) * 10, 9, c, .95); puff(A, x + 44, 20 + (k % 3) * 10, 7, c, .95); puff(A, x + 20, 22 + (k % 3) * 10, 6, c, .95); });
+const grad = (A, stops, y0 = 0, y1 = A.H) => { const g = A.ctx.createLinearGradient(0, y0, 0, y1); stops.forEach((c, i) => g.addColorStop(i / (stops.length - 1), c)); A.ctx.fillStyle = g; A.ctx.fillRect(0, y0, A.W, y1 - y0); };
+const ell = (A, c, x, y, rx, ry, rot = 0) => { A.ctx.fillStyle = c; A.ctx.beginPath(); A.ctx.ellipse(x, y, Math.max(.5, rx), Math.max(.5, ry), rot, 0, 7); A.ctx.fill(); };
+const oell = (A, c, x, y, rx, ry, rot = 0) => { ell(A, A.C.ink, x, y, rx + 1, ry + 1, rot); ell(A, c, x, y, rx, ry, rot); };
+const lieRed = (A, x, y, rot, c = "#E8271A") => { const k = A.ctx, im = A.NS.b5_stand; k.save(); k.translate(x, y); k.rotate(rot); k.drawImage(im, -im.width / 2, -im.height / 2); k.restore(); };
+const lock = (p, x) => { p.x = x; p.vy = 0; p.y = 0; p.inv = Math.max(p.inv, .3); };
+
+/* RAIN GODS: the offering, the climb, the hand in the clouds. Green rain. */
+W["rain-gods"] = A => {
+  const R = A.R, G = A.G, PYR = 620, RAIN = 600, AFTER = 760;
+  return {
+    sprites: Object.assign(reds(A, "b5", {}), { rg_head: { pal: { Q: "#7CFC6A" }, rows: ["KKKK", "KRRK", "RKRK", "RRRR", "QRRQ", ".Q.Q"] } }),
+    level: {
+      obs: [["bird", 220], ["rg_slime", 300], ["bird", 380], ["rg_slime", 470], ["rg_slime", 820]],
+      target: "plant", targetAt: 860, prop: "rg_head", propAt: 130, npcs: [],
+      captions: [[30, "The crowd wants rain."], [250, "Make the offering."], [AFTER, "...the rain came."]]
+    },
+    obs: { rg_slime: { w: 14, h: 2, y: 0, vx: 0, tough: "slimy", draw(o, x, y, t) { ell(A, "#a8e83a", x + 7, A.G, 8, 2); R("#d8ff8a", x + 3 + Math.floor(t * 2) % 7, A.G - 1, 2, 1); } } },
+    reset(S) { S.rg = { pour: -1, drops: [] }; },
+    update(dt, S, p) {
+      const r = S.rg; if (r.pour < 0 && p.x > RAIN && p.x < RAIN + 60) { r.pour = 0; A.redSays("Oh great one...", 1.6); }
+      if (r.pour >= 0) { const b = r.pour; r.pour += dt; if (b < 1.2 && r.pour >= 1.2) A.showCaption("Rain gods."); if (r.pour > 1 && r.pour < 6) for (let i = 0; i < 3; i++) r.drops.push({ x: S.camX + Math.random() * A.W, y: -4, v: 120 + Math.random() * 60 }); }
+      for (const d of r.drops) d.y += d.v * dt; r.drops = r.drops.filter(d => d.y < A.G);
+    },
+    bg(t, S) {
+      grad(A, ["#f0a8b0", "#f4c0b8", "#f0b090"], 0, 96); disc(A, "#fff4ec", 236, 30, 13);
+      A.layer(.12, 160, (x, k) => { A.ctx.fillStyle = "#9a7a7a"; A.ctx.beginPath(); A.ctx.moveTo(x - 20, 96); A.ctx.lineTo(x + 40, 62 + (k % 2) * 10); A.ctx.lineTo(x + 90, 82); A.ctx.lineTo(x + 140, 96); A.ctx.fill(); });
+      R("#e8822a", 0, 92, A.W, G - 92);
+      if (S.p.x > AFTER) { A.layer(.6, 70, (x, k) => { oell(A, "#b8e83a", x + 30, 120 + (k % 3) * 8, 22, 6); lieRed(A, x + 30, 116 + (k % 3) * 8, k % 2 ? 1.4 : -1.5); }); }
+      else A.layer(.4, 6, (x, k) => { const b = Math.floor(t * 3 + k) % 2, y = 100 + (k % 5) * 7; R("#14110F", x, y - b, 2, 8); R("#14110F", x - 1 + (k % 2) * 3, y - 4 - b, 1, 4); disc(A, "#14110F", x + 1, y - 2 - b, 1.5); });
+      const px = sx(A, PYR, .7); if (px > -100 && px < A.W + 100) { for (let i = 0; i < 7; i++) { const w = 80 - i * 10, y = G - 10 - i * 9; R(A.C.ink, px - w / 2 - 1, y - 1, w + 2, 10); R(i % 2 ? "#a8a8a8" : "#9a9a9a", px - w / 2, y, w, 9); for (let j = 0; j < w / 6; j++) R("#bcbcbc", px - w / 2 + j * 6 + (i % 2) * 3, y + 3, 2, 2); }
+        R(A.C.ink, px - 3, G - 74, 6, 64); R("#cfcfcf", px - 2, G - 73, 4, 63); R(A.C.ink, px - 9, G - 80, 18, 8); R("#bcbcbc", px - 8, G - 79, 16, 6); }
+      R("#9a9a9a", 0, G, A.W, 30); A.layer(1, 22, (x) => { R("#8a8a8a", x, G + 1, 1, 29); }); R("#7a7a7a", 0, G, A.W, 1);
+    },
+    mid(t, S) {
+      const r = S.rg; if (r.pour < 0) return; const px = sx(A, PYR, .7), u = Math.min(1, r.pour / .8);
+      puff(A, px, 4, 30, "#f4f4f2", .95); puff(A, px - 26, 8, 18, "#f4f4f2", .95); puff(A, px + 26, 8, 18, "#f4f4f2", .95);
+      const hy = -40 + u * 50; R(A.C.ink, px - 15, hy - 30, 30, 32); R("#E8271A", px - 14, hy - 29, 28, 30); for (let i = 0; i < 4; i++) { R(A.C.ink, px - 13 + i * 7, hy, 6, 8); R("#E8271A", px - 12 + i * 7, hy + 1, 4, 6); }
+      if (r.pour > .8 && r.pour < 6) { const w = 8 + Math.sin(t * 9) * 2; R("#a8e83a", px - w, hy + 10, w * 2, G - 80 - hy); A.ctx.globalAlpha = .5; R("#d8ff8a", px - 2, hy + 10, 3, G - 80 - hy); A.ctx.globalAlpha = 1; ell(A, "#a8e83a", px, G - 72, 18, 5); }
+      for (const d of r.drops) R("#a8e83a", Math.round(d.x - S.camX), Math.round(d.y), 1, 3);
+    },
+    fg(t, S) {
+      onHead(A, (x, top, face) => { for (let i = -4; i <= 4; i++) { const a = i * .3 - Math.PI / 2, fx = x + Math.cos(a) * 9, fy = top + 4 + Math.sin(a) * 9; A.ctx.strokeStyle = A.C.ink; A.ctx.lineWidth = 3; A.ctx.beginPath(); A.ctx.moveTo(x, top + 4); A.ctx.lineTo(fx, fy); A.ctx.stroke(); A.ctx.strokeStyle = "#f4f4f2"; A.ctx.lineWidth = 1; A.ctx.stroke(); R(A.C.ink, Math.round(fx), Math.round(fy), 1, 1); }
+        R(A.C.ink, x - 5, top + 3, 10, 2); R("#f3d23b", x - 4, top + 3, 8, 1); });
+      if (S.p.x > AFTER) { const fx = sx(A, 900); R("#3a8a2a", fx, A.G - 10, 1, 10); for (let i = 0; i < 6; i++) { const a = i / 6 * 7; R("#f4f4f2", fx + Math.round(Math.cos(a) * 3), A.G - 12 + Math.round(Math.sin(a) * 3), 2, 2); } R("#f3d23b", fx, A.G - 12, 2, 2);
+        A.ctx.globalAlpha = .25; A.ctx.fillStyle = "#ffffff"; A.ctx.beginPath(); A.ctx.moveTo(fx - 4, 0); A.ctx.lineTo(fx + 6, 0); A.ctx.lineTo(fx + 16, A.G); A.ctx.lineTo(fx - 14, A.G); A.ctx.fill(); A.ctx.globalAlpha = 1; }
+    }
+  };
+};
+
+/* THE DEVIL PLAYS TOO MUCH: a priest, a lounging devil, and one flick. */
+W["the-devil-plays-too-much"] = A => {
+  const R = A.R, G = A.G, FLICK = 640, LAND = 800;
+  const priest = rows => rows.map((r, j) => j >= 11 && j <= 22 ? r.replace(/[RWwK]/g, c => j === 11 ? (c === "R" ? "Z" : c) : "D") : j >= 23 ? r.replace(/R/g, "D").replace(/r/g, "d") : r);
+  return {
+    sprites: Object.assign(reds(A, "b5", {}), { bible: { pal: { N: "#8a6a3a", Y: "#f3d23b" }, rows: ["NNNN", "NYNN", "YYYN", "NYNN", "NNNN"] } }),
+    level: {
+      obs: [["fire", 200], ["dv_fork", 280], ["fire", 380], ["dv_fork", 460], ["fire", 540]],
+      target: "dv_font", targetAt: 420, prop: "bible", propAt: 120, npcs: [],
+      captions: [[30, "Father Red on his rounds."], [260, "Someone's watching from above."], [FLICK - 60, "Don't look up."]]
+    },
+    obs: { dv_fork: { w: 14, h: 5, y: 16, vx: -150, draw(o, x, y) { R("#8a1008", x + 4, y + 2, 10, 1); R(A.C.ink, x, y, 1, 5); R(A.C.ink, x + 2, y, 1, 5); R(A.C.ink, x, y + 2, 4, 1); R(A.C.ink, x + 4, y, 1, 5); } } },
+    targets: { dv_font: { line: "Holy water, refilled.", draw(tg, x) { R(A.C.ink, x - 7, G - 12, 14, 5); R("#cfcfcf", x - 6, G - 11, 12, 3); R("#9fd0ee", x - 5, G - 11, 10, 1); R(A.C.ink, x - 2, G - 7, 4, 7); R("#cfcfcf", x - 1, G - 7, 2, 7); R(A.C.ink, x - 5, G - 1, 10, 1); } } },
+    reset(S) { S.dv = { dressed: false, flick: -1 }; },
+    update(dt, S, p) {
+      const d = S.dv; if (!d.dressed) { d.dressed = true; A.reskin(priest, { D: "#24242e", d: "#16161c", Z: "#f4f4f2" }); }
+      if (d.flick < 0 && p.x > FLICK && p.x < FLICK + 50) { d.flick = 0; A.redSays("Lord, give me strength.", 1.2); }
+      if (d.flick >= 0 && d.flick < 9) { const b = d.flick; d.flick += dt; if (d.flick < 1.1) lock(p, FLICK);
+        if (b < 1.1 && d.flick >= 1.1) { p.x = FLICK + 4; p.vy = 330; p.onG = false; p.kb = .5; p.face = 1; crowdText(A, S, "FLICK", FLICK, 70); }
+        if (b < 2.6 && d.flick >= 2.6) { A.showCaption("The devil plays too much."); A.redSays("...amen?", 1.6); } }
+    },
+    bg(t, S) {
+      const canyon = S.p.x > LAND - 40;
+      if (canyon) { R("#e8822a", 0, 0, A.W, A.H); A.layer(.3, 26, (x, k) => { R("#a8522a", x, 20 + (k % 4) * 6, 12, 50); disc(A, "#a8522a", x + 6, 20 + (k % 4) * 6, 6); }); R("#c86a2a", 0, 80, A.W, G - 80);
+        const sx0 = sx(A, 880); oell(A, "#c8924a", sx0, G - 6, 40, 12); R("#c8924a", sx0 - 40, G - 6, 80, 30); for (let i = 0; i < 8; i++) R("#a87a3a", sx0 - 36 + i * 10, G, 2, 20); ell(A, "#8a6a3a", sx0, G - 8, 34, 8);
+        R("#c86a2a", 0, G + 18, A.W, 12); return; }
+      grad(A, ["#7a8a6a", "#a8a888"], 0, 100);
+      A.ctx.fillStyle = "#3a72d6"; A.ctx.beginPath(); A.ctx.moveTo(0, 70); A.ctx.lineTo(A.W, 120); A.ctx.lineTo(A.W, A.H); A.ctx.lineTo(0, A.H); A.ctx.fill();
+      R("#2a62c6", 0, G, A.W, 30);
+      // the devil, lounging, chin in hand, watching
+      const dx = Math.round(230 - A.S.camX * .04), dy = 46 + Math.sin(t) * 3, look = Math.max(-2, Math.min(2, (A.red.x - dx) / 60));
+      const tw = Math.sin(t * 2); A.ctx.strokeStyle = A.C.ink; A.ctx.lineWidth = 4; A.ctx.beginPath(); A.ctx.moveTo(dx + 40, dy); A.ctx.bezierCurveTo(dx + 60, dy - 20, dx + 50 + tw * 8, dy - 40, dx + 66, dy - 46); A.ctx.stroke(); A.ctx.strokeStyle = "#e89a9a"; A.ctx.lineWidth = 2; A.ctx.stroke();
+      oell(A, "#556a3a", dx + 30, dy + 6, 18, 8, -.2);
+      oell(A, "#e89a9a", dx + 6, dy + 8, 34, 14, -.25); oell(A, "#e89a9a", dx - 22, dy - 4, 14, 16);
+      for (let i = 0; i < 3; i++) R("#c87a7a", dx - 4 + i * 6, dy + 2, 1, 10);
+      R(A.C.ink, dx - 34, dy - 22, 3, 6); R("#f4f4f2", dx - 33, dy - 21, 1, 4); R(A.C.ink, dx - 13, dy - 22, 3, 6); R("#f4f4f2", dx - 12, dy - 21, 1, 4);
+      oell(A, "#f4f4f2", dx - 28, dy - 8, 4, 3); oell(A, "#f4f4f2", dx - 18, dy - 8, 4, 3); R(A.C.ink, dx - 29 + look, dy - 8, 2, 2); R(A.C.ink, dx - 19 + look, dy - 8, 2, 2);
+      R(A.C.ink, dx - 28, dy + 1, 12, 2); R(A.C.ink, dx - 23, dy + 5, 4, 1);
+      oell(A, "#e89a9a", dx - 10, dy + 18, 10, 6, .4);                       // hand under chin
+    },
+    mid(t, S) {
+      const d = S.dv; if (d.flick < 0 || d.flick > 1.6) return; const fx = sx(A, FLICK) - 14, u = Math.min(1, d.flick / .8), y = -60 + u * (G - 2), cocked = d.flick < 1.1;
+      R(A.C.ink, fx - 8, y - 70, 16, 70); R("#d82a1a", fx - 7, y - 69, 14, 69); oell(A, "#d82a1a", fx, y, 9, 10);
+      if (cocked) { oell(A, "#d82a1a", fx + 6, y + 6, 5, 4); } else { R(A.C.ink, fx + 4, y - 2, 16, 6); R("#d82a1a", fx + 5, y - 1, 14, 4); }
+    },
+    fg(t, S) { if (S.p.x < LAND - 40) onHead(A, (x, top) => { R("#f4f4f2", x - 2, top + 11, 4, 2); }); txtFx(A, S); }
+  };
+};
+
+/* ECOLOGICAL MARTYRDOM: lie down for the birds, the bears, the fish. */
+W["ecological-martydom"] = A => {
+  const R = A.R, G = A.G, BEARS = [330, 560], RIVER = 600, LINE = 830;
+  const bear = (x, t, k, c = "#e4e4e0") => { const b = Math.round(Math.sin(t * 3 + k) * 1); oell(A, c, x, G - 11 + b, 17, 10); oell(A, c, x - 15, G - 15 + b, 8, 7); R(A.C.ink, x - 20, G - 16 + b, 2, 2); R(A.C.ink, x - 22, G - 13 + b, 2, 2);
+    for (let i = 0; i < 4; i++) { R(A.C.ink, x - 12 + i * 8, G - 4, 5, 4); R(c, x - 11 + i * 8, G - 4, 3, 3); } disc(A, c, x - 11, G - 22 + b, 2); };
+  return {
+    sprites: Object.assign(reds(A, "b5", {}), reds(A, "hand", {})),
+    level: {
+      obs: [["bird", 160], ["bird", 230], ["bird", 290], ["em_salmon", 660], ["em_salmon", 720], ["em_salmon", 780]],
+      target: "tree", targetAt: 300, prop: "fish", propAt: 110, npcs: [["hand_stand", LINE, -1, "Hold on."], ["hand_stand", LINE + 26, -1], ["hand_stand", LINE + 52, -1]],
+      captions: [[30, "Feed the birds. With yourself."], [BEARS[0] + 10, "The bears are hungry too."], [RIVER + 20, "Into the river. Hold hands."]]
+    },
+    obs: { em_salmon: { w: 10, h: 5, y: 0, vx: 0, draw(o, x, y, t) { const c = (t * .7 + o.x * .01) % 1, h = c < .5 ? Math.sin(c * 2 * Math.PI) * 26 : 0; o.y = h; o.off = h < 5; if (h < 1) return; const yy = A.G - Math.round(h) - 5;
+      R(A.C.ink, x, yy, 10, 5); R("#e88a7a", x + 1, yy + 1, 8, 3); R("#7ac85a", x + 1, yy + 1, 3, 3); R(A.C.ink, x + 2, yy + 2, 1, 1); R(A.C.ink, x + 9, yy - 1, 2, 7); } } },
+    reset(S) { S.em = { bit: {} }; },
+    update(dt, S, p) {
+      const e = S.em; if (p.x > BEARS[0] && p.x < BEARS[1]) { const k = Math.floor((p.x - BEARS[0]) / 60); if (!e.bit[k]) { e.bit[k] = 1; crowdText(A, S, ["NOM", "CHOMP", "MUNCH", "NOM NOM"][k % 4], p.x - 10, 40); splash(S, p.x, 14, 6, "#E8271A"); } }
+      if (p.x > LINE - 20 && !e.done) { e.done = true; A.showCaption("Ecological martyrdom."); A.redSays("Circle of life, baby.", 2); }
+      dropFx(A, S, dt);
+    },
+    bg(t, S) {
+      const x = S.p.x;
+      if (x < BEARS[0] - 20) { R("#7ac85a", 0, 0, A.W, A.H); A.layer(.4, 9, (x, k) => R("#6ab84a", x + A.hash(k, 1) * 6, A.hash(k, 2) * 150, 3, 1));
+        lieRed(A, sx(A, 200), G - 4, -Math.PI / 2 + .1); for (let i = 0; i < 4; i++) { const bx = sx(A, 170 + i * 18), b = Math.floor(t * 5 + i) % 2; oell(A, "#d8d8d4", bx, G - 9 - b, 4, 5); R("#f3a91f", bx - 5, G - 12 - b, 2, 1); R(A.C.ink, bx - 2, G - 12 - b, 1, 1); }
+        R("#6ab84a", 0, G, A.W, 30); }
+      else if (x < RIVER) { grad(A, ["#5a7a9a", "#7a9aba"], 0, 90); A.layer(.2, 40, (x, k) => R("#4a6a8a", x, 40 + (k % 3) * 10, 30, 60)); R("#d8b878", 0, 90, A.W, G - 90); R("#c8a868", 0, G, A.W, 30);
+        [BEARS[0] + 50, BEARS[0] + 110, BEARS[0] + 170].forEach((bx, i) => bear(sx(A, bx), t, i)); }
+      else { R("#e8d860", 0, 0, A.W, 70); A.layer(.15, 140, (x, k) => { ell(A, "#3a9a3a", x + 60, 76, 80, 18); }); A.layer(.3, 90, (x, k) => ell(A, "#4aa84a", x + 30, 84, 50, 12));
+        R("#7ad0e0", 0, 84, A.W, G - 84); A.layer(1, 13, (x, k) => R("#a8e4f0", x + (Math.floor(t * 2 + k) % 4), 96 + (k % 7) * 8, 6, 1));
+        const bx = sx(A, 900, .6); oell(A, "#c8a07a", bx, 70, 14, 26); oell(A, "#c8a07a", bx, 40, 10, 9); R("#c8a07a", bx - 22, 34, 10, 4); R("#c8a07a", bx + 12, 30, 10, 4); R(A.C.ink, bx - 4, 38, 2, 2); R(A.C.ink, bx + 2, 38, 2, 2); R("#f4f4f2", bx - 3, 44, 6, 2);
+        R("#5ab4d0", 0, G, A.W, 30); A.layer(1, 11, (x, k) => R("#a8e4f0", x + (Math.floor(t * 3 + k) % 5), G + 4 + (k % 5) * 5, 6, 1)); }
+    },
+    mid(t, S) { if (S.p.x > LINE - 60) { const xs = [LINE, LINE + 26, LINE + 52].map(v => sx(A, v)); xs.slice(0, -1).forEach((x, i) => R("#E8271A", x + 4, A.G - 20, xs[i + 1] - x - 8, 2)); R("#E8271A", A.red.x + 3, A.G - 20, xs[0] - A.red.x - 6, 2); } },
+    fg(t, S) { txtFx(A, S); dropFx(A, S); }
+  };
+};
+
+/* FLAPJACKS: sunset on the balcony with her. Something small and dark keeps following. */
+W["flapjacks"] = A => {
+  const R = A.R, G = A.G, HIDE = 700, LIGHT = 820;
+  return {
+    sprites: { gf: { pal: { P: "#f0a8d0", p: "#d888b8", B: "#9ac8ee", b: "#7aa8d6", K: "#14110F" }, rows: [
+      "..KKKKK...", ".KKKKKKK..", ".KPPPPPKK.", ".KPKPPKPK.", ".KPPPPPKK.", ".K.PRRP.K.", "....PP....", "..BBBBBB..", ".BBBBBBBB.", ".PBBBBBBP.", ".PBBBBBBP.", "..BBBBBB..", ".bbbbbbbb.", "bbbbbbbbbb", "..PP..PP..", "..PP..PP..", "..PP..PP..", "..PP..PP..", "..pp..pp..", ".PPP.PPP.."] },
+      blob: { pal: { K: "#0a0a0a", E: "#ffffff" }, rows: ["..KKKK..", ".KKKKKK.", "KKKKKKKK", "KEKKKEKK", "KKKKKKKK", "KKKEEKKK", "KKKKKKKK", "KKKKKKKK", "KKKKKKKK", ".KK..KK."] },
+      torch: { pal: { G: "#9a9a9a", Y: "#f3d23b" }, rows: ["GGGY", "GGGY"] } },
+    level: {
+      obs: [["bat", 220], ["fj_moth", 300], ["bat", 420], ["fj_moth", 520], ["bat", 610]],
+      target: "lamp", targetAt: 460, prop: "torch", propAt: 600, npcs: [],
+      captions: [[30, "Sunset on the balcony. Perfect."], [250, "Is something following us?"], [HIDE - 20, "Where'd it go?"]]
+    },
+    obs: { fj_moth: { w: 6, h: 5, y: 15, vx: -40, draw(o, x, y, t) { const f = Math.floor(t * 14) % 2, yy = y + Math.round(Math.sin(t * 5 + o.x) * 3); R(A.C.ink, x + 2, yy, 2, 5); R("#e8dcc8", x + (f ? 0 : 1), yy + 1, 2, 3); R("#e8dcc8", x + (f ? 4 : 3), yy + 1, 2, 3); } } },
+    reset(S) { S.fj = { g: { x: 30, y: 0, d: 0, face: 1, moving: false }, b: { x: -30, y: 0, d: 0, face: 1, moving: false }, lit: -1 }; },
+    update(dt, S, p) {
+      const f = S.fj; follow(f.g, Math.min(p.x - 14 * (p.face || 1), HIDE + 120), 120, dt); if (Math.abs(f.g.x - p.x) > 80) f.g.x = p.x - 40;
+      const goal = p.x > HIDE ? f.g.x + 4 : p.x - 60; follow(f.b, goal, 110, dt); if (Math.abs(f.b.x - goal) > 140) f.b.x = goal - 60 * Math.sign(goal - f.b.x || 1);
+      if (f.lit < 0 && p.x > LIGHT && p.x < LIGHT + 60) { f.lit = 0; A.showCaption("Flapjacks."); A.say("...hi.", f.g.x + 4, 30, 2); }
+      if (f.lit >= 0) f.lit += dt;
+    },
+    bg(t, S) {
+      grad(A, ["#3a2a7a", "#8a4aa0", "#f08a5a", "#f8c85a"], 0, 96); disc(A, "#ff7a3a", 160, 96, 10);
+      R("#2a3a6a", 0, 96, A.W, 30); A.layer(1, 13, (x, k) => R("#f08a5a", x + (Math.floor(t + k) % 4), 100 + (k % 5) * 4, 7, 1));
+      A.layer(.4, 20, (x, k) => { const h = 20 + (k % 4) * 12; R("#4a4a5a", x, 126 - h, 18, h); if (k % 2) R("#f3d23b", x + 6, 130 - h, 3, 3); });
+      R("#6a6a72", 0, 126, A.W, G - 126); R("#8a5a32", 0, G, A.W, 30); A.layer(1, 22, x => R("#6a4224", x, G + 1, 1, 29));
+    },
+    mid(t, S) {
+      const f = S.fj, gx = sx(A, f.g.x), im = A.NS[f.g.face < 0 ? "gfL" : "gf"]; A.ctx.drawImage(im, gx - 5, G - im.height + 1);
+      const bx = sx(A, f.b.x), shy = S.p.face < 0 && Math.abs(f.b.x - S.p.x) < 120 && f.lit < 0, bi = A.NS[f.b.face < 0 ? "blobL" : "blob"];
+      A.ctx.globalAlpha = shy ? .25 : 1; A.ctx.drawImage(bi, bx - 4, G - bi.height + 1 - (f.b.moving ? Math.floor(f.b.d / 4) % 2 : 0)); A.ctx.globalAlpha = 1;
+    },
+    fg(t, S) {
+      R(A.C.ink, 0, G - 20, A.W, 2); R("#a8763a", 0, G - 19, A.W, 1); A.layer(1, 9, x => { R(A.C.ink, x, G - 20, 2, 20); R("#a8763a", x, G - 19, 1, 19); });
+      const f = S.fj; if (f.lit >= 0) { const x = A.red.x + 6, gx = sx(A, f.g.x); A.ctx.globalAlpha = Math.min(.7, f.lit * 2); A.ctx.fillStyle = "#fff4a0"; A.ctx.beginPath(); const bx = sx(A, f.b.x); A.ctx.moveTo(x, G - 18); A.ctx.lineTo(bx - 8, G - 34); A.ctx.lineTo(bx - 8, G + 4); A.ctx.fill(); A.ctx.globalAlpha = 1;
+        const bi = A.NS.blobL; A.ctx.drawImage(bi, bx - 4, G - bi.height + 1); R("#ffffff", bx - 1, G - 4, 1, 3); }
+    }
+  };
+};
+
+/* THERE GO THE BOYS: a pink valley, a thousand tiny Reds, a long goodbye. */
+W["there-go-the-boys"] = A => {
+  const R = A.R, G = A.G, PIT = 560, SOCK = 780;
+  return {
+    sprites: { tgsock: { pal: { Z: "#f4f4f2" }, rows: ["ZZ..", "ZZ..", "ZZ..", "ZZZZ", "ZZZZ"] }, boy: { pal: {}, rows: [".K.", "RRR", ".R.", "R.R"] }, boyb: { pal: {}, rows: [".K.", "RRR", ".R.", ".R."] } },
+    level: {
+      obs: [["tg_boy", 160], ["tg_boy", 200], ["tg_boy", 260], ["tg_boy", 330], ["tg_boy", 380], ["tg_boy", 440], ["tg_boy", 500]],
+      target: "plant", targetAt: 300, prop: "tgsock", propAt: 120, npcs: [],
+      captions: [[30, "The boys are running."], [PIT - 40, "Some of them make it."], [SOCK - 50, "...and the rest?"]]
+    },
+    obs: { tg_boy: { w: 3, h: 4, y: 0, vx: -45, draw(o, x, y, t) { const f = Math.floor(t * 12 + o.x) % 2; A.ctx.drawImage(A.NS[f ? "boyL" : "boybL"], x - 1, y - 1); } } },
+    reset(S) { S.tg = { sock: -1, swarm: [] }; for (let i = 0; i < 26; i++) S.tg.swarm.push({ x: SOCK - 60 + Math.random() * 120, y: 0, ph: Math.random() * 7 }); },
+    update(dt, S, p) {
+      const g = S.tg; if (g.sock < 0 && p.x > SOCK - 70 && p.x < SOCK + 30) { g.sock = 0; }
+      if (g.sock >= 0 && g.sock < 9) { const b = g.sock; g.sock += dt; if (b < 1.5 && g.sock >= 1.5) { A.showCaption("There go the boys."); A.redSays("Bye, boys...", 2.2); }
+        for (const s of g.swarm) if (g.sock > .8) { s.x += (SOCK - s.x) * dt * 2; s.y += dt * 40; } }
+    },
+    bg(t, S) {
+      grad(A, ["#f39a3a", "#f3c85a", "#f0e0a0"], 0, 112);
+      const fx = sx(A, 700, .15); oell(A, "#f0c8e0", fx, 30, 22, 24); R(A.C.ink, fx - 8, 24, 2, 12); R(A.C.ink, fx + 6, 24, 2, 12); oell(A, "#f08aa0", fx, 44, 6, 2);
+      A.layer(.3, 220, (x, k) => { A.ctx.fillStyle = A.C.ink; A.ctx.beginPath(); A.ctx.moveTo(x - 1, G); A.ctx.quadraticCurveTo(x + 50, 20, x + 101, G); A.ctx.fill(); A.ctx.fillStyle = "#a890a8"; A.ctx.beginPath(); A.ctx.moveTo(x, G); A.ctx.quadraticCurveTo(x + 50, 22, x + 100, G); A.ctx.fill(); });
+      R("#f0c8e0", 0, 110, A.W, G - 110); R("#f0c8e0", 0, G, A.W, 30); A.layer(1, 7, (x, k) => R("#e0b0d0", x, G + 3 + (k % 5) * 5, 3, 1));
+      const px = sx(A, PIT); if (px > -60 && px < A.W + 60) { oell(A, "#5a2a3a", px, G + 4, 30, 7); for (let i = 0; i < 9; i++) { const bx = px - 22 + (i * 11) % 44, by = G + 2 + (i % 3) * 2, f = Math.floor(t * 8 + i) % 2; A.ctx.drawImage(A.NS[f ? "boy" : "boyb"], bx, by - 6 - Math.round(Math.abs(Math.sin(t * 4 + i)) * 5)); } }
+    },
+    mid(t, S) {
+      const g = S.tg, sx0 = sx(A, SOCK);
+      for (const s of g.swarm) { if (s.y > 50) continue; const x = sx(A, s.x) + Math.round(Math.sin(t * 6 + s.ph) * 3); A.ctx.drawImage(A.NS[Math.floor(t * 10 + s.ph) % 2 ? "boy" : "boyb"], x, G - 4 - Math.round(s.y)); }
+      if (g.sock >= 0) { const u = Math.min(1, g.sock / .8), y = -80 + u * (G + 26);
+        R(A.C.ink, sx0 - 21, y - 40, 42, 74); R("#f4f4f2", sx0 - 20, y - 39, 40, 72); for (let i = 0; i < 6; i++) R("#d8d8d4", sx0 - 20, y - 36 + i * 3, 40, 1);
+        oell(A, "#f4f4f2", sx0 + 4, y + 34, 26, 14); ell(A, "#2a2a2a", sx0 + 10, y + 38, 9, 4, .4);
+        R(A.C.ink, sx0 - 26, y - 70, 52, 34); R("#f0b8a0", sx0 - 25, y - 69, 50, 32); R("#e8c23a", sx0 - 25, y - 44, 50, 2); for (let i = 0; i < 4; i++) oell(A, "#f0b8a0", sx0 - 18 + i * 12, y - 36, 5, 4);
+        R("#7CFC6A", sx0 - 22, y - 40, 4, 3); R("#7CFC6A", sx0 + 18, y - 40, 4, 3); }
+    },
+    fg(t, S) { const g = S.tg; if (g.sock > 1.5) onHead(A, (x, top, face) => { if (Math.floor(t * 3) % 2) R("#9fd0ee", x + face * 3, top + 8, 1, 3); R(A.C.ink, x - 1, top - 10, 2, 12); R("#E8271A", x, top - 9, 1, 10); }); }
+  };
+};
+
+/* FOODCHAIN BATTLE: tiny Red vs worm. Pigeon vs worm. Cat vs pigeon. Dog vs cat. */
+W["foodchain-battle"] = A => {
+  const R = A.R, G = A.G, PIG = 520, CHAIN = 760;
+  const pigeon = (x, y, s, peck) => { oell(A, "#9a9a9a", x, y, 22 * s, 16 * s); oell(A, "#8a8a8a", x + 16 * s, y - 2 * s, 12 * s, 7 * s, .4); oell(A, "#9a9a9a", x - 16 * s, y - 14 * s + peck, 11 * s, 11 * s);
+    A.ctx.fillStyle = A.C.ink; A.ctx.beginPath(); A.ctx.moveTo(x - 24 * s, y - 16 * s + peck); A.ctx.lineTo(x - 40 * s, y - 8 * s + peck * 1.5); A.ctx.lineTo(x - 22 * s, y - 9 * s + peck); A.ctx.fill();
+    A.ctx.fillStyle = "#e8a23a"; A.ctx.beginPath(); A.ctx.moveTo(x - 24 * s, y - 15 * s + peck); A.ctx.lineTo(x - 38 * s, y - 8 * s + peck * 1.5); A.ctx.lineTo(x - 23 * s, y - 10 * s + peck); A.ctx.fill();
+    disc(A, A.C.ink, x - 18 * s, y - 17 * s + peck, 2.5 * s); disc(A, "#ffffff", x - 19 * s, y - 18 * s + peck, .8 * s); [x - 6 * s, x + 6 * s].forEach(lx => { R("#e8a23a", lx, y + 14 * s, 2, G - y - 14 * s); R("#e8a23a", lx - 3, G - 1, 8, 1); }); };
+  return {
+    sprites: Object.assign(reds(A, "b5", {}), { spear: { pal: { N: "#8a5a32", G: "#c8c8c8" }, rows: ["GNNNNNN"] } }),
+    level: {
+      obs: [["fc_worm", 180], ["fc_worm", 260], ["fc_worm", 340], ["fc_worm", 420], ["fc_worm", 620], ["fc_worm", 680]],
+      target: "bush", targetAt: 460, prop: "spear", propAt: 110, npcs: [],
+      captions: [[30, "Tiny warrior. Big worms."], [PIG - 80, "Uh oh. Bird."], [CHAIN - 40, "Everybody eats somebody."]]
+    },
+    obs: { fc_worm: { w: 14, h: 5, y: 0, vx: -18, draw(o, x, y, t) { const w = Math.sin(t * 6 + o.x); for (let i = 0; i < 7; i++) { const yy = y + 2 - Math.round(Math.abs(Math.sin(i * .6 + t * 4)) * 2 * (1 + w * .3)); R(A.C.ink, x + i * 2, yy - 1, 3, 4); R("#e8a8a8", x + i * 2, yy, 2, 2); } } } },
+    reset(S) { S.fc = { chain: -1, peck: 0 }; },
+    update(dt, S, p) {
+      const f = S.fc; if (Math.abs(p.x - PIG + 20) < 30 && p.inv <= 0 && Math.sin(S.t * 3) > .9) { p.inv = 1.2; p.vy = 180; p.onG = false; p.kb = .3; A.redSays("Not today, bird!", 1.4); crowdText(A, S, "PECK", p.x, 50); }
+      if (f.chain < 0 && p.x > CHAIN && p.x < CHAIN + 60) { f.chain = 0; } if (f.chain >= 0) { const b = f.chain; f.chain += dt; if (b < 2 && f.chain >= 2) A.showCaption("Foodchain battle."); }
+    },
+    bg(t, S) {
+      R("#5ab8e8", 0, 0, A.W, 70); clouds(A); R("#3aa83a", 0, 70, A.W, G - 70); A.layer(.4, 9, (x, k) => R("#2f982f", x + A.hash(k, 1) * 6, 74 + A.hash(k, 2) * 70, 3, 1));
+      A.ctx.fillStyle = "#a8763a"; A.ctx.beginPath(); A.ctx.moveTo(0, G - 6); A.ctx.lineTo(A.W, G - 16); A.ctx.lineTo(A.W, A.H); A.ctx.lineTo(0, A.H); A.ctx.fill();
+      R("#a8763a", 0, G, A.W, 30); A.layer(1, 8, (x, k) => R("#8a5a2a", x, G + 3 + (k % 5) * 5, 4, 1));
+    },
+    mid(t, S) {
+      const f = S.fc, px = sx(A, PIG); if (f.chain < 0 && px > -80 && px < A.W + 80) pigeon(px, G - 40, 1, Math.max(0, Math.sin(t * 3)) * 18);
+      if (f.chain >= 0) { const u = f.chain, base = sx(A, CHAIN) + 160;
+        const bx = base - u * 90; pigeon(bx, G - 14, .45, Math.sin(t * 10) * 4);
+        const cx = base + 50 - u * 100, cy = G - 8 - Math.abs(Math.sin(u * 4)) * 10; oell(A, "#e8923a", cx, cy, 14, 6); oell(A, "#e8923a", cx - 14, cy - 5, 6, 6); R("#e8923a", cx - 19, cy - 13, 3, 4); R("#e8923a", cx - 12, cy - 13, 3, 4);
+        for (let i = 0; i < 4; i++) R("#c8721a", cx - 6 + i * 5, cy - 5, 2, 10); A.ctx.strokeStyle = "#e8923a"; A.ctx.lineWidth = 2; A.ctx.beginPath(); A.ctx.moveTo(cx + 12, cy); A.ctx.quadraticCurveTo(cx + 22, cy - 18, cx + 18, cy - 22); A.ctx.stroke(); R(A.C.ink, cx - 17, cy - 6, 1, 1);
+        const dx = base + 120 - u * 110, dy = G - 12 - Math.abs(Math.sin(u * 5)) * 6; oell(A, "#f4f4f2", dx, dy, 18, 9); oell(A, "#f4f4f2", dx - 18, dy - 8, 10, 8); oell(A, "#8a5a32", dx - 13, dy - 12, 4, 5); oell(A, "#8a5a32", dx + 6, dy - 3, 6, 4);
+        R(A.C.ink, dx - 26, dy - 8, 3, 2); R(A.C.ink, dx - 21, dy - 10, 2, 2); R("#e8506a", dx - 26, dy - 4, 4, 3); }
+    },
+    fg(t, S) { onHead(A, (x, top, face) => A.ctx.drawImage(A.NS[face > 0 ? "spear" : "spearL"], x + face * 2 - 3, top + 14)); txtFx(A, S); }
+  };
+};
+
+/* SACRIFICIAL TREE: she offers the glowing fruit. He takes a bite. He becomes the field. */
+W["sacrificial-tree"] = A => {
+  const R = A.R, G = A.G, TREE = 540, FRUIT = 680;
+  return {
+    sprites: Object.assign(reds(A, "b5", {}), { fruitg: { pal: { Y: "#f3d23b", Q: "#3a8a2a" }, rows: [".Q.", "YYY", "YYY", ".Y."] } }),
+    level: {
+      obs: [["skeeter", 200], ["st_daisy", 280], ["skeeter", 360], ["st_daisy", 440], ["skeeter", 620]],
+      target: "bush", targetAt: 400, prop: "fruitg", propAt: 140, npcs: [],
+      captions: [[30, "Tall grass. Warm light."], [TREE - 80, "She's offering something."], [FRUIT - 20, "Just one bite."]]
+    },
+    obs: { st_daisy: { w: 8, h: 8, y: 0, vx: 0, draw(o, x, y, t) { R("#3a8a2a", x + 3, y + 3, 1, 5); for (let i = 0; i < 8; i++) { const a = i / 8 * 7 + t; R("#f4f4f2", x + 3 + Math.round(Math.cos(a) * 3), y + 1 + Math.round(Math.sin(a) * 3), 2, 2); } R("#f3d23b", x + 3, y + 1, 2, 2); } } },
+    reset(S) { S.st = { eat: -1 }; },
+    update(dt, S, p) { const s = S.st; if (s.eat < 0 && p.x > FRUIT && p.x < FRUIT + 50) { s.eat = 0; } if (s.eat >= 0 && s.eat < 9) { const b = s.eat; s.eat += dt; if (s.eat < 4.2) lock(p, FRUIT); if (b < 4.2 && s.eat >= 4.2) { A.showCaption("Sacrificial tree."); p.x = FRUIT + 60; } } },
+    bg(t, S) {
+      R("#2a8a2a", 0, 0, A.W, A.H); const k = A.ctx, g = k.createRadialGradient(A.W / 2, 60, 10, A.W / 2, 60, 200); g.addColorStop(0, "rgba(160,240,140,.6)"); g.addColorStop(1, "rgba(0,40,0,.4)"); k.fillStyle = g; k.fillRect(0, 0, A.W, A.H);
+      A.layer(.5, 7, (x, k) => { R("#1f7a1f", x, 100 + (k % 5) * 9, 1, 8); R("#3a9a3a", x + 3, 104 + (k % 4) * 10, 1, 6); });
+      R("#227a22", 0, G, A.W, 30); A.layer(1, 4, (x, k) => R("#1a6a1a", x, G + 1 + (k % 5) * 5, 1, 4));
+      if (S.st.eat > 4.2) A.layer(.8, 46, (x, k) => { lieRed(A, x + 20, 128 + (k % 3) * 8, k % 2 ? 1.57 : -1.57); A.ctx.globalAlpha = .7; R("#1a5a1a", x + 6, 124 + (k % 3) * 8, 28, 9); A.ctx.globalAlpha = 1; for (let i = 0; i < 2; i++) { R("#f4f4f2", x + 12 + i * 14, 124 + (k % 3) * 8, 3, 3); R("#f3d23b", x + 13 + i * 14, 125 + (k % 3) * 8, 1, 1); } });
+      const tx = sx(A, TREE); if (tx > -80 && tx < A.W + 80) {          // the tree lady
+        A.ctx.fillStyle = A.C.ink; A.ctx.beginPath(); A.ctx.moveTo(tx - 31, G); A.ctx.lineTo(tx - 7, 46); A.ctx.lineTo(tx + 7, 46); A.ctx.lineTo(tx + 31, G); A.ctx.fill();
+        A.ctx.fillStyle = "#c8924a"; A.ctx.beginPath(); A.ctx.moveTo(tx - 30, G); A.ctx.lineTo(tx - 6, 47); A.ctx.lineTo(tx + 6, 47); A.ctx.lineTo(tx + 30, G); A.ctx.fill();
+        for (let i = 0; i < 6; i++) R("#a8722a", tx - 12 + i * 5, 70 + i * 12, 1, 14);
+        [-1, 1].forEach(s => { A.ctx.strokeStyle = A.C.ink; A.ctx.lineWidth = 4; A.ctx.beginPath(); A.ctx.moveTo(tx + s * 4, 60); A.ctx.quadraticCurveTo(tx + s * 40, 40 + Math.sin(t + s) * 3, tx + s * 56, 76); A.ctx.stroke(); A.ctx.strokeStyle = "#c8924a"; A.ctx.lineWidth = 2; A.ctx.stroke(); });
+        disc(A, A.C.ink, tx, 40, 11); disc(A, "#3a9a3a", tx, 40, 10); for (let i = 0; i < 7; i++) disc(A, "#4aaa4a", tx - 8 + (i * 5) % 16, 34 + (i * 3) % 8, 3);
+        R("#c8924a", tx - 4, 42, 8, 6); R(A.C.ink, tx - 3, 44, 1, 1); R(A.C.ink, tx + 2, 44, 1, 1); }
+      const fx = sx(A, FRUIT + 14); if (S.st.eat < 0) { A.ctx.globalAlpha = .35; disc(A, "#fff4a0", fx, 40, 14 + Math.sin(t * 3) * 2); A.ctx.globalAlpha = 1; R("#3a8a2a", fx, 0, 1, 36); oell(A, "#f3d23b", fx, 40, 4, 5); }
+    },
+    fg(t, S) {
+      const s = S.st; onHead(A, (x, top) => { if (s.eat > 4.2) return; R("#f4f4f2", x - 4, top + 11, 9, 8); R("#3a6ad0", x - 4, top + 19, 9, 3); });
+      if (s.eat < 0 || s.eat > 4.6) return; const u = s.eat, a = Math.min(1, u * 3, (4.6 - u) * 3); A.ctx.globalAlpha = a;
+      if (u < 2.2) { R("#2a8a2a", 0, 0, A.W, A.H); const cx = 170; disc(A, A.C.ink, cx, 80, 46); disc(A, "#E8271A", cx, 80, 45); ell(A, A.C.ink, cx, 40, 46, 22); oell(A, "#ffffff", cx - 16, 70, 9, 10); oell(A, "#ffffff", cx + 16, 70, 9, 10); disc(A, A.C.ink, cx - 14, 72, 4); disc(A, A.C.ink, cx + 18, 72, 4);
+        R("#f4f4f2", cx - 60, 126, 120, 60); oell(A, "#f3d23b", cx - 50, 100, 16, 14 - Math.min(10, u * 6)); oell(A, "#E8271A", cx - 60, 110, 12, 10); R(A.C.ink, cx - 6, 98, 14, 6); if (u > .6) for (let i = 0; i < 3; i++) R("#f3d23b", cx - 2 + i * 4, 104, 1, 3 + ((u * 20 + i * 5) % 12)); }
+      else { R("#1a5a1a", 0, 0, A.W, A.H); const cx = 160; for (let i = 0; i < 10; i++) { const a = i / 10 * 7, r = (u - 2.2) * 50; A.ctx.strokeStyle = "#0a2a0a"; A.ctx.lineWidth = 2; A.ctx.beginPath(); A.ctx.moveTo(cx, 100); A.ctx.lineTo(cx + Math.cos(a) * r, 100 + Math.sin(a) * r * .5); A.ctx.stroke(); }
+        lieRed(A, cx, 100, 1.57); if (u > 3) [[-8, 0], [8, 0]].forEach(([dx]) => { for (let i = 0; i < 8; i++) { const a = i / 8 * 7; R("#f4f4f2", cx + dx + Math.round(Math.cos(a) * 4), 88 + Math.round(Math.sin(a) * 4), 2, 2); } R("#f3d23b", cx + dx, 88, 2, 2); }); }
+      A.ctx.globalAlpha = 1;
+    }
+  };
+};
+
+/* WHEN IS BUFF ENOUGH?: the mirror always says something different. */
+W["when-is-buff-enough"] = A => {
+  const R = A.R, G = A.G, MIRRORS = [140, 400, 640, 880];
+  return {
+    sprites: Object.assign(reds(A, "b5", {}), { plate: { pal: { Z: "#f4f4f2", Q: "#3a9a3a", N: "#8a5a32" }, rows: [".ZZZZ.", "ZQNZQZ", ".ZZZZ."] } }),
+    level: {
+      obs: [["bb_tread", 240], ["bb_bell", 330], ["bb_tread", 480], ["bb_bell", 560], ["bb_plate", 720], ["bb_plate", 780]],
+      target: "bb_scale", targetAt: 300, prop: "plate", propAt: 600, npcs: [],
+      captions: [[30, "Mirror says: big."], [220, "Treadmill. Every day."], [460, "Lift. Lift. Lift."], [700, "Eat clean. Eat more."]]
+    },
+    obs: {
+      bb_tread: { w: 22, h: 6, y: 0, vx: 0, tough: "whoa", draw(o, x, y, t) { A.ctx.fillStyle = A.C.ink; A.ctx.beginPath(); A.ctx.moveTo(x - 1, A.G); A.ctx.lineTo(x + 23, A.G - 8); A.ctx.lineTo(x + 23, A.G - 5); A.ctx.lineTo(x + 2, A.G + 1); A.ctx.fill(); for (let i = 0; i < 6; i++) R("#8a8a8a", x + ((i * 4 + Math.floor(t * 20)) % 22), A.G - 1 - Math.round(((i * 4 + Math.floor(t * 20)) % 22) / 3), 2, 1); R(A.C.ink, x + 20, A.G - 20, 2, 14); } },
+      bb_bell: { w: 12, h: 6, y: 0, vx: -50, draw(o, x, y) { R(A.C.ink, x, y, 4, 6); R(A.C.ink, x + 8, y, 4, 6); R(A.C.ink, x + 3, y + 2, 6, 2); R("#5a7ac8", x + 1, y + 1, 2, 4); R("#5a7ac8", x + 9, y + 1, 2, 4); } },
+      bb_plate: { w: 12, h: 3, y: 0, vx: 0, draw(o, x, y) { R(A.C.ink, x, y, 12, 3); R("#f4f4f2", x + 1, y + 1, 10, 1); R("#3a9a3a", x + 2, y, 3, 2); R("#e88a5a", x + 6, y, 3, 2); } }
+    },
+    targets: { bb_scale: { line: "Don't look at the number.", draw(tg, x) { R(A.C.ink, x - 7, G - 4, 14, 4); R("#e8e8e8", x - 6, G - 3, 12, 2); R(A.C.ink, x - 2, G - 3, 4, 1); } } },
+    reset(S) { S.bb = { seen: {} }; },
+    update(dt, S, p) { const b = S.bb; MIRRORS.forEach((m, i) => { if (!b.seen[i] && Math.abs(p.x - m) < 16) { b.seen[i] = 1; A.redSays(["...still fat.", "Getting there.", "Not enough.", "Wait. Am I tiny?"][i], 1.8); if (i === 3) A.showCaption("When is buff enough?"); } }); },
+    bg(t, S) { R("#ecebe6", 0, 0, A.W, A.H); A.layer(.5, 8, (x, k) => R("#e2e0da", x + A.hash(k, 1) * 6, A.hash(k, 2) * 180, 1, 1)); R("#d8d6d0", 0, G + 1, A.W, 1);
+      MIRRORS.forEach((m, i) => { const x = sx(A, m + 18); if (x < -30 || x > A.W + 30) return; R(A.C.ink, x - 13, G - 52, 26, 52); R("#f8f8f4", x - 12, G - 51, 24, 51);
+        const im = A.NS[S.p.face > 0 ? "b5_standL" : "b5_stand"], sc = [1.9, 1.5, 1.2, .55][i], w = Math.round(im.width * sc), h = Math.round(im.height * (i === 3 ? 1.05 : 1));
+        A.ctx.save(); A.ctx.beginPath(); A.ctx.rect(x - 12, G - 51, 24, 51); A.ctx.clip(); A.ctx.imageSmoothingEnabled = false; A.ctx.drawImage(im, x - w / 2, G - h - 2, w, h); A.ctx.restore(); }); },
+    fg(t, S) { const buff = A.clamp(S.p.x / 880, 0, 1), m = Math.round(buff * 5); if (m < 1) return;
+      onHead(A, (x, top, face) => { if (S.p.duck) return; R(A.C.ink, x - 5 - m, top + 11, 10 + m * 2, 6); R("#E8271A", x - 4 - m, top + 12, 8 + m * 2, 4); R("#B21A10", x - 1, top + 13, 1, 3);
+        [x - 6 - m, x + 4 + m].forEach(ax => { R(A.C.ink, ax - Math.floor(m / 2), top + 13, 3 + m, 8); R("#E8271A", ax + 1 - Math.floor(m / 2), top + 14, 1 + m, 6); }); }); }
+  };
+};
+})();
