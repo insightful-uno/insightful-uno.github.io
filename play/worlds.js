@@ -1846,3 +1846,327 @@ W["when-is-buff-enough"] = A => {
   };
 };
 })();
+
+/* ======================= batch 6 ======================= */
+(() => {
+const W = window.RED_WORLDS, { lerp, mix, disc, puff, sx, confetti } = W.__shared;
+const { arm, reds, drawWalker, follow, onHead, heartFx, hearts, splash, dropFx, crowdText, txtFx, smoke } = W.__shared2;
+const flash = (A, a, c = "#ffffff") => { if (a <= 0) return; A.ctx.globalAlpha = Math.min(1, a); A.R(c, 0, 0, A.W, A.H); A.ctx.globalAlpha = 1; };
+const clouds = (A, c = "#f4f4f2", f = .06) => A.layer(f, 110, (x, k) => { puff(A, x + 30, 18 + (k % 3) * 10, 9, c, .95); puff(A, x + 44, 20 + (k % 3) * 10, 7, c, .95); puff(A, x + 20, 22 + (k % 3) * 10, 6, c, .95); });
+const grad = (A, stops, y0 = 0, y1 = A.H) => { const g = A.ctx.createLinearGradient(0, y0, 0, y1); stops.forEach((c, i) => g.addColorStop(i / (stops.length - 1), c)); A.ctx.fillStyle = g; A.ctx.fillRect(0, y0, A.W, y1 - y0); };
+const ell = (A, c, x, y, rx, ry, rot = 0) => { A.ctx.fillStyle = c; A.ctx.beginPath(); A.ctx.ellipse(x, y, Math.max(.5, rx), Math.max(.5, ry), rot, 0, 7); A.ctx.fill(); };
+const oell = (A, c, x, y, rx, ry, rot = 0) => { ell(A, A.C.ink, x, y, rx + 1, ry + 1, rot); ell(A, c, x, y, rx, ry, rot); };
+const lock = (p, x) => { p.x = x; p.vy = 0; p.y = 0; p.inv = Math.max(p.inv, .3); };
+const text = (A, s, x, y, c, size = 6) => { A.ctx.font = `bold ${size}px monospace`; A.ctx.textAlign = "center"; A.ctx.fillStyle = c; A.ctx.fillText(s, x, y); };
+const alien = (A, x, base, t, k, s = 1, pose = 0) => { const b = Math.round(Math.sin(t * 2 + k) * 1), G = base;
+  oell(A, "#7aa88a", x, G - 22 * s + b, 6 * s, 12 * s); oell(A, "#7aa88a", x, G - 40 * s + b, 6 * s, 7 * s); A.R(A.C.ink, x - 3 * s, G - 41 * s + b, 2, 2); A.R(A.C.ink, x + 2 * s, G - 41 * s + b, 2, 2); A.R("#4a6a5a", x - 2 * s, G - 36 * s + b, 4 * s, 1);
+  A.R(A.C.ink, x - 4 * s, G - 11 * s, 3, 11 * s); A.R("#7aa88a", x - 3 * s, G - 11 * s, 1, 11 * s); A.R(A.C.ink, x + 2 * s, G - 11 * s, 3, 11 * s); A.R("#7aa88a", x + 3 * s, G - 11 * s, 1, 11 * s);
+  [-1, 1].forEach(d => { A.R(A.C.ink, x + d * 6 * s - 1, G - 30 * s + b, 3, 16 * s); A.R("#7aa88a", x + d * 6 * s, G - 30 * s + b, 1, 16 * s); }); };
+// the gut buddy: a pink worm-man tied to Red's belly by his own intestine
+const gutBuddy = (A, S, g, s, t, extra) => { const R = A.R, G = A.G, x = sx(A, g.x), hop = g.moving ? Math.abs(Math.sin(g.d / 4)) * 2 : 0, top = G - 22 * s - hop;
+  const r = A.red, bx = r.x + (r.face > 0 ? -1 : 1), by = r.top + 19; A.ctx.strokeStyle = A.C.ink; A.ctx.lineWidth = 3; A.ctx.beginPath(); A.ctx.moveTo(bx, by); A.ctx.quadraticCurveTo((bx + x) / 2, G + 2, x, top + 12 * s); A.ctx.stroke(); A.ctx.strokeStyle = "#f0a8a8"; A.ctx.lineWidth = 1.5; A.ctx.stroke();
+  oell(A, "#f0b8b0", x, top + 12 * s, 5 * s, 9 * s); oell(A, "#f0b8b0", x, top + 2 * s, 4 * s, 4 * s); R(A.C.ink, x - 2 * s, top + 1 * s, 1, 1); R(A.C.ink, x + 1 * s, top + 1 * s, 1, 1); R("#c88080", x - 1 * s, top + 4 * s, 2 * s, 1);
+  R(A.C.ink, x - 3 * s, G - 3 - hop, 2, 3 + hop); R(A.C.ink, x + 2 * s, G - 3 - hop, 2, 3 + hop); for (let i = 0; i < 3; i++) R("#d89090", x - 3 * s + i * 2 * s, top + 8 * s + i * 3 * s, 3 * s, 1); if (extra) extra(x, top); };
+
+/* MAN CREAM: down the pipe, out to the aliens, back to the farm, into the machine. */
+W["man-cream"] = A => {
+  const R = A.R, G = A.G, BEACH = 260, FARM = 520, VEND = 840;
+  const kneel = { R: "#E8271A", r: "#B21A10" };
+  return {
+    sprites: Object.assign(reds(A, "kn", kneel), { cup6: { pal: { P: "#b070e0", Z: "#f4f4f2" }, rows: ["ZPPZ", "ZPPZ", "ZZZZ", ".ZZ."] } }),
+    level: {
+      obs: [["mc_goo", 160], ["mc_goo", 220], ["bird", 340], ["mc_goo", 420], ["mc_hose", 600], ["mc_hose", 700], ["mc_goo", 780]],
+      target: "rock", targetAt: 460, prop: "cup6", propAt: 120, npcs: [],
+      captions: [[30, "Down the pipe it goes."], [BEACH + 10, "Where does it end up?"], [FARM + 10, "The farm. Keep your head down."], [VEND - 60, "...for sale."]]
+    },
+    obs: {
+      mc_goo: { w: 12, h: 2, y: 0, vx: 0, tough: "ew, goo", draw(o, x, y, t) { ell(A, "#b070e0", x + 6, A.G, 7, 2); R("#e0b0ff", x + 2 + Math.floor(t * 2) % 8, A.G - 1, 2, 1); } },
+      mc_hose: { w: 16, h: 3, y: 0, vx: 0, draw(o, x, y, t) { R(A.C.ink, x, A.G - 3, 16, 3); R("#c8c8c8", x, A.G - 2, 16, 1); R("#b070e0", x + ((Math.floor(t * 20)) % 14), A.G - 2, 2, 1); } }
+    },
+    reset(S) { S.mc = {}; },
+    update(dt, S, p) { if (p.x > VEND - 30 && !S.mc.v) { S.mc.v = 1; A.showCaption("Man cream."); A.redSays("...two please.", 2); } },
+    bg(t, S) {
+      const x = S.p.x;
+      if (x < BEACH) { R("#0a0a0a", 0, 0, A.W, A.H); R("#e8e8e8", 0, 0, A.W, 18); const px = sx(A, 120, .8); R(A.C.ink, px - 12, 18, 24, G - 18); grad(A, ["#c8c8c8", "#8a8a8a"], 0, 0); R("#b8b8b8", px - 11, 18, 22, G - 18); R("#e8e8e8", px - 9, 18, 4, G - 18);
+        for (let i = 0; i < 8; i++) R("#b070e0", px - 8 + (i * 5) % 16, ((t * 40 + i * 23) % (G - 18)) + 18, 3 + (i % 2) * 2, 5); R(A.C.ink, px - 12, G - 24, 220, 24); R("#b8b8b8", px - 11, G - 23, 218, 22); for (let i = 0; i < 14; i++) R("#b070e0", px + ((t * 60 + i * 17) % 210) - 11, G - 20 + (i % 3) * 5, 5, 2); R("#0a0a0a", 0, G, A.W, 30); }
+      else if (x < FARM) { R("#8a6a9a", 0, 0, A.W, 70); R("#3a5a9a", 0, 70, A.W, 12); R("#d8c870", 0, 82, A.W, G - 82); R("#d8c870", 0, G, A.W, 30);
+        const ux = sx(A, 470, .3); oell(A, "#c8c8c8", ux, 62, 14, 5); disc(A, "#9fe0ff", ux, 58, 5);
+        [BEACH + 60, BEACH + 110, BEACH + 170].forEach((ax, i) => { const s = sx(A, ax); alien(A, s, G, t, i); if (i === 1) { R(A.C.ink, s + 6, G - 26, 30, 2); R("#b070e0", s + 6 + Math.floor(t * 10) % 28, G - 26, 2, 1); } }); }
+      else if (x < VEND - 60) { R("#5a5a5a", 0, 0, A.W, A.H); for (let j = 0; j < 4; j++) { const y = 30 + j * 32; R("#7a7a7a", 0, y + 16, A.W, 3); A.layer(.3 + j * .15, 26, (xx, k) => { const im = A.NS[(k + j) % 2 ? "kn_stand" : "kn_standL"]; A.ctx.drawImage(im, xx, y + 16 - 22, 12, 22); R("#b070e0", xx + 6, y + 14, 2, 2); }); }
+        alien(A, sx(A, FARM + 160), G, t, 1, 1.3); R(A.C.ink, sx(A, FARM + 140), G - 34, 26, 3); R("#f3d23b", sx(A, FARM + 141), G - 33, 24, 1); R("#4a4a4a", 0, G, A.W, 30); }
+      else { grad(A, ["#c84a8a", "#f08a5a"], 0, 110); A.layer(.3, 40, (xx, k) => { R("#6a4a6a", xx, 60 + (k % 3) * 10, 20, 50); disc(A, "#6a4a6a", xx + 10, 60 + (k % 3) * 10, 10); }); R("#4a4a4a", 0, 110, A.W, A.H);
+        const vx = sx(A, VEND + 20); R(A.C.ink, vx - 21, 50, 42, G - 50); R("#e8d8f0", vx - 20, 51, 40, G - 51); R("#9fd0ee", vx - 16, 66, 28, 60); for (let j = 0; j < 5; j++) for (let i = 0; i < 4; i++) R("#b070e0", vx - 14 + i * 7, 69 + j * 11, 4, 7);
+        text(A, "MAN·VOM", vx, 61, "#b070e0", 7); R("#b070e0", vx + 14, 50, 6, 4); R("#b070e0", vx + 17, 54, 2, 6);
+        R(A.C.ink, vx - 46, 106, 18, 44); R("#3a5a3a", vx - 45, 107, 16, 43); text(A, "FREE", vx - 37, 120, "#7CFC6A", 4); text(A, "VOMS", vx - 37, 126, "#7CFC6A", 4); }
+    },
+    fg(t, S) { if (S.p.x > FARM && S.p.x < VEND - 60 && Math.floor(t * 2) % 2) onHead(A, (x, top) => R("#b070e0", x + 2, top + 9, 2, 3)); }
+  };
+};
+
+/* MOTHER GIRTH: sunbathing on the hill, money in the air. Then the cloud sits down. */
+W["mother-girth"] = A => {
+  const R = A.R, G = A.G, SIT = 700;
+  return {
+    sprites: { towel: { pal: { Y: "#f3d23b" }, rows: ["YYYYYY", "YYYYYY"] } },
+    level: {
+      obs: [["cash", 180], ["cash", 260], ["bird", 320], ["cash", 400], ["cash", 470], ["bird", 560], ["cash", 620]],
+      target: "bush", targetAt: 440, prop: "towel", propAt: 140, npcs: [],
+      captions: [[30, "Sun's out. Money's falling."], [300, "Nothing could ruin this."], [SIT - 60, "Is that cloud... lowering?"]]
+    },
+    reset(S) { S.mg = { sit: -1 }; },
+    update(dt, S, p) {
+      const m = S.mg; if (m.sit < 0 && p.x > SIT && p.x < SIT + 50) { m.sit = 0; A.redSays("Ahh, the life.", 1.4); }
+      if (m.sit >= 0 && m.sit < 9) { const b = m.sit; m.sit += dt; if (m.sit < 2.4) lock(p, SIT);
+        if (b < 1.6 && m.sit >= 1.6) { crowdText(A, S, "FWUMP", SIT, 60); A.reskin(rows => rows.filter((r, j) => j < 9 || j % 3 === 0)); }
+        if (b < 2.4 && m.sit >= 2.4) { A.showCaption("Mother girth."); A.redSays("...ow.", 1.6); } }
+    },
+    bg(t, S) {
+      R("#8ad8ee", 0, 0, A.W, A.H); clouds(A); A.layer(.2, 130, (x) => { A.ctx.fillStyle = "#3a9a3a"; A.ctx.beginPath(); A.ctx.ellipse(x + 65, 120, 90, 40, 0, Math.PI, 0); A.ctx.fill(); });
+      R("#4aaa4a", 0, 110, A.W, G - 110); A.layer(.5, 9, (x, k) => R("#3a9a3a", x + A.hash(k, 1) * 6, 114 + A.hash(k, 2) * 30, 3, 1));
+      R("#4aaa4a", 0, G, A.W, 30); A.layer(1, 6, (x, k) => R("#3a9a3a", x, G + 2 + (k % 5) * 5, 2, 1));
+      const tx = sx(A, SIT); A.ctx.fillStyle = A.C.ink; A.ctx.beginPath(); A.ctx.moveTo(tx - 18, G + 4); A.ctx.lineTo(tx + 16, G + 4); A.ctx.lineTo(tx + 22, G - 2); A.ctx.lineTo(tx - 12, G - 2); A.ctx.fill(); A.ctx.fillStyle = "#f3d23b"; A.ctx.beginPath(); A.ctx.moveTo(tx - 16, G + 3); A.ctx.lineTo(tx + 15, G + 3); A.ctx.lineTo(tx + 20, G - 1); A.ctx.lineTo(tx - 11, G - 1); A.ctx.fill();
+    },
+    fg(t, S) {
+      const m = S.mg; if (m.sit < 0 && S.p.x < SIT - 200) return; const u = m.sit < 0 ? 0 : m.sit < 3.2 ? Math.min(1, m.sit / 1.6) : Math.max(0, 1 - (m.sit - 3.2) / 1.2), x = sx(A, SIT) + 40, y = -120 + u * (G + 30);
+      const bump = (cx, cy, rx, ry) => { oell(A, "#ececf0", cx, cy, rx, ry); for (let i = 0; i < 9; i++) { const a = i / 9 * 7; A.ctx.strokeStyle = "#c8c8d0"; A.ctx.beginPath(); A.ctx.arc(cx + Math.cos(a) * rx * .6, cy + Math.sin(a) * ry * .6, 4, Math.PI, 0); A.ctx.stroke(); } };
+      bump(x - 30, y, 46, 56); bump(x + 40, y + 6, 46, 56); R("#c8c8d0", x + 4, y + 14, 2, 40); bump(x + 70, y - 70, 30, 60);
+      if (m.sit >= 1.6 && m.sit < 1.9) flash(A, 1 - (m.sit - 1.6) / .3, "#ffffff");
+      txtFx(A, S);
+    }
+  };
+};
+
+/* GUT FOLLOWER: his gut walks out on its own. Into the bank. Into the motel. Into trouble. */
+W["gut-follower"] = A => {
+  const R = A.R, G = A.G, BANK = [240, 520], ROB = 400, MOTEL = 560, SWAT = 820;
+  return {
+    sprites: { knife: { pal: { G: "#e8e8e8", N: "#6a4224" }, rows: ["GGGGNN"] } },
+    level: {
+      obs: [["cash", 140], ["bird", 200], ["cash", 320], ["mc_coin", 460], ["cash", 640], ["gf_laser", 760]],
+      target: "lamp", targetAt: 660, prop: "knife", propAt: 110, npcs: [],
+      captions: [[30, "Trust your gut. It's walking."], [BANK[0] + 10, "The bank. Gut's got a plan."], [MOTEL + 10, "Lay low at the Inn-n-Out."]]
+    },
+    obs: {
+      mc_coin: { w: 5, h: 5, y: 0, vx: 0, draw(o, x, y, t) { R(A.C.ink, x, y, 5, 5); R("#f3d23b", x + 1, y + 1, 3, 3); } },
+      gf_laser: { w: 2, h: 40, y: 0, vx: 0, draw(o, x, y, t) { if (A.S.gf.swat < 0) return; A.ctx.globalAlpha = .7; R("#7CFC6A", x, A.G - 60, 1, 60); A.ctx.globalAlpha = 1; } }
+    },
+    reset(S) { S.gf = { g: { x: 20, y: 0, d: 0, face: 1, moving: false }, rob: -1, swat: -1, cash: [] }; },
+    update(dt, S, p) {
+      const g = S.gf; follow(g.g, p.x - 26 * (p.face || 1), 120, dt); if (Math.abs(g.g.x - p.x) > 80) g.g.x = p.x - 40;
+      if (g.rob < 0 && p.x > ROB && p.x < ROB + 50) { g.rob = 0; A.say("Empty the drawer.", g.g.x, 40, 2); }
+      if (g.rob >= 0 && g.rob < 9) { const b = g.rob; g.rob += dt; if (g.rob < 1.4) lock(p, ROB); if (b < 1.4 && g.rob >= 1.4) { for (let i = 0; i < 14; i++) g.cash.push({ x: ROB + 60, y: 40, vx: -40 - Math.random() * 60, vy: 40 + Math.random() * 40 }); A.redSays("Gut feeling!", 1.4); } }
+      for (const c of g.cash) { c.vy -= 120 * dt; c.x += c.vx * dt; c.y = Math.max(0, c.y + c.vy * dt); if (c.y === 0) c.vx *= .9; }
+      if (g.swat < 0 && p.x > SWAT - 30 && p.x < SWAT + 40) { g.swat = 0; crowdText(A, S, "FREEZE!", SWAT + 40, 60); } if (g.swat >= 0) { const b = g.swat; g.swat += dt; if (b < 1 && g.swat >= 1) A.showCaption("Gut follower."); }
+    },
+    bg(t, S) {
+      const x = S.p.x;
+      if (x < BANK[0]) { R("#f3e84a", 0, 0, A.W, 60); R("#3a8a3a", 0, 60, A.W, 30); R("#6a6a6a", 0, 90, A.W, G - 90); R("#5a5a5a", 0, G, A.W, 30);
+        const bx = sx(A, BANK[0] + 10); R(A.C.ink, bx - 1, 20, 140, G - 20); R("#8a8a8a", bx, 21, 140, G - 21); R(A.C.ink, bx + 14, 90, 20, 60); R("#3a3a3a", bx + 15, 91, 18, 59); oell(A, "#f4f4f2", bx + 50, 40, 16, 10); R("#f3d23b", bx + 44, 36, 12, 8); }
+      else if (x < BANK[1]) { R("#b8b8b0", 0, 0, A.W, 100); R("#d8d8d0", 0, 0, A.W, 10); R("#8a5a32", 0, 100, A.W, G - 100); R("#6a4224", 0, G, A.W, 30);
+        A.layer(.6, 90, (xx) => { R(A.C.ink, xx + 20, 30, 30, 40); R("#f3d23b", xx + 21, 31, 28, 38); text(A, "$", xx + 35, 58, A.C.ink, 22); });
+        const tx = sx(A, ROB + 60); R(A.C.ink, tx - 40, 100, 90, 4); oell(A, "#5a8ad6", tx, 92, 14, 10); oell(A, "#f0b0a0", tx, 72, 9, 10); R("#e8a23a", tx - 10, 62, 20, 6); R(A.C.ink, tx - 4, 70, 2, 2); R(A.C.ink, tx + 3, 70, 2, 2); R(A.C.ink, tx - 2, 77, 4, 2);
+        R(A.C.ink, 0, 104, A.W, 2); }
+      else { R("#0a0a14", 0, 0, A.W, A.H); grad(A, ["#0a0a14", "#8a1a1a"], 40, 100); A.layer(.3, 12, (xx, k) => { A.ctx.fillStyle = "#1a3a1a"; A.ctx.beginPath(); A.ctx.moveTo(xx, 100); A.ctx.lineTo(xx + 6, 80 - (k % 3) * 6); A.ctx.lineTo(xx + 12, 100); A.ctx.fill(); });
+        const mx = sx(A, MOTEL + 120); R(A.C.ink, mx - 61, 80, 122, G - 80); R("#5a3a2a", mx - 60, 81, 120, G - 81); R("#3a2a1a", mx - 66, 76, 132, 6); for (let i = 0; i < 4; i++) { R(A.C.ink, mx - 50 + i * 28, 100, 14, 24); R(i === 3 ? "#f3d23b" : "#c87a2a", mx - 49 + i * 28, 101, 12, 22); }
+        R(A.C.ink, mx - 30, 54, 60, 14); R("#2a1a14", mx - 29, 55, 58, 12); text(A, "INN-n-OUT", mx, 64, "#ffd28a", 8); R("#3a3a3a", 0, G, A.W, 30); A.layer(1, 26, xx => R("#f4f4f2", xx, G + 14, 1, 10));
+        if (S.gf.swat >= 0) { const u = S.gf.swat; puff(A, sx(A, SWAT + 60), G - 20, 20 + u * 10, "#8a8a8a", .8); for (let i = 0; i < 5; i++) { A.ctx.strokeStyle = "#7CFC6A"; A.ctx.globalAlpha = .7; A.ctx.beginPath(); A.ctx.moveTo(sx(A, SWAT + 60), G - 30 + i * 4); A.ctx.lineTo(A.red.x + (i - 2) * 8, A.red.top + 10 + i * 3); A.ctx.stroke(); } A.ctx.globalAlpha = 1;
+          [SWAT + 50, SWAT + 72].forEach((sw, i) => { const s = sx(A, sw); R(A.C.ink, s - 6, G - 30, 12, 30); R("#2a2a8a", s - 5, G - 29, 10, 29); disc(A, "#1a1a6a", s, G - 33, 6); R("#9fd0ee", s - 4, G - 34, 5, 2); R(A.C.ink, s - 14, G - 22 + i * 4, 10, 2); }); } }
+    },
+    mid(t, S) {
+      const g = S.gf; gutBuddy(A, S, g.g, S.p.x > MOTEL ? 1.3 : 1, t, (x, top) => { if (g.rob >= 0 && g.rob < 3) { R(A.C.ink, x + 4, top + 10, 10, 2); R("#e8e8e8", x + 5, top + 10, 8, 1); } });
+      for (const c of g.cash) { const x = sx(A, c.x); R(A.C.ink, x, A.G - Math.round(c.y) - 3, 6, 4); R("#5aa83a", x + 1, A.G - Math.round(c.y) - 2, 4, 2); }
+    },
+    fg(t, S) { txtFx(A, S); }
+  };
+};
+
+/* WHEN A MERMAID GAVE ME PINKEYE: surf, dive, dance, shark. Back on the board, eye's pink. */
+W["when-a-mermaid-gave-me-pinkeye"] = A => {
+  const R = A.R, G = A.G, DIVE = 220, SHARK = 720, UP = 840, PINK = "#ff8ac0";
+  const maid = (x, y, t, flip = 1) => { const s = Math.sin(t * 4); A.ctx.fillStyle = A.C.ink; A.ctx.beginPath(); A.ctx.moveTo(x - 4, y); A.ctx.quadraticCurveTo(x + flip * 14, y + 14 + s * 3, x + flip * 20, y + 22); A.ctx.lineTo(x + flip * 26, y + 26); A.ctx.lineTo(x + flip * 16, y + 26); A.ctx.quadraticCurveTo(x, y + 18, x + 4, y); A.ctx.fill();
+    A.ctx.fillStyle = "#7ab05a"; A.ctx.beginPath(); A.ctx.moveTo(x - 3, y + 1); A.ctx.quadraticCurveTo(x + flip * 13, y + 14 + s * 3, x + flip * 19, y + 22); A.ctx.lineTo(x + flip * 24, y + 25); A.ctx.lineTo(x + flip * 17, y + 25); A.ctx.quadraticCurveTo(x + 1, y + 17, x + 3, y + 1); A.ctx.fill();
+    oell(A, "#d080c0", x, y - 6, 4, 8); oell(A, "#d080c0", x, y - 17, 4, 4); R(A.C.ink, x - 5, y - 22, 10, 4); R(A.C.ink, x - 6 - Math.round(s * 2), y - 20, 3, 14); R(A.C.ink, x + 1, y - 18, 1, 1); R("#e8902a", x - 3, y - 8, 6, 2); };
+  return {
+    sprites: { board: { pal: { Y: "#f3d23b", B: "#2a48c8" }, rows: ["YYYYYYY", "BBBBBBB"] } },
+    level: {
+      obs: [["mm_bubble", 300], ["fish", 0], ["mm_jelly", 380], ["mm_bubble", 460], ["mm_jelly", 560], ["mm_bubble", 640]].filter(o => o[1]),
+      target: "rock", targetAt: 500, prop: "board", propAt: 110, npcs: [],
+      captions: [[30, "Hang ten."], [DIVE - 40, "Is that a mermaid?"], [DIVE + 60, "Dance with her."], [SHARK - 50, "Something big in the deep."]]
+    },
+    obs: {
+      mm_bubble: { w: 5, h: 5, y: 0, vx: 0, draw(o, x, y, t) { const yy = A.G - 6 - ((t * 30 + o.x) % 80); A.ctx.strokeStyle = "#cfefff"; A.ctx.beginPath(); A.ctx.arc(x + 2, yy, 2, 0, 7); A.ctx.stroke(); o.y = A.G - yy - 2; } },
+      mm_jelly: { w: 9, h: 9, y: 14, vx: -20, draw(o, x, y, t) { const yy = y + Math.round(Math.sin(t * 2 + o.x) * 4); R(A.C.ink, x, yy, 9, 5); R("#f0c8f0", x + 1, yy + 1, 7, 3); for (let i = 0; i < 3; i++) R("#f0c8f0", x + 1 + i * 3, yy + 5 + (i + Math.floor(t * 4)) % 2, 1, 4); } }
+    },
+    reset(S) { S.mm = { m: { x: DIVE, y: 0, d: 0, face: -1, moving: false }, eat: -1, pink: false }; },
+    update(dt, S, p) {
+      const m = S.mm; if (m.eat < 0 && p.x > DIVE) { follow(m.m, p.x + 16, 100, dt); }
+      if (m.eat < 0 && p.x > SHARK && p.x < SHARK + 60) { m.eat = 0; A.redSays("NOOO!", 1.4); }
+      if (m.eat >= 0 && m.eat < 9) { const b = m.eat; m.eat += dt; if (m.eat < 1.6) lock(p, SHARK); if (b < .8 && m.eat >= .8) { splash(S, m.m.x, 30, 30, "#8a1a1a"); crowdText(A, S, "CHOMP", m.m.x, 60); }
+        if (b < 1.6 && m.eat >= 1.6) { m.pink = true; A.showCaption("When a mermaid gave me pinkeye."); } }
+      dropFx(A, S, dt);
+    },
+    bg(t, S) {
+      const under = S.p.x > DIVE && S.p.x < UP;
+      if (!under) { R("#6ac0e6", 0, 0, A.W, A.H); clouds(A); R("#3a9ad0", 0, 100, A.W, G - 100); A.layer(.6, 13, (x, k) => R("#9fe0f4", x + (Math.floor(t * 2 + k) % 4), 106 + (k % 6) * 7, 6, 1));
+        const rx = sx(A, 120); oell(A, "#7a7a72", rx, G - 2, 26, 14); if (S.p.x < DIVE) maid(rx - 4, G - 26, t, 1);
+        R("#3a9ad0", 0, G, A.W, 30); R(A.C.ink, 0, G, A.W, 1); R("#f3d23b", 0, G + 1, A.W, 8); R("#2a48c8", 0, G + 4, A.W, 3); R("#3a9ad0", 0, G + 10, A.W, 20); return; }
+      grad(A, ["#3a8ab8", "#1a3a6a", "#0a1a3a"]); A.layer(.2, 60, (x, k) => { A.ctx.globalAlpha = .15; A.ctx.fillStyle = "#ffffff"; A.ctx.beginPath(); A.ctx.moveTo(x, 0); A.ctx.lineTo(x + 10, 0); A.ctx.lineTo(x + 40, G); A.ctx.lineTo(x + 20, G); A.ctx.fill(); A.ctx.globalAlpha = 1; });
+      oell(A, "#c8a83a", 160, 10, 26, 3); A.layer(.4, 70, (x, k) => { if (k % 2) { R("#2a4a8a", x + 10, 80 + (k % 4) * 12, 10, 3); R("#2a4a8a", x + 20, 79 + (k % 4) * 12, 2, 5); } });
+      R("#c8b880", 0, G, A.W, 30); A.layer(1, 11, (x, k) => R("#a8986a", x, G + 3 + (k % 5) * 5, 4, 1));
+    },
+    mid(t, S) {
+      const m = S.mm; if (!(S.p.x > DIVE && S.p.x < UP)) return;
+      if (m.eat < .8) maid(sx(A, m.m.x), G - 30 + Math.round(Math.sin(t * 3) * 4), t, -1); else if (m.eat < 3) { A.ctx.globalAlpha = Math.max(0, 1 - (m.eat - .8) / 2); puff(A, sx(A, m.m.x), G - 30, 20, "#8a2a1a", .8); A.ctx.globalAlpha = 1; }
+      if (S.p.x > SHARK - 140 && m.eat < 2) { const u = m.eat < 0 ? 0 : Math.min(1, m.eat / .8), shx = lerp(sx(A, SHARK + 140), sx(A, m.m.x) + 10, u), shy = G - 36;
+        oell(A, "#8a9aaa", shx + 20, shy, 30, 11); A.ctx.fillStyle = "#8a9aaa"; A.ctx.beginPath(); A.ctx.moveTo(shx + 20, shy - 10); A.ctx.lineTo(shx + 30, shy - 24); A.ctx.lineTo(shx + 34, shy - 8); A.ctx.fill(); A.ctx.beginPath(); A.ctx.moveTo(shx + 48, shy); A.ctx.lineTo(shx + 60, shy - 12); A.ctx.lineTo(shx + 60, shy + 12); A.ctx.fill();
+        ell(A, "#e8e8f0", shx + 16, shy + 5, 22, 5); R(A.C.ink, shx + 2, shy - 4, 2, 2); ell(A, "#6a1a1a", shx - 6, shy + 3, 6, 4 + u * 3); for (let i = 0; i < 4; i++) R("#ffffff", shx - 10 + i * 3, shy, 1, 2); }
+    },
+    fg(t, S) { const m = S.mm; if (m.pink) onHead(A, (x, top, face) => { R(PINK, face > 0 ? x : x - 3, top + 3, 4, 4); R("#ffffff", face > 0 ? x + 1 : x - 2, top + 4, 1, 1); });
+      if (m.eat > 1.6 && m.eat < 2.6) { const a = Math.min(1, (m.eat - 1.6) * 3, (2.6 - m.eat) * 3); A.ctx.globalAlpha = a; R("#a050a0", 0, 0, A.W, A.H); oell(A, "#f4e8f0", 160, 90, 120, 60); disc(A, A.C.ink, 160, 90, 41); disc(A, "#6a3a2a", 160, 90, 40); disc(A, A.C.ink, 160, 90, 14);
+        A.ctx.save(); A.ctx.beginPath(); A.ctx.arc(160, 90, 40, -Math.PI / 2, Math.PI / 2); A.ctx.closePath(); A.ctx.clip(); R("#5a8ab8", 160, 50, 40, 80); oell(A, "#8a9aaa", 182, 92, 18, 8); R(A.C.ink, 170, 88, 2, 2); A.ctx.restore();
+        for (let i = 0; i < 24; i++) { const a = Math.PI + i / 23 * Math.PI; R(A.C.ink, 160 + Math.cos(a) * 120, 90 + Math.sin(a) * 60 - 6, 2, 8); } A.ctx.globalAlpha = 1; }
+      txtFx(A, S); dropFx(A, S); }
+  };
+};
+
+/* MONEY BAD: the boardroom says money bad. Red says nothing, then jumps out the window. */
+W["money-bad"] = A => {
+  const R = A.R, G = A.G, LEAP = 620, OUT = 700;
+  const suit = (x, t, k) => { R(A.C.ink, x - 8, G - 26, 16, 26); R("#2a3a2a", x - 7, G - 25, 14, 25); R("#f4f4f2", x - 2, G - 25, 4, 6); R("#E8271A", x - 1, G - 24, 2, 5); oell(A, "#E8271A", x, G - 32, 6, 6); R(A.C.ink, x - 6, G - 38, 12, 4); };
+  return {
+    sprites: { tie: { pal: { Q: "#3a9a3a" }, rows: ["QQQ", ".Q.", "QQQ", "QQQ", ".Q."] } },
+    level: {
+      obs: [["mb_chair", 200], ["cash", 260], ["mb_chair", 340], ["cash", 420], ["mb_chair", 500], ["cash", 780]],
+      target: "mb_shred", targetAt: 460, prop: "tie", propAt: 110, npcs: [],
+      captions: [[30, "Quarterly meeting."], [180, "$ = 👎"], [LEAP - 60, "Then what's it all for?"]]
+    },
+    obs: { mb_chair: { w: 12, h: 12, y: 0, vx: -40, draw(o, x, y, t) { R(A.C.ink, x, y + 2, 12, 6); R("#2a5a2a", x + 1, y + 3, 10, 4); R(A.C.ink, x + 1, y - 6, 3, 10); R("#2a5a2a", x + 2, y - 5, 1, 8); R(A.C.ink, x + 5, y + 8, 2, 4); R(A.C.ink, x + 1, y + 11, 10, 1); } } },
+    targets: { mb_shred: { line: "Shredded.", draw(tg, x) { R(A.C.ink, x - 6, G - 14, 12, 14); R("#5a5a5a", x - 5, G - 13, 10, 13); R("#f4f4f2", x - 3, G - 16, 6, 3); for (let i = 0; i < 4; i++) R("#f4f4f2", x - 4 + i * 2, G - 4, 1, 4); } } },
+    reset(S) { S.mb = { leap: -1 }; },
+    update(dt, S, p) { const m = S.mb; if (m.leap < 0 && p.x > LEAP && p.x < LEAP + 40) { m.leap = 0; p.vy = 260; p.onG = false; A.redSays("Money bad!", 1.4); } if (m.leap >= 0) { const b = m.leap; m.leap += dt; if (b < .6 && m.leap >= .6) crowdText(A, S, "CRASH", OUT, 80); if (b < 2 && m.leap >= 2) A.showCaption("Money bad."); } },
+    bg(t, S) {
+      const ox = sx(A, OUT);
+      R("#6a5a4a", 0, 0, A.W, A.H); grad(A, ["#3a3a3a", "#6a5a4a"], 0, 60);
+      const sc = sx(A, 200, .6); R(A.C.ink, sc - 41, 20, 82, 50); R("#f4f4f2", sc - 40, 21, 80, 48); text(A, "$ = ", sc - 10, 52, A.C.ink, 18); R("#f3d23b", sc + 16, 36, 10, 10); R("#f3d23b", sc + 18, 46, 6, 8);
+      R("#4a3a2a", 0, 120, A.W, G - 120); A.layer(.7, 60, (x, k) => suit(x + 20, t, k)); R("#a8763a", 0, G - 14, A.W, 14); R("#c8925a", 0, G - 14, A.W, 2);
+      R("#5a4a3a", 0, G, A.W, 30);
+      if (ox < A.W) { R("#7ac0f0", ox, 0, A.W - ox, A.H); A.ctx.save(); A.ctx.beginPath(); A.ctx.rect(ox, 0, A.W - ox, A.H); A.ctx.clip(); A.layer(.3, 70, (x, k) => { puff(A, x + 30, 40 + (k % 3) * 30, 14, "#f4f4f2", .9); puff(A, x + 50, 44 + (k % 3) * 30, 10, "#f4f4f2", .9); }); A.ctx.restore();
+        R(A.C.ink, ox - 4, 0, 4, A.H); if (S.mb.leap >= .6) for (let i = 0; i < 12; i++) R("#6a5a4a", ox + 2 + (i * 7) % 20, 40 + (i * 13) % 90 + Math.min(80, (S.mb.leap - .6) * 60), 4, 3); }
+    },
+    fg(t, S) { onHead(A, (x, top, face) => A.ctx.drawImage(A.NS.tie, x - (face > 0 ? 0 : 3), top + 10)); txtFx(A, S); }
+  };
+};
+
+/* STAY A STRAY: running with the pack. Caught. Adopted. The yard's nice, but the street calls. */
+W["stay-a-stray"] = A => {
+  const R = A.R, G = A.G, NET = 420, HOME = 470, CALL = 820;
+  const dog = (x, t, k, face = -1, c = "#d8a85a") => { const b = Math.floor(t * 8 + k) % 2; oell(A, c, x, G - 7, 8, 4); oell(A, c, x + face * 8, G - 11, 4, 3); R(c, x + face * 10, G - 15, 2, 3); R(A.C.ink, x + face * 9, G - 12, 1, 1);
+    R(A.C.ink, x - 6, G - 4, 2, 4 - b); R(A.C.ink, x + 5, G - 4, 2, 4 - b); R(A.C.ink, x - 2, G - 4, 2, 3 + b); R(c, x - face * 9, G - 10 - b, 3, 2); };
+  return {
+    sprites: { collar: { pal: { Q: "#E8271A", Y: "#f3d23b" }, rows: ["QQQQQ", "..Y.."] } },
+    level: {
+      obs: [["rat", 200], ["sa_can", 280], ["rat", 360], ["sa_ball", 560], ["sa_ball", 660], ["sa_ball", 740]],
+      target: "rock", targetAt: 300, prop: "collar", propAt: 610, npcs: [],
+      captions: [[30, "Running with the pack."], [NET - 60, "Uh oh. Dog catcher."], [HOME + 40, "New home. Nice yard."], [CALL - 40, "...the street's calling."]]
+    },
+    obs: {
+      sa_can: { w: 10, h: 12, y: 0, vx: 0, draw(o, x, y) { R(A.C.ink, x, y, 10, 12); R("#7a7a7a", x + 1, y + 2, 8, 10); R("#9a9a9a", x - 1, y, 12, 2); } },
+      sa_ball: { w: 4, h: 4, y: 0, vx: -110, draw(o, x, y, t) { const yy = y + Math.round(Math.abs(Math.sin(t * 6 + o.x)) * 10); R(A.C.ink, x, yy, 4, 4); R("#f4f4f2", x + 1, yy + 1, 2, 2); R("#E8271A", x + 1, yy + 1, 1, 1); } }
+    },
+    reset(S) { S.sa = { net: -1 }; },
+    update(dt, S, p) { const s = S.sa; if (s.net < 0 && p.x > NET && p.x < HOME) { s.net = 0; crowdText(A, S, "SWOOP", NET, 50); }
+      if (s.net >= 0 && s.net < 9) { const b = s.net; s.net += dt; if (s.net < 1.6) lock(p, NET); if (b < 1.6 && s.net >= 1.6) { p.x = HOME + 20; } }
+      if (p.x > CALL && !s.c) { s.c = 1; A.showCaption("Stay a stray."); A.redSays("Bark bark. Bye, dad.", 2); } },
+    bg(t, S) {
+      const x = S.p.x;
+      if (x < HOME) { R("#3a3a40", 0, 0, A.W, A.H); grad(A, ["#1a1a20", "#4a4a50"], 0, 110); A.layer(.3, 60, (xx, k) => R("#2a2a30", xx, 40 + (k % 3) * 10, 40, 80)); A.layer(.5, 80, (xx) => { R("#5a5a5a", xx + 10, 40, 2, 80); A.ctx.globalAlpha = .25; disc(A, "#fff4c0", xx + 11, 40, 16); A.ctx.globalAlpha = 1; });
+        R("#4a4a50", 0, 110, A.W, G - 110); R("#3a3a3a", 0, G, A.W, 30); A.layer(1, 40, xx => R("#f3d23b", xx, G + 14, 10, 2));
+        if (S.p.x < NET) [-30, -46, -60].forEach((d, i) => dog(A.red.x + d, t, i, 1, ["#d8a85a", "#b88a4a", "#c8985a"][i]));
+        const cx = sx(A, NET + 40); R(A.C.ink, cx - 9, G - 34, 18, 34); R("#2a3a8a", cx - 8, G - 33, 16, 20); R("#3a3a6a", cx - 8, G - 13, 16, 13); oell(A, "#E8271A", cx, G - 40, 7, 7); R("#2a3a8a", cx - 8, G - 47, 16, 4);
+        const sw = S.sa.net >= 0 ? Math.min(1, S.sa.net * 3) : 0, ang = -1.2 + sw * 1.6; A.ctx.strokeStyle = "#8a5a32"; A.ctx.lineWidth = 2; A.ctx.beginPath(); A.ctx.moveTo(cx - 6, G - 26); const nx = cx - 6 + Math.cos(Math.PI + ang) * 40, ny = G - 26 + Math.sin(Math.PI + ang) * 40; A.ctx.lineTo(nx, ny); A.ctx.stroke(); A.ctx.strokeStyle = "#f4f4f2"; A.ctx.lineWidth = 1; A.ctx.beginPath(); A.ctx.arc(nx, ny + 6, 8, 0, 7); A.ctx.stroke();
+        if (sw >= 1) { A.ctx.globalAlpha = .7; for (let i = 0; i < 5; i++) R("#f4f4f2", A.red.x - 8 + i * 4, A.red.top, 1, 34); A.ctx.globalAlpha = 1; } }
+      else { R("#e8a0d8", 0, 0, A.W, 80); R("#3aa83a", 0, 80, A.W, G - 80); R("#3aa83a", 0, G, A.W, 30); A.layer(1, 6, (xx, k) => R("#2a982a", xx, G + 2 + (k % 5) * 5, 2, 1));
+        const hx = sx(A, HOME + 80, .6); R(A.C.ink, hx - 51, 60, 102, 50); R("#8a4a2a", hx - 50, 61, 100, 49); A.ctx.fillStyle = "#5a2a1a"; A.ctx.beginPath(); A.ctx.moveTo(hx - 60, 62); A.ctx.lineTo(hx, 36); A.ctx.lineTo(hx + 60, 62); A.ctx.fill(); R("#E8271A", hx + 26, 36, 8, 14); for (let i = 0; i < 3; i++) { R(A.C.ink, hx - 40 + i * 30, 76, 16, 12); R("#9fd0ee", hx - 39 + i * 30, 77, 14, 10); }
+        const tr = sx(A, HOME + 150, .8); R(A.C.ink, tr - 24, 96, 48, 14); R("#e8c83a", tr - 23, 97, 46, 12); disc(A, A.C.ink, tr - 14, 112, 5); disc(A, A.C.ink, tr + 14, 112, 5);
+        const dx = sx(A, CALL + 70); A.ctx.globalAlpha = .9; dog(dx, t, 1, -1); dog(dx + 22, t, 2, -1, "#b88a4a"); A.ctx.globalAlpha = 1; }
+    },
+    fg(t, S) { if (S.p.x > HOME && S.p.x < CALL) onHead(A, (x, top) => { R("#E8271A", x - 3, top + 10, 7, 2); R("#f3d23b", x, top + 12, 1, 1); }); txtFx(A, S); }
+  };
+};
+
+/* FOLLOW YOUR GUT PT. 2: lockup. The gut's bigger now, and he's got a shank. Riot, then the wall. */
+W["follow-your-gut-pt-2"] = A => {
+  const R = A.R, G = A.G, RIOT = 560, WALL = 760;
+  const jump = rows => rows.map((r, j) => j >= 11 ? r.replace(/[RW]/g, "D").replace(/[rw]/g, "d") : r);
+  return {
+    sprites: { tray: { pal: { G: "#c8c8c8", Y: "#f3d23b", Q: "#3a9a3a" }, rows: ["GGGGGG", "GYGQGG", "GGGGGG"] } },
+    level: {
+      obs: [["fy_guard", 200], ["fy_tray", 280], ["fy_guard", 380], ["fy_tray", 460], ["fy_laser", 620], ["fy_laser", 680]],
+      target: "fy_toilet", targetAt: 140, prop: "tray", propAt: 300, npcs: [],
+      captions: [[30, "Inside. The gut's been working out."], [300, "Lunch. Watch your back."], [RIOT, "RIOT!"], [WALL - 30, "Over the wall. Follow your gut."]]
+    },
+    obs: {
+      fy_guard: { w: 10, h: 30, y: 0, vx: -30, tough: "HEY!", draw(o, x, y, t) { const b = Math.floor(t * 8) % 2; R(A.C.ink, x, y + 8, 10, 22); R("#2a3a8a", x + 1, y + 9, 8, 13); R("#1a2a5a", x + 1, y + 22, 8, 8 - b); disc(A, "#c87a5a", x + 5, y + 4, 5); R("#1a2a5a", x, y - 2, 10, 3); } },
+      fy_tray: { w: 10, h: 3, y: 0, vx: 0, draw(o, x, y) { R(A.C.ink, x, y, 10, 3); R("#c8c8c8", x + 1, y + 1, 8, 1); R("#f3d23b", x + 2, y, 2, 1); R("#3a9a3a", x + 6, y, 2, 1); } },
+      fy_laser: { w: 2, h: 60, y: 0, vx: 0, tough: "zap", draw(o, x, y, t) { if (Math.floor(t * 2 + o.x) % 3 === 0) { o.off = true; return; } o.off = false; A.ctx.globalAlpha = .8; R("#7CFC6A", x, A.G - 60, 1, 60); A.ctx.globalAlpha = 1; } }
+    },
+    targets: { fy_toilet: { line: "Steel toilet. Cozy.", draw(tg, x) { R(A.C.ink, x - 6, G - 12, 12, 12); R("#c8c8c8", x - 5, G - 11, 10, 11); R(A.C.ink, x - 5, G - 18, 10, 6); R("#a8a8a8", x - 4, G - 17, 8, 4); } } },
+    reset(S) { S.fy = { g: { x: 20, y: 0, d: 0, face: 1, moving: false }, dressed: false, riot: -1 }; },
+    update(dt, S, p) {
+      const f = S.fy; if (!f.dressed) { f.dressed = true; A.reskin(jump, { D: "#2a4ad0", d: "#1a3aa0" }); }
+      follow(f.g, p.x - 30 * (p.face || 1), 120, dt); if (Math.abs(f.g.x - p.x) > 90) f.g.x = p.x - 40;
+      if (f.riot < 0 && p.x > RIOT && p.x < RIOT + 80) { f.riot = 0; A.say("Now.", f.g.x, 46, 1.4); } if (f.riot >= 0) f.riot += dt;
+      if (p.x > WALL + 60 && !f.out) { f.out = 1; A.showCaption("Follow your gut, pt. 2."); A.redSays("Free!", 1.6); }
+    },
+    bg(t, S) {
+      const x = S.p.x, riot = S.fy.riot;
+      if (x < WALL) { R("#8a8a8a", 0, 0, A.W, A.H); grad(A, ["#5a5a5a", "#9a9a9a"], 0, 120); A.layer(.6, 40, (xx, k) => { R("#6a6a6a", xx, 30, 30, 60); for (let i = 0; i < 6; i++) R(A.C.ink, xx + 3 + i * 5, 30, 1, 60); });
+        A.layer(.8, 120, (xx) => { R("#6a6a6a", xx + 10, 110, 60, 4); R(A.C.ink, xx + 14, 114, 2, 12); R(A.C.ink, xx + 64, 114, 2, 12); });
+        R("#7a7a7a", 0, G, A.W, 30);
+        if (riot >= 0) { const a = .35 + Math.sin(t * 10) * .15; A.ctx.globalAlpha = a; R("#E8271A", 0, 0, A.W, A.H); A.ctx.globalAlpha = 1; for (let i = 0; i < 4; i++) puff(A, ((t * 20 + i * 90) % (A.W + 60)) - 30, G - 20 - (i % 2) * 20, 24, "#f0c8c8", .6);
+          A.layer(.9, 50, (xx, k) => { const b = Math.floor(t * 10 + k) % 2; R(A.C.ink, xx + 10, G - 24 - b * 4, 8, 20); R("#2a4ad0", xx + 11, G - 23 - b * 4, 6, 14); disc(A, "#E8271A", xx + 14, G - 28 - b * 4, 4); }); } }
+      else { R("#1a1a3a", 0, 0, A.W, A.H); A.stars({}); R("#2a2a4a", 0, 80, A.W, 40); const wx = sx(A, WALL + 20); R(A.C.ink, wx - 1, 40, A.W, 80); R("#5a5a6a", wx, 41, A.W, 79); for (let i = 0; i < 20; i++) R("#9a9a9a", wx + i * 10, 36 + (i % 2) * 2, 6, 2);
+        const sa = Math.sin(t * .8) * .6; A.ctx.globalAlpha = .25; A.ctx.fillStyle = "#fff4c0"; A.ctx.beginPath(); A.ctx.moveTo(wx + 40, 30); A.ctx.lineTo(wx + 40 + Math.sin(sa - .2) * 200, 30 + Math.cos(sa - .2) * 200); A.ctx.lineTo(wx + 40 + Math.sin(sa + .2) * 200, 30 + Math.cos(sa + .2) * 200); A.ctx.fill(); A.ctx.globalAlpha = 1;
+        R("#2a5a2a", 0, 120, A.W, G - 120); R("#2a5a2a", 0, G, A.W, 30); }
+    },
+    mid(t, S) { const f = S.fy; gutBuddy(A, S, f.g, 1.6, t, (x, top) => { R("#2a4ad0", x - 7, top + 10, 14, 10); R("#2a6ad0", x - 7, top - 1, 14, 2); if (f.riot >= 0) { R(A.C.ink, x + 6, top + 6, 2, 8); R("#e8e8e8", x + 6, top, 2, 6); } }); },
+    fg(t, S) { txtFx(A, S); }
+  };
+};
+
+/* TODAY VS TOMORROW: today the robotaxi and the card both say yes. Tomorrow, not so much. */
+W["today-vs-tomorrow"] = A => {
+  const R = A.R, G = A.G, DESK = 330, TOMORROW = 540, KIOSK = [140, 860];
+  const kiosk = (x, ok, t) => { R(A.C.ink, x - 3, G - 30, 6, 30); R("#5a5a5a", x - 2, G - 30, 4, 30); R(A.C.ink, x - 16, G - 54, 32, 26); R(ok ? "#f4f4f2" : "#c81a1a", x - 15, G - 53, 30, 24);
+    if (ok) { disc(A, "#3aa83a", x, G - 46, 5); R("#ffffff", x - 2, G - 46, 2, 2); R("#ffffff", x, G - 48, 2, 4); text(A, "HAVE A", x, G - 36, "#3aa83a", 4); text(A, "GREAT DAY", x, G - 31, "#3aa83a", 4); }
+    else { R("#ffffff", x - 10, G - 50, 20, 6); text(A, "CREDITS", x, G - 37, "#ffffff", 4); text(A, "DECLINED", x, G - 32, "#ffffff", 4); if (Math.floor(t * 3) % 2) disc(A, "#ffd0d0", x + 12, G - 51, 1); } };
+  return {
+    sprites: { card: { pal: { B: "#2a48c8", Y: "#f3d23b" }, rows: ["BBBB", "BYBB", "BBBB"] } },
+    level: {
+      obs: [["tv_taxi", 260], ["cash", 200], ["tv_bot", 600], ["fire", 660], ["tv_bot", 720], ["fire", 790]],
+      target: "lamp", targetAt: 400, prop: "card", propAt: 110, npcs: [],
+      captions: [[30, "Today."], [DESK - 20, "Nine to five. Screen to screen."], [TOMORROW + 10, "Tomorrow."]]
+    },
+    obs: {
+      tv_taxi: { w: 30, h: 12, y: 0, vx: -60, draw(o, x, y, t) { R(A.C.ink, x, y + 2, 30, 9); R("#f4f4f2", x + 1, y + 3, 28, 7); R(A.C.ink, x + 6, y - 3, 16, 6); R("#3a3a4a", x + 7, y - 2, 14, 4); R("#5a5a5a", x + 12, y - 6, 6, 3); disc(A, A.C.ink, x + 6, y + 11, 3); disc(A, A.C.ink, x + 24, y + 11, 3); R("#9fe0ff", x + 1, y + 5, 2, 2); } },
+      tv_bot: { w: 10, h: 14, y: 16, vx: -50, draw(o, x, y, t) { const b = Math.round(Math.sin(t * 4 + o.x) * 2); R(A.C.ink, x, y + b, 10, 8); R("#c8a24a", x + 1, y + 1 + b, 8, 6); R("#E8271A", x + 2, y + 3 + b, 2, 2); R("#E8271A", x + 6, y + 3 + b, 2, 2); R("#c8a24a", x + 4, y + 8 + b, 2, 4); } }
+    },
+    reset(S) { S.tv = { k: [-1, -1] }; },
+    update(dt, S, p) { const v = S.tv; KIOSK.forEach((kx, i) => { if (v.k[i] < 0 && Math.abs(p.x - kx + 14) < 14) { v.k[i] = 0; A.redSays(i ? "Declined?!" : "Beep. Easy.", 1.6); if (i) A.showCaption("Today vs tomorrow."); } }); },
+    bg(t, S) {
+      const x = S.p.x;
+      if (x < TOMORROW) { R("#7ab8e8", 0, 0, A.W, A.H); clouds(A); A.layer(.3, 60, (xx, k) => { R("#9a9aa8", xx, 40 + (k % 3) * 12, 36, 80); for (let i = 0; i < 6; i++) R("#c8d8e8", xx + 4 + (i % 3) * 10, 46 + (k % 3) * 12 + Math.floor(i / 3) * 14, 6, 8); });
+        R("#3a8a3a", 0, 118, A.W, 6); R("#6a6a6a", 0, 124, A.W, G - 124); R("#5a5a5a", 0, G, A.W, 30); A.layer(1, 30, xx => R("#f4f4f2", xx, G + 14, 12, 2));
+        kiosk(sx(A, KIOSK[0]), true, t);
+        const dx = sx(A, DESK + 30); if (dx > -80 && dx < A.W + 80) { R(A.C.ink, dx - 60, 40, 120, G - 40); R("#2a2a3a", dx - 59, 41, 118, G - 41); R(A.C.ink, dx - 40, 56, 30, 24); R("#9fd0ee", dx - 39, 57, 28, 22); R(A.C.ink, dx + 10, 56, 30, 24); R("#9fd0ee", dx + 11, 57, 28, 22);
+          R(A.C.ink, dx - 34, 116, 68, 4); R("#a8763a", dx - 33, 117, 66, 2); R(A.C.ink, dx - 12, 98, 24, 18); R("#f3a91f", dx - 11, 99, 22, 14); R(A.C.ink, dx + 20, 104, 8, 12); R("#f3d23b", dx + 18, 100, 12, 6); } }
+      else { grad(A, ["#3a0a0a", "#8a1a0a", "#c8401a"], 0, 130); A.layer(.3, 50, (xx, k) => { R("#2a1a1a", xx, 50 + (k % 3) * 14, 26, 90); for (let i = 0; i < 4; i++) R("#c8401a", xx + 4 + (i % 2) * 12, 60 + (k % 3) * 14 + i * 12, 4, 4); smoke(A, xx + 13, 48 + (k % 3) * 14, t + k, 4, "#1a1a1a", 20, 40); });
+        const rx = Math.round(250 - A.S.camX * .05); R(A.C.ink, rx - 21, 20, 42, 110); R("#c8a24a", rx - 20, 21, 40, 109); oell(A, "#c8a24a", rx, 16, 16, 14); R(A.C.ink, rx - 8, 12, 5, 3); R(A.C.ink, rx + 3, 12, 5, 3); R("#E8271A", rx - 7, 13, 3, 1); R("#E8271A", rx + 4, 13, 3, 1);
+        const ga = Math.sin(t) * .3; A.ctx.strokeStyle = A.C.ink; A.ctx.lineWidth = 6; A.ctx.beginPath(); A.ctx.moveTo(rx + 18, 50); A.ctx.lineTo(rx + 50 + Math.cos(ga) * 10, 90 + Math.sin(ga) * 10); A.ctx.stroke(); A.ctx.strokeStyle = "#c8a24a"; A.ctx.lineWidth = 4; A.ctx.stroke();
+        R("#3a1a1a", 0, 130, A.W, G - 130); A.layer(.8, 10, (xx, k) => { R("#E8271A", xx, 136 + (k % 3) * 4, 3, 5); R(A.C.ink, xx, 135 + (k % 3) * 4, 3, 2); });
+        R("#2a1414", 0, G, A.W, 30); kiosk(sx(A, KIOSK[1]), false, t); }
+    },
+    fg(t, S) { const v = S.tv; KIOSK.forEach((kx, i) => { if (v.k[i] >= 0 && v.k[i] < 1.2) { v.k[i] += 1 / 60; onHead(A, (x, top, face) => A.ctx.drawImage(A.NS.card, x + face * 7 - 2, top + 14)); } }); }
+  };
+};
+})();
